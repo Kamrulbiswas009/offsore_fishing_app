@@ -39,13 +39,18 @@ class OnboardingScreen4 extends StatelessWidget {
               children: [
                 Align(
                   alignment: Alignment.topRight,
-                  child: Text(
-                    "skip",
-                    style: getTextStyle(
-                      color: AppColors.whiteColor,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      lineHeight: 10,
+                  child: GestureDetector(
+                    onTap: () {
+                      controller.goToStep(3, () => LoginScreen());
+                    },
+                    child: Text(
+                      "skip",
+                      style: getTextStyle(
+                        color: AppColors.whiteColor,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        lineHeight: 10,
+                      ),
                     ),
                   ),
                 ),
