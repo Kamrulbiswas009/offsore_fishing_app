@@ -6,17 +6,27 @@ import 'package:paytonpieper/core/utils/constants/colors.dart';
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
   final String hintText;
-  final IconData prefixIcon;
+  final IconData? prefixIcon;
   final TextInputType keyboardType;
   final TextInputAction textInputAction;
+  final int? minLines;
+  final int maxLines;
+  final TextCapitalization textCapitalization;
+  final EdgeInsetsGeometry? contentPadding;
+  final Color? fillColor;
 
   const CustomTextField({
     super.key,
     required this.controller,
     required this.hintText,
-    required this.prefixIcon,
+    this.prefixIcon,
     this.keyboardType = TextInputType.text,
     this.textInputAction = TextInputAction.next,
+    this.minLines,
+    this.maxLines = 1,
+    this.textCapitalization = TextCapitalization.none,
+    this.contentPadding,
+    this.fillColor,
   });
 
   @override
@@ -26,6 +36,12 @@ class CustomTextField extends StatelessWidget {
         controller: controller,
         keyboardType: keyboardType,
         textInputAction: textInputAction,
+        minLines: minLines,
+        maxLines: maxLines,
+        textCapitalization: textCapitalization,
+        textAlignVertical: maxLines > 1
+            ? TextAlignVertical.top
+            : TextAlignVertical.center,
         style: getTextStyle(
           color: AppColors.whiteColor,
           fontSize: 15,
@@ -36,6 +52,8 @@ class CustomTextField extends StatelessWidget {
         decoration: _inputDecoration(
           hintText: hintText,
           prefixIcon: prefixIcon,
+          contentPadding: contentPadding,
+          fillColor: fillColor
         ),
       ),
     );
@@ -107,12 +125,14 @@ class _AuthTextFieldContainer extends StatelessWidget {
 
 InputDecoration _inputDecoration({
   required String hintText,
-  required IconData prefixIcon,
+  Color? fillColor,
+  IconData? prefixIcon,
   Widget? suffixIcon,
+  EdgeInsetsGeometry? contentPadding,
 }) {
   return InputDecoration(
     filled: true,
-    fillColor: const Color(0xFF29303C),
+    fillColor:fillColor ?? const Color(0xFF29303C),
     hintText: hintText,
     hintStyle: getTextStyle(
       color: AppColors.grey8B95A5Color,
@@ -120,9 +140,13 @@ InputDecoration _inputDecoration({
       fontWeight: FontWeight.w400,
       lineHeight: 20,
     ),
-    prefixIcon: Icon(prefixIcon, color: AppColors.grey8B95A5Color, size: 20.r),
+    prefixIcon: prefixIcon == null
+        ? null
+        : Icon(prefixIcon, color: AppColors.grey8B95A5Color, size: 20.r),
     suffixIcon: suffixIcon,
-    contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
+    contentPadding:
+        contentPadding ??
+        EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(11.r),
       borderSide: const BorderSide(color: Color(0xFF3B4351)),
