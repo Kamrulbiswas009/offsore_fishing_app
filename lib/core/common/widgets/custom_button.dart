@@ -40,32 +40,44 @@ class CustomButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: ontap,
-      child: Container(
-        padding: padding ?? EdgeInsets.all(8.r),
-        decoration: BoxDecoration(
-          color: bgColor ?? AppColors.orangeColor,
-          borderRadius: BorderRadius.circular(borderRadius ?? 50.r),
-          border: Border.all(
-            color: borderColor ?? Colors.transparent,
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (prefixIcon != null) prefixIcon ?? SizedBox.shrink(),
-            Text(
-              title,
-              style: getTextStyle(
-                fontSize: fontSize ?? 18,
-                fontWeight: FontWeight.w500,
-                color: titleColor ?? AppColors.whiteColor,
-                lineHeight: lineHeight ?? 14,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final titleWidget = Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: getTextStyle(
+              fontSize: fontSize ?? 18,
+              fontWeight: FontWeight.w500,
+              color: titleColor ?? AppColors.whiteColor,
+              lineHeight: lineHeight ?? 14,
+            ),
+          );
+
+          return Container(
+            padding: padding ?? EdgeInsets.all(8.r),
+            decoration: BoxDecoration(
+              color: bgColor ?? AppColors.orangeColor,
+              borderRadius: BorderRadius.circular(borderRadius ?? 50.r),
+              border: Border.all(
+                color: borderColor ?? Colors.transparent,
+                width: 1.5,
               ),
             ),
-            if (suffixIcon != null) suffixIcon ?? SizedBox.shrink(),
-          ],
-        ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (prefixIcon != null) prefixIcon ?? const SizedBox.shrink(),
+                if (constraints.maxWidth.isFinite)
+                  Flexible(child: titleWidget)
+                else
+                  titleWidget,
+                if (suffixIcon != null) suffixIcon ?? const SizedBox.shrink(),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

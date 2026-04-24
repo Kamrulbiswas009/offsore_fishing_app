@@ -4,6 +4,8 @@ import 'package:paytonpieper/features/authentication/presentation/screens/forgot
 import 'package:paytonpieper/features/authentication/presentation/screens/login_screen.dart';
 import 'package:paytonpieper/features/authentication/presentation/screens/set_new_password_screen.dart';
 import 'package:paytonpieper/features/authentication/presentation/screens/veriry_otp_screen.dart';
+import 'package:paytonpieper/features/groups/presentation/screen/create_group_screen.dart';
+import 'package:paytonpieper/features/groups/presentation/screen/group_details_screen.dart';
 import 'package:paytonpieper/features/onboarding/presentation/screen/onboardin_screen3.dart';
 import 'package:paytonpieper/features/onboarding/presentation/screen/onboarding_screen1.dart';
 import 'package:paytonpieper/features/onboarding/presentation/screen/onboarding_screen2.dart';
@@ -21,7 +23,8 @@ class AppRoute {
   static String forgotPasswordScreen = "/forgotPasswordScreen";
   static String veriryOtpScreen = "/veriryOtpScreen";
   static String setNewPasswordScreen = "/setNewPasswordScreen";
-
+  static String createGroupScreen = "/createGroupScreen";
+  static String groupDetailsScreen = "/groupDetailsScreen";
 
   static String getSplashScreen1() => splashScreen1;
   static String getOnboardingScreen1() => onboardingScreen1;
@@ -33,7 +36,8 @@ class AppRoute {
   static String getForgotPasswordScreen() => forgotPasswordScreen;
   static String getVeriryOtpScreen() => veriryOtpScreen;
   static String getSetNewPasswordScreen() => setNewPasswordScreen;
-
+  static String getCreateGroupScreen() => createGroupScreen;
+  static String getGroupDetailsScreen() => groupDetailsScreen;
 
   static List<GetPage> routes = [
     GetPage(name: splashScreen1, page: () => SplashScreen1()),
@@ -45,6 +49,16 @@ class AppRoute {
     GetPage(name: createAccountScreen, page: () => CreateAccountScreen()),
     GetPage(name: forgotPasswordScreen, page: () => ForgotPasswordScreen()),
     GetPage(name: veriryOtpScreen, page: () => VeriryOtpScreen()),
-    GetPage(name: setNewPasswordScreen, page: ()=> SetNewPasswordScreen()),
+    GetPage(name: setNewPasswordScreen, page: () => SetNewPasswordScreen()),
+    GetPage(
+      name: createGroupScreen,
+      page: () => CreateGroupScreen(),
+      transition: Transition.leftToRight,
+    ),
+    GetPage(
+      name: groupDetailsScreen,
+      page: () => GroupDetailsScreen(),
+      transition: Transition.leftToRight,
+    ),
   ];
 }
