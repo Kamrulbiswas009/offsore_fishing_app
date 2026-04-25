@@ -9,6 +9,7 @@ import 'package:paytonpieper/core/utils/constants/colors.dart';
 import '../controller/summary_details_controller.dart';
 import 'widgets/report_tab_widget.dart';
 import 'widgets/summary_tab_widget.dart';
+import 'widgets/weather_tab_widget.dart';
 
 class SummaryScreen extends GetView<SummaryController> {
   const SummaryScreen({super.key});
@@ -38,7 +39,7 @@ class SummaryScreen extends GetView<SummaryController> {
                       return const ReportTabWidget();
                     }
                     if (selectedTab == 'Weather') {
-                      return _buildWeatherTab();
+                      return const WeatherTabWidget();
                     }
                     return const SummaryTabWidget();
                   }),
@@ -92,19 +93,5 @@ class SummaryScreen extends GetView<SummaryController> {
     );
   }
 
-  Widget _buildWeatherTab() {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(20.w),
-      decoration: BoxDecoration(
-        color: AppColors.blue0D2B43Color,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.blue153A56Color.withOpacity(0.5)),
-      ),
-      child: Text(
-        'Weather content will appear here.',
-        style: getTextStyle(fontSize: 14, color: Colors.white),
-      ),
-    );
-  }
+
 }
