@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:paytonpieper/features/main_screen/screen/main_screen.dart';
+import 'package:paytonpieper/features/main_screen/screen/home_main_screen.dart';
 import 'package:paytonpieper/routes/app_routes.dart';
 
 class LoginController extends GetxController {

@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 
-
 class GlobalRealMapBox extends StatelessWidget {
   final double height;
   final LatLng center; // Real coordinates
@@ -31,21 +30,21 @@ class GlobalRealMapBox extends StatelessWidget {
               initialCenter: center,
               initialZoom: zoom,
               interactionOptions: const InteractionOptions(
-                flags: InteractiveFlag.none, // Lock map interaction for the header box
+                flags: InteractiveFlag
+                    .none, // Lock map interaction for the header box
               ),
             ),
             children: [
               TileLayer(
-                urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                urlTemplate:
+                    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
                 userAgentPackageName: 'com.paytonpieper.app',
               ),
             ],
           ),
 
           // 2. TACTICAL OVERLAY (Dark Tint)
-          IgnorePointer(
-            child: Container(color: Colors.black.withOpacity(0.3)),
-          ),
+          IgnorePointer(child: Container(color: Colors.black.withOpacity(0.3))),
 
           // 3. ORANGE HIGHLIGHTED ZONE SQUARE (Tactical UI)
           Center(
@@ -60,25 +59,25 @@ class GlobalRealMapBox extends StatelessWidget {
                     color: AppColors.orangeColor.withOpacity(0.5),
                     blurRadius: 20,
                     spreadRadius: 5,
-                  )
+                  ),
                 ],
               ),
             ),
           ),
 
           // 4. TOP NAVIGATION (Back Button)
-          Positioned(
-            top: 50.h,
-            left: 20.w,
-            child: GestureDetector(
-              onTap: () => Get.back(),
-              child: CircleAvatar(
-                radius: 20.r,
-                backgroundColor: Colors.black.withOpacity(0.5),
-                child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
-              ),
-            ),
-          ),
+          // Positioned(
+          //   top: 50.h,
+          //   left: 20.w,
+          //   child: GestureDetector(
+          //     onTap: () => Get.back(),
+          //     child: CircleAvatar(
+          //       radius: 20.r,
+          //       backgroundColor: Colors.black.withOpacity(0.5),
+          //       child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );

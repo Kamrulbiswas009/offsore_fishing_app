@@ -5,7 +5,7 @@ import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/features/report_main/report/model/report_model.dart';
 
-import '../../controller/summary_details_controller.dart';
+import '../controller/summary_details_controller.dart';
 
 class ReportTabWidget extends GetView<SummaryController> {
   const ReportTabWidget({super.key});
@@ -171,10 +171,7 @@ class ReportTabWidget extends GetView<SummaryController> {
             report.author != null
                 ? "by ${report.author} . ${report.timeAgo}"
                 : report.timeAgo,
-            style: getTextStyle(
-              fontSize: 12,
-              color: AppColors.grey8B95A5Color,
-            ),
+            style: getTextStyle(fontSize: 12, color: AppColors.grey8B95A5Color),
           ),
           SizedBox(height: 15.h),
 
@@ -188,8 +185,7 @@ class ReportTabWidget extends GetView<SummaryController> {
           SizedBox(height: 8.h),
           Row(
             children: [
-              Expanded(
-                  child: _reportInfoLabel("Technique:", report.technique)),
+              Expanded(child: _reportInfoLabel("Technique:", report.technique)),
               Expanded(child: _reportInfoLabel("Bait:", report.bait)),
             ],
           ),
@@ -248,10 +244,7 @@ class ReportTabWidget extends GetView<SummaryController> {
         children: [
           TextSpan(
             text: "$label ",
-            style: getTextStyle(
-              fontSize: 13,
-              color: AppColors.grey8B95A5Color,
-            ),
+            style: getTextStyle(fontSize: 13, color: AppColors.grey8B95A5Color),
           ),
           TextSpan(
             text: value,
