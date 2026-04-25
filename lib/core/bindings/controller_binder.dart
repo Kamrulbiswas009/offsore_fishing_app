@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:paytonpieper/features/authentication/controllers/create_account_screen_controller.dart';
 import 'package:paytonpieper/features/authentication/controllers/forgot_password_screen_controller.dart';
 import 'package:paytonpieper/features/authentication/controllers/login_controller.dart';
+import 'package:paytonpieper/features/main_screen/controller/filter_controller.dart';
 import 'package:paytonpieper/features/main_screen/controller/main_screen_controller.dart';
 import 'package:paytonpieper/features/groups/controller/create_group_screen_controller.dart';
 import 'package:paytonpieper/features/groups/controller/group_details_screen_controller.dart';
@@ -11,6 +12,7 @@ import 'package:paytonpieper/features/notification/controller/notification_scree
 import 'package:paytonpieper/features/onboarding/controller/onboarding_screen_controller.dart';
 import 'package:paytonpieper/features/profile_and_setting/controller/profile_main_screen_controller.dart';
 import 'package:paytonpieper/features/profile_and_setting/controller/settings_screen_controller.dart';
+import 'package:paytonpieper/features/report_main/summary/controller/summary_details_controller.dart';
 import 'package:paytonpieper/features/splash_screen/controller/splash_screen_controller.dart';
 
 class ControllerBinder extends Bindings {
@@ -62,5 +64,7 @@ class ControllerBinder extends Bindings {
       () => MainScreenController(),
       fenix: true,
     );
+    Get.lazyPut<FilterController>(() => FilterController(), fenix: true);
+    Get.lazyPut<SummaryController>(() => SummaryController(), fenix: true);
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
+import 'package:paytonpieper/features/main_screen/widgets/filter_dialog.dart';
 
 import '../controller/map_screen_controller.dart';
 import '../model/map_zone_model.dart';
@@ -150,7 +151,15 @@ class ZoneMapScreen extends GetView<MapScreenController> {
       bottom: 120.h, right: 20.w,
       child: Column(
         children: [
-          _badgeButton(Icons.tune),
+   GestureDetector(
+  onTap: () {
+    Get.dialog(
+      const FilterDialog(),
+      barrierColor: Colors.black.withOpacity(0.5),
+    );
+  },
+  child: _badgeButton(Icons.tune),
+),
           SizedBox(height: 16.h),
           _gradientAddButton(),
         ],
