@@ -2,9 +2,11 @@ import 'package:get/get.dart';
 import 'package:paytonpieper/features/authentication/controllers/create_account_screen_controller.dart';
 import 'package:paytonpieper/features/authentication/controllers/forgot_password_screen_controller.dart';
 import 'package:paytonpieper/features/authentication/controllers/login_controller.dart';
+import 'package:paytonpieper/features/main_screen/controller/main_screen_controller.dart';
 import 'package:paytonpieper/features/groups/controller/create_group_screen_controller.dart';
 import 'package:paytonpieper/features/groups/controller/group_details_screen_controller.dart';
 import 'package:paytonpieper/features/groups/controller/group_main_screen_controller.dart';
+import 'package:paytonpieper/features/map/controller/map_screen_controller.dart';
 import 'package:paytonpieper/features/notification/controller/notification_screen_controller.dart';
 import 'package:paytonpieper/features/onboarding/controller/onboarding_screen_controller.dart';
 import 'package:paytonpieper/features/profile_and_setting/controller/profile_main_screen_controller.dart';
@@ -31,11 +33,34 @@ class ControllerBinder extends Bindings {
       () => ForgotPasswordScreenController(),
       fenix: true,
     );
-    Get.lazyPut<GroupMainScreenController>(()=>GroupMainScreenController(),fenix: true);
-    Get.lazyPut<CreateGroupScreenController>(()=> CreateGroupScreenController(),fenix: true);
-    Get.lazyPut<GroupDetailsScreenController>(()=>GroupDetailsScreenController(), fenix: true);
-    Get.lazyPut<ProfileMainScreenController>(()=>ProfileMainScreenController(), fenix: true);
-    Get.lazyPut<SettingsScreenController>(()=>SettingsScreenController(),fenix: true);
-    Get.lazyPut<NotificationScreenController>(()=>NotificationScreenController(),fenix: true);
+    Get.lazyPut<GroupMainScreenController>(
+      () => GroupMainScreenController(),
+      fenix: true,
+    );
+    Get.lazyPut<CreateGroupScreenController>(
+      () => CreateGroupScreenController(),
+      fenix: true,
+    );
+    Get.lazyPut<GroupDetailsScreenController>(
+      () => GroupDetailsScreenController(),
+      fenix: true,
+    );
+    Get.lazyPut<ProfileMainScreenController>(
+      () => ProfileMainScreenController(),
+      fenix: true,
+    );
+    Get.lazyPut<SettingsScreenController>(
+      () => SettingsScreenController(),
+      fenix: true,
+    );
+    Get.lazyPut<NotificationScreenController>(
+      () => NotificationScreenController(),
+      fenix: true,
+    );
+    Get.lazyPut<MapScreenController>(() => MapScreenController(), fenix: true);
+    Get.lazyPut<MainScreenController>(
+      () => MainScreenController(),
+      fenix: true,
+    );
   }
 }
