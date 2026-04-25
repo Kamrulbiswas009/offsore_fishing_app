@@ -84,4 +84,13 @@ class SummaryController extends GetxController {
     Get.snackbar("Confirmed", "You confirmed this bite!", 
       snackPosition: SnackPosition.BOTTOM, backgroundColor: const Color(0xFF10B981), colorText: Colors.white);
   }
+  // Main Tab (Summary, Reports, Weather)
+
+  // Weather Sub-Tabs
+  var selectedWeatherType = "Forecast".obs; // Now or Forecast
+  var selectedDay = "Today".obs;
+  var selectedTimePeriod = "Morning".obs; // Morning, Afternoon, Evening
+
+  final List<String> days = ["Today", "Sat 19", "Sun 20", "Mon 21", "Tue 22"];
+  final List<String> timePeriods = ["Morning", "Afternoon", "Evening"];
 }
