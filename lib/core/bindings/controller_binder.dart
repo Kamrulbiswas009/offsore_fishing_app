@@ -5,6 +5,7 @@ import 'package:paytonpieper/features/authentication/controllers/login_controlle
 import 'package:paytonpieper/features/groups/controller/create_group_screen_controller.dart';
 import 'package:paytonpieper/features/groups/controller/group_details_screen_controller.dart';
 import 'package:paytonpieper/features/groups/controller/group_main_screen_controller.dart';
+import 'package:paytonpieper/features/notification/controller/notification_screen_controller.dart';
 import 'package:paytonpieper/features/onboarding/controller/onboarding_screen_controller.dart';
 import 'package:paytonpieper/features/profile_and_setting/controller/profile_main_screen_controller.dart';
 import 'package:paytonpieper/features/profile_and_setting/controller/settings_screen_controller.dart';
@@ -35,5 +36,6 @@ class ControllerBinder extends Bindings {
     Get.lazyPut<GroupDetailsScreenController>(()=>GroupDetailsScreenController(), fenix: true);
     Get.lazyPut<ProfileMainScreenController>(()=>ProfileMainScreenController(), fenix: true);
     Get.lazyPut<SettingsScreenController>(()=>SettingsScreenController(),fenix: true);
+    Get.lazyPut<NotificationScreenController>(()=>NotificationScreenController(),fenix: true);
   }
 }

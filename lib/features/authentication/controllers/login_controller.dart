@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:paytonpieper/features/profile_and_setting/presentation/screen/profile_main_screen.dart';
 import 'package:paytonpieper/routes/app_routes.dart';
 
 class LoginController extends GetxController {
@@ -14,7 +13,7 @@ class LoginController extends GetxController {
   }
 
   void login() {
-    Get.to(()=>ProfileMainScreen());
+    //should navigate to bottom navigation screen
   }
 
   void forgotPassword() {
