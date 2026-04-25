@@ -7,9 +7,9 @@ import 'package:paytonpieper/core/common/widgets/global_map_box.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 
 import '../controller/summary_details_controller.dart';
-import 'widgets/report_tab_widget.dart';
-import 'widgets/summary_tab_widget.dart';
-import 'widgets/weather_tab_widget.dart';
+import '../widgets/report_tab_widget.dart';
+import '../widgets/summary_tab_widget.dart';
+import '../widgets/weather_tab_widget.dart';
 
 class SummaryScreen extends GetView<SummaryController> {
   const SummaryScreen({super.key});
@@ -92,6 +92,4 @@ class SummaryScreen extends GetView<SummaryController> {
           .toList(),
     );
   }
-
-
 }

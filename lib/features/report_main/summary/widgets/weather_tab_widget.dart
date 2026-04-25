@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 
-import '../../controller/summary_details_controller.dart';
+import '../controller/summary_details_controller.dart';
 
 class WeatherTabWidget extends GetView<SummaryController> {
   const WeatherTabWidget({super.key});
@@ -128,7 +128,6 @@ class WeatherTabWidget extends GetView<SummaryController> {
                 style: getTextStyle(
                   fontSize: 12,
                   color: AppColors.grey8B95A5Color,
-              
                 ),
               ),
             ],

@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 
-import '../../controller/summary_details_controller.dart';
+import '../controller/summary_details_controller.dart';
 
 class SummaryTabWidget extends GetView<SummaryController> {
   const SummaryTabWidget({super.key});
@@ -494,11 +494,7 @@ class SummaryTabWidget extends GetView<SummaryController> {
   Widget _speciesItem(String name, String count) {
     return Column(
       children: [
-        Icon(
-          Icons.set_meal,
-          color: AppColors.blue00F0FFColor,
-          size: 20.sp,
-        ),
+        Icon(Icons.set_meal, color: AppColors.blue00F0FFColor, size: 20.sp),
         SizedBox(height: 6.h),
         Text(
           count,
@@ -510,10 +506,7 @@ class SummaryTabWidget extends GetView<SummaryController> {
         ),
         Text(
           name,
-          style: getTextStyle(
-            fontSize: 12,
-            color: AppColors.grey516173Color,
-          ),
+          style: getTextStyle(fontSize: 12, color: AppColors.grey516173Color),
         ),
       ],
     );
