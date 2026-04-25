@@ -19,6 +19,20 @@ class IconPath {
   static const String doublePersonWhiteIcon = "assets/icons/double_person_white_icon.png";
   static const String messageSentIcon = "assets/icons/message_sent_icon.png";
   static const String crownIcon = "assets/icons/crown_icon.png";
+  static const String notificationIcon = "assets/icons/notification_icon.png";
+  static const String settingIcon = "assets/icons/setting_icon.png";
+  static const String curveArrowIcon = "assets/icons/curve_arrow_icon.png";
+  static const String fishIcon = "assets/icons/fish_icon.png";
+  static const String locationIcon = "assets/icons/location_icon.png";
+  static const String logoutIcon = "assets/icons/logout_icon.png";
+  static const String mailIcon = "assets/icons/mail_icon.png";
+  static const String penIcon = "assets/icons/pen_icon.png";
+  static const String aboutIcon = "assets/icons/about_icon.png";
+  static const String downloadIcon = "assets/icons/download_icon.png";
+  static const String notificationTealIcon = "assets/icons/notification_teal_icon.png";
+  static const String offlineStorageIcon = "assets/icons/offline_storage_icon.png";
+
+
 
 
 }
