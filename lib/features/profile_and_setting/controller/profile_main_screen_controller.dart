@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/core/utils/constants/image_path.dart';
+import 'package:paytonpieper/features/notification/presentation/screen/notification_screen.dart';
 import 'package:paytonpieper/features/profile_and_setting/presentation/screen/settings_screen.dart';
 
 class ProfileMainScreenController extends GetxController {
@@ -47,7 +48,9 @@ class ProfileMainScreenController extends GetxController {
         ],
       );
 
-  void onNotificationsTap() {}
+  void onNotificationsTap() {
+    Get.to(()=>NotificationScreen());
+  }
 
   void onEditProfile() {}
 

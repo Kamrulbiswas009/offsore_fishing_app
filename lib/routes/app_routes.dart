@@ -6,6 +6,7 @@ import 'package:paytonpieper/features/authentication/presentation/screens/set_ne
 import 'package:paytonpieper/features/authentication/presentation/screens/veriry_otp_screen.dart';
 import 'package:paytonpieper/features/groups/presentation/screen/create_group_screen.dart';
 import 'package:paytonpieper/features/groups/presentation/screen/group_details_screen.dart';
+import 'package:paytonpieper/features/notification/presentation/screen/notification_screen.dart';
 import 'package:paytonpieper/features/onboarding/presentation/screen/onboardin_screen3.dart';
 import 'package:paytonpieper/features/onboarding/presentation/screen/onboarding_screen1.dart';
 import 'package:paytonpieper/features/onboarding/presentation/screen/onboarding_screen2.dart';
@@ -27,6 +28,7 @@ class AppRoute {
   static String createGroupScreen = "/createGroupScreen";
   static String groupDetailsScreen = "/groupDetailsScreen";
   static String settingsScreen = "/settingsScreen";
+  static String notificationScreen = "/notificationScreen";
 
   static String getSplashScreen1() => splashScreen1;
   static String getOnboardingScreen1() => onboardingScreen1;
@@ -41,6 +43,7 @@ class AppRoute {
   static String getCreateGroupScreen() => createGroupScreen;
   static String getGroupDetailsScreen() => groupDetailsScreen;
   static String getSettingsScreen() => settingsScreen;
+  static String getNotificationScreen() => notificationScreen;
 
   static List<GetPage> routes = [
     GetPage(name: splashScreen1, page: () => SplashScreen1()),
@@ -66,6 +69,12 @@ class AppRoute {
     GetPage(
       name: settingsScreen,
       page: () => SettingsScreen(),
+      transition: Transition.leftToRight,
+      transitionDuration: const Duration(milliseconds: 500),
+    ),
+    GetPage(
+      name: notificationScreen,
+      page: () => NotificationScreen(),
       transition: Transition.leftToRight,
       transitionDuration: const Duration(milliseconds: 500),
     ),
