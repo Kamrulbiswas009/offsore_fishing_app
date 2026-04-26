@@ -44,7 +44,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
         _buildSunMoon(),
         SizedBox(height: 20.h),
         _buildTideCurrents(),
-        SizedBox(height: 20.h),
+        SizedBox(height: 30.h),
       ],
     );
   }
@@ -92,11 +92,11 @@ class WeatherTabWidget extends GetView<SummaryController> {
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
               decoration: BoxDecoration(
-                color: AppColors.tealColor117A88,
+                color: Color(0xFF00D4FF),
                 borderRadius: BorderRadius.circular(20.r),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.tealColor117A88.withOpacity(0.25),
+                    color: AppColors.teal0C98AFColor.withOpacity(0.25),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -106,8 +106,8 @@ class WeatherTabWidget extends GetView<SummaryController> {
                 'Excellent',
                 style: getTextStyle(
                   fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black,
                 ),
               ),
             ),
@@ -160,7 +160,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
                   margin: EdgeInsets.all(4.w),
                   decoration: BoxDecoration(
                     color: selected
-                        ? AppColors.tealColor117A88.withOpacity(0.5)
+                        ? AppColors.teal0C98AFColor.withOpacity(0.5)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(8.r),
                     border: selected
@@ -680,7 +680,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
                 decoration: BoxDecoration(
-                  color: AppColors.tealColor117A88.withOpacity(0.3),
+                  color: AppColors.teal0C98AFColor.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(10.r),
                   border: Border.all(
                     color: AppColors.blue00F0FFColor.withOpacity(0.5),
@@ -733,7 +733,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
                     ),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.tealColor117A88
+                          ? Color(0xFF00D4FF)
                           : AppColors.blue0D2B43Color,
                       borderRadius: BorderRadius.circular(20.r),
                       border: Border.all(
@@ -746,8 +746,8 @@ class WeatherTabWidget extends GetView<SummaryController> {
                       day,
                       style: getTextStyle(
                         fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                        color: isSelected ? Colors.black : Colors.white,
                       ),
                     ),
                   ),
@@ -793,7 +793,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
                   margin: EdgeInsets.all(4.w),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? AppColors.tealColor117A88
+                        ? AppColors.teal0C98AFColor
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(8.r),
                   ),

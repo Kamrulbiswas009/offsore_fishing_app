@@ -16,7 +16,8 @@ class IconPath {
   static const String lockTealColorIcon = "assets/icons/lock_teal_color.png";
   static const String reportIcon = "assets/icons/report_icon.png";
   static const String chatIcon = "assets/icons/chat_icon.png";
-  static const String doublePersonWhiteIcon = "assets/icons/double_person_white_icon.png";
+  static const String doublePersonWhiteIcon =
+      "assets/icons/double_person_white_icon.png";
   static const String messageSentIcon = "assets/icons/message_sent_icon.png";
   static const String crownIcon = "assets/icons/crown_icon.png";
   static const String notificationIcon = "assets/icons/notification_icon.png";
@@ -29,15 +30,17 @@ class IconPath {
   static const String penIcon = "assets/icons/pen_icon.png";
   static const String aboutIcon = "assets/icons/about_icon.png";
   static const String downloadIcon = "assets/icons/download_icon.png";
-  static const String notificationTealIcon = "assets/icons/notification_teal_icon.png";
-  static const String offlineStorageIcon = "assets/icons/offline_storage_icon.png";
+  static const String notificationTealIcon =
+      "assets/icons/notification_teal_icon.png";
+  static const String offlineStorageIcon =
+      "assets/icons/offline_storage_icon.png";
   static const String map = "assets/icons/map.png";
   static const String report = "assets/icons/report.png";
   static const String groups = "assets/icons/groups.png";
   static const String profile = "assets/icons/profile.png";
-
-
-
-
-
+  static const String timeScheduleIcon = "assets/icons/time_schedule.png";
+  static const String redFish = "assets/icons/red_fish.png";
+  static const String ratioGraph = "assets/icons/ratio_graph.png";
+  static const String redGroupsIcon = "assets/icons/red_groups.png";
+  static const String filterIcon = "assets/icons/filter.png";
 }

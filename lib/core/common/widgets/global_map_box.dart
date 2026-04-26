@@ -48,8 +48,8 @@ class GlobalRealMapBox extends StatelessWidget {
           // 3. ORANGE HIGHLIGHTED ZONE SQUARE (Tactical UI)
           Center(
             child: Container(
-              height: 100.h,
-              width: 100.h,
+              height: 60.h,
+              width: 60.h,
               decoration: BoxDecoration(
                 color: AppColors.orangeColor.withOpacity(0.15),
                 border: Border.all(color: AppColors.orangeColor, width: 2),

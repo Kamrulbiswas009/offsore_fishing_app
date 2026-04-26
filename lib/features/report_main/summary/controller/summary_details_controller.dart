@@ -58,6 +58,29 @@ class SummaryController extends GetxController {
   var selectedTechnique = "Trolling".obs;
   var selectedTime = "24h".obs;
 
+  final List<String> speciesList = [
+    "Tuna",
+    "Marlin",
+    "Mahi Mahi",
+    "Sailfish",
+    "Wahoo",
+  ];
+  final List<String> depthList = [
+    "0-50 ft",
+    "50-100 ft",
+    "100-200 ft",
+    "200-500 ft",
+    "500+ ft",
+  ];
+  final List<String> techniqueList = [
+    "Trolling",
+    "Bottom Fishing",
+    "Jigging",
+    "Fly Fishing",
+    "Drifting",
+  ];
+  final List<String> timeList = ["6h", "12h", "24h", "48h", "Week"];
+
   final List<FishingReport> reports = [
     FishingReport(
       title: "Tuna (Blackfin)",

@@ -129,7 +129,7 @@ class ReportCatchStep1Screen extends GetView<ReportCatchController> {
             textAlign: TextAlign.center,
             style: getTextStyle(
               fontSize: 11,
-              color: AppColors.orangeFF6B35Color,
+              color: AppColors.yellowFCEA74Color,
             ),
           ),
         ],
@@ -180,7 +180,7 @@ class ReportCatchStep1Screen extends GetView<ReportCatchController> {
       height: 26.r,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: isActive ? AppColors.tealColor117A88 : AppColors.blue1B2134Color,
+        color: isActive ? AppColors.teal0C98AFColor : AppColors.blue1B2134Color,
         border: isActive ? null : Border.all(color: AppColors.grey3A4B62Color),
       ),
       alignment: Alignment.center,
@@ -210,10 +210,7 @@ class ReportCatchStep1Screen extends GetView<ReportCatchController> {
         decoration: BoxDecoration(
           color: AppColors.blue1B2134Color,
           borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(
-            color: isSelected ? AppColors.blue00F0FFColor : Colors.transparent,
-            width: 1.5,
-          ),
+          border: Border.all(color: Colors.transparent, width: 0),
         ),
         child: Column(
           children: [
@@ -297,7 +294,7 @@ class ReportCatchStep1Screen extends GetView<ReportCatchController> {
   Widget _buildConfirmButton() {
     return SizedBox(
       width: double.infinity,
-      height: 56.h,
+      height: 46.h,
       child: ElevatedButton(
         onPressed: controller.confirmGrid,
         style: ElevatedButton.styleFrom(

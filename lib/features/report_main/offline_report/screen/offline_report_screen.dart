@@ -50,9 +50,9 @@ class OfflineReportsScreen extends GetView<OfflineReportsTabController> {
                   _buildFilterRow(),
                   SizedBox(height: 20.h),
                   _buildPatternLine(),
-                  SizedBox(height: 20.h),
+                  SizedBox(height: 5.h),
                   _buildReportList(),
-                  SizedBox(height: 100.h),
+                  SizedBox(height: 50.h),
                 ],
               ),
             ),
@@ -202,33 +202,56 @@ class OfflineReportsScreen extends GetView<OfflineReportsTabController> {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          _filterChip(controller.speciesFilter),
-          _filterChip(controller.depthFilter),
-          _filterChip(controller.techniqueFilter),
-          _filterChip(controller.timeFilter),
+          _filterChip(controller.speciesFilter, controller.speciesOptions),
+          _filterChip(controller.depthFilter, controller.depthOptions),
+          _filterChip(controller.techniqueFilter, controller.techniqueOptions),
+          _filterChip(controller.timeFilter, controller.timeOptions),
         ],
       ),
     );
   }
 
-  Widget _filterChip(RxString val) {
+  Widget _filterChip(RxString val, List<String> options) {
     return Obx(
-      () => Container(
-        margin: EdgeInsets.only(right: 8.w),
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-        decoration: BoxDecoration(
-          color: AppColors.blue1B2134Color,
-          borderRadius: BorderRadius.circular(8.r),
-          border: Border.all(color: AppColors.grey3A4B62Color),
+      () => PopupMenuButton<String>(
+        onSelected: (String newValue) {
+          val.value = newValue;
+        },
+        offset: const Offset(0, 45),
+        color: AppColors.blue1B2134Color,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.r),
+          side: BorderSide(color: AppColors.grey3A4B62Color.withOpacity(0.5)),
         ),
-        child: Row(
-          children: [
-            Text(
-              val.value,
-              style: getTextStyle(fontSize: 13, color: Colors.white),
-            ),
-            Icon(Icons.keyboard_arrow_down, color: Colors.white, size: 18.sp),
-          ],
+        itemBuilder: (BuildContext context) {
+          return options.map((String option) {
+            return PopupMenuItem<String>(
+              value: option,
+              child: Text(
+                option,
+                style: getTextStyle(fontSize: 14, color: Colors.white),
+              ),
+            );
+          }).toList();
+        },
+        child: Container(
+          margin: EdgeInsets.only(right: 8.w),
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+          decoration: BoxDecoration(
+            color: AppColors.blue1B2134Color,
+            borderRadius: BorderRadius.circular(8.r),
+            border: Border.all(color: AppColors.grey3A4B62Color),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                val.value,
+                style: getTextStyle(fontSize: 13, color: Colors.white),
+              ),
+              Icon(Icons.keyboard_arrow_down, color: Colors.white, size: 18.sp),
+            ],
+          ),
         ),
       ),
     );
@@ -241,7 +264,7 @@ class OfflineReportsScreen extends GetView<OfflineReportsTabController> {
           child: Divider(color: AppColors.grey3A4B62Color.withOpacity(0.5)),
         ),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 10.w),
+          padding: EdgeInsets.symmetric(horizontal: 4.w),
           child: Text(
             "3 Reports . Same Pattern",
             style: getTextStyle(

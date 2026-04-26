@@ -4,7 +4,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
+import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/main_screen/widgets/filter_dialog.dart';
+import 'package:paytonpieper/features/report_main/report_catch/screen/report_catch_screen.dart';
 
 import '../controller/map_screen_controller.dart';
 import '../model/map_zone_model.dart';
@@ -212,7 +214,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
   // ─── Legend ────────────────────────────────────────────────────────────────
   Widget _buildLegend() {
     return Positioned(
-      bottom: 220.h,
+      bottom: 85.h,
       left: 20.w,
       child: Container(
         padding: EdgeInsets.all(12.w),
@@ -256,7 +258,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
   // ─── Action Buttons ────────────────────────────────────────────────────────
   Widget _buildActionButtons() {
     return Positioned(
-      bottom: 220.h,
+      bottom: 85.h,
       right: 20.w,
       child: Column(
         children: [
@@ -268,7 +270,12 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
             child: _badgeButton(Icons.tune),
           ),
           SizedBox(height: 16.h),
-          _gradientAddButton(),
+          GestureDetector(
+            onTap: () {
+              Get.to(ReportCatchStep1Screen());
+            },
+            child: _gradientAddButton(),
+          ),
         ],
       ),
     );
@@ -278,10 +285,19 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
     return Stack(
       alignment: Alignment.topRight,
       children: [
-        CircleAvatar(
-          radius: 28.r,
-          backgroundColor: AppColors.blue134D67Color,
-          child: Icon(icon, color: Colors.white),
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: AppColors.blue00D4FF66Color,
+              width: 1.5.w,
+            ),
+          ),
+          child: CircleAvatar(
+            radius: 28.r,
+            backgroundColor: AppColors.blue134D67Color,
+            child: Image.asset(IconPath.filterIcon, height: 33.h, width: 33.w),
+          ),
         ),
         CircleAvatar(
           radius: 9.r,
