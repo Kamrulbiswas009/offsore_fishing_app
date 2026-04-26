@@ -31,6 +31,11 @@ class IconPath {
   static const String downloadIcon = "assets/icons/download_icon.png";
   static const String notificationTealIcon = "assets/icons/notification_teal_icon.png";
   static const String offlineStorageIcon = "assets/icons/offline_storage_icon.png";
+  static const String map = "assets/icons/map.png";
+  static const String report = "assets/icons/report.png";
+  static const String groups = "assets/icons/groups.png";
+  static const String profile = "assets/icons/profile.png";
+
 
 
 

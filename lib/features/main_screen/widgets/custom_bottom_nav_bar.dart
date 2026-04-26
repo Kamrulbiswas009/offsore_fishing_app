@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
+import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 
 import '../controller/main_screen_controller.dart';
 
@@ -24,22 +25,21 @@ class CustomBottomNavBar extends GetView<MainScreenController> {
             color: Colors.black.withOpacity(0.3),
             blurRadius: 10,
             offset: const Offset(0, 5),
-          )
+          ),
         ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _navItem(0, Icons.map_outlined, "Map"),
-          _navItem(1, Icons.edit_note_rounded, "Report"),
-          _navItem(2, Icons.group_outlined, "Groups"),
-          _navItem(3, Icons.person_outline_rounded, "Profile"),
+          Expanded(child: _navItem(0, IconPath.map, "Map")),
+          Expanded(child: _navItem(1, IconPath.report, "Report")),
+          Expanded(child: _navItem(2, IconPath.groups, "Groups")),
+          Expanded(child: _navItem(3, IconPath.profile, "Profile")),
         ],
       ),
     );
   }
 
-  Widget _navItem(int index, IconData icon, String label) {
+  Widget _navItem(int index, String icon, String label) {
     return Obx(() {
       bool isSelected = controller.currentIndex.value == index;
       Color activeColor = AppColors.blue00F0FFColor;
@@ -51,9 +51,10 @@ class CustomBottomNavBar extends GetView<MainScreenController> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
+            Image.asset(
               icon,
-              size: 26.sp,
+              height: 25.h,
+              width: 25.w,
               color: isSelected ? activeColor : inactiveColor,
             ),
             SizedBox(height: 2.h),
