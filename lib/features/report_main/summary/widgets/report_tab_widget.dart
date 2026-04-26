@@ -56,34 +56,59 @@ class ReportTabWidget extends GetView<SummaryController> {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          _filterDropdown(controller.selectedSpecies),
-          _filterDropdown(controller.selectedDepth),
-          _filterDropdown(controller.selectedTechnique),
-          _filterDropdown(controller.selectedTime),
+          _filterDropdown(controller.selectedSpecies, controller.speciesList),
+          _filterDropdown(controller.selectedDepth, controller.depthList),
+          _filterDropdown(
+            controller.selectedTechnique,
+            controller.techniqueList,
+          ),
+          _filterDropdown(controller.selectedTime, controller.timeList),
         ],
       ),
     );
   }
 
-  Widget _filterDropdown(RxString selectedValue) {
+  Widget _filterDropdown(RxString selectedValue, List<String> options) {
     return Obx(
-      () => Container(
-        margin: EdgeInsets.only(right: 10.w),
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-        decoration: BoxDecoration(
-          color: AppColors.blue1B2134Color,
+      () => PopupMenuButton<String>(
+        onSelected: (String value) {
+          selectedValue.value = value;
+        },
+        offset: const Offset(0, 40),
+        color: AppColors.blue1B2134Color,
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8.r),
-          border: Border.all(color: AppColors.grey3A4B62Color),
+          side: const BorderSide(color: AppColors.grey3A4B62Color),
         ),
-        child: Row(
-          children: [
-            Text(
-              selectedValue.value,
-              style: getTextStyle(fontSize: 13, color: Colors.white),
-            ),
-            SizedBox(width: 5.w),
-            Icon(Icons.keyboard_arrow_down, color: Colors.white, size: 18.sp),
-          ],
+        itemBuilder: (BuildContext context) {
+          return options.map((String choice) {
+            return PopupMenuItem<String>(
+              value: choice,
+              child: Text(
+                choice,
+                style: getTextStyle(fontSize: 13, color: Colors.white),
+              ),
+            );
+          }).toList();
+        },
+        child: Container(
+          margin: EdgeInsets.only(right: 10.w),
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+          decoration: BoxDecoration(
+            color: AppColors.blue1B2134Color,
+            borderRadius: BorderRadius.circular(8.r),
+            border: Border.all(color: AppColors.grey3A4B62Color),
+          ),
+          child: Row(
+            children: [
+              Text(
+                selectedValue.value,
+                style: getTextStyle(fontSize: 13, color: Colors.white),
+              ),
+              SizedBox(width: 5.w),
+              Icon(Icons.keyboard_arrow_down, color: Colors.white, size: 18.sp),
+            ],
+          ),
         ),
       ),
     );
@@ -173,7 +198,7 @@ class ReportTabWidget extends GetView<SummaryController> {
                 : report.timeAgo,
             style: getTextStyle(fontSize: 12, color: AppColors.grey8B95A5Color),
           ),
-          SizedBox(height: 15.h),
+          SizedBox(height: 8.h),
 
           // Data Grid
           Row(
@@ -191,7 +216,7 @@ class ReportTabWidget extends GetView<SummaryController> {
           ),
 
           if (report.note != null) ...[
-            const Divider(color: AppColors.blue153A56Color, height: 30),
+            const Divider(color: AppColors.blue153A56Color, height: 20),
             Text(
               report.note!,
               style: getTextStyle(
@@ -203,7 +228,7 @@ class ReportTabWidget extends GetView<SummaryController> {
             ),
           ],
 
-          SizedBox(height: 15.h),
+          SizedBox(height: 12.h),
 
           // Clickable Confirm Button
           InkWell(

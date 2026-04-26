@@ -240,7 +240,18 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
             ),
           ),
           SizedBox(height: 15.h),
-          _customDropdown("Select Species"),
+          Obx(
+            () => _customDropdown(
+              items: controller.speciesOptions,
+              selectedValue: "Select Species", // Constant hint value
+              hint: "Select Species",
+              onChanged: (val) {
+                if (val != null && val != "Select Species") {
+                  controller.addSpecies(val);
+                }
+              },
+            ),
+          ),
           SizedBox(height: 12.h),
           Obx(
             () => Wrap(
@@ -301,14 +312,33 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
               color: Colors.white,
             ),
           ),
-          _quantityRow("Snapper", "01"),
-          _quantityRow("Tuna", "10"),
+          Obx(
+            () => Column(
+              children: controller.quantities.entries
+                  .map(
+                    (e) =>
+                        _quantityRow(e.key, e.value.toString().padLeft(2, '0')),
+                  )
+                  .toList(),
+            ),
+          ),
           Align(
             alignment: Alignment.centerRight,
-            child: Icon(
-              Icons.add_circle,
-              color: AppColors.orangeColor,
-              size: 28.sp,
+            child: GestureDetector(
+              onTap: () {
+                if (controller.speciesOptions.isNotEmpty) {
+                  final nextSpecies = controller.speciesOptions.firstWhere(
+                    (s) => !controller.quantities.containsKey(s),
+                    orElse: () => controller.speciesOptions.first,
+                  );
+                  controller.quantities[nextSpecies] = 1;
+                }
+              },
+              child: Icon(
+                Icons.add_circle,
+                color: AppColors.orangeColor,
+                size: 28.sp,
+              ),
             ),
           ),
         ],
@@ -328,7 +358,7 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
           ),
           SizedBox(height: 5.h),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
             decoration: BoxDecoration(
               color: AppColors.blue0D2B43Color,
               borderRadius: BorderRadius.circular(8.r),
@@ -336,13 +366,38 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Text(species, style: getTextStyle(color: Colors.white)),
-                    Icon(Icons.keyboard_arrow_down, color: Colors.white),
-                  ],
+                Expanded(
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: species,
+                      dropdownColor: AppColors.blue0D2B43Color,
+                      icon: Icon(
+                        Icons.keyboard_arrow_down,
+                        color: Colors.white,
+                      ),
+                      style: getTextStyle(color: Colors.white),
+                      isExpanded: false,
+                      items: controller.speciesOptions.map((s) {
+                        return DropdownMenuItem(value: s, child: Text(s));
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null && val != species) {
+                          final currentQty =
+                              controller.quantities[species] ?? 1;
+                          controller.quantities.remove(species);
+                          controller.quantities[val] = currentQty;
+                        }
+                      },
+                    ),
+                  ),
                 ),
-                Text(qty, style: getTextStyle(color: Colors.white)),
+                GestureDetector(
+                  onTap: () {
+                    final currentQty = controller.quantities[species] ?? 1;
+                    controller.updateQuantity(species, currentQty + 1);
+                  },
+                  child: Text(qty, style: getTextStyle(color: Colors.white)),
+                ),
               ],
             ),
           ),
@@ -369,34 +424,88 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
           style: getTextStyle(fontSize: 12, color: AppColors.grey8B95A5Color),
         ),
         SizedBox(height: 10.h),
-        Row(
-          children: [
-            _patternTab("Topwater", false),
-            _patternTab("Suspended", true),
-            _patternTab("Bottom", false),
-          ],
+        Obx(
+          () => Row(
+            children: [
+              _patternTab(
+                "Topwater",
+                controller.waterPosition.value == "Topwater",
+                () => controller.waterPosition.value = "Topwater",
+              ),
+              _patternTab(
+                "Suspended",
+                controller.waterPosition.value == "Suspended",
+                () => controller.waterPosition.value = "Suspended",
+              ),
+              _patternTab(
+                "Bottom",
+                controller.waterPosition.value == "Bottom",
+                () => controller.waterPosition.value = "Bottom",
+              ),
+            ],
+          ),
         ),
         SizedBox(height: 15.h),
         Row(
           children: [
-            Expanded(child: _miniInput("Water Depth (ft)", "120")),
+            Expanded(
+              child: _miniInput(
+                "Water Depth (ft)",
+                "120",
+                controller: controller.depthController,
+              ),
+            ),
             SizedBox(width: 15.w),
-            Expanded(child: _miniInput("Strike Zone (ft)", "80")),
+            Expanded(
+              child: _miniInput(
+                "Strike Zone (ft)",
+                "80",
+                controller: controller.strikeZoneController,
+              ),
+            ),
           ],
         ),
         SizedBox(height: 15.h),
-        _labelDropdown("Method", "Select Method"),
-        _labelDropdown("Bait / Lure Type", "Select bait"),
-        Row(
-          children: [
-            Expanded(
-              child: _iconInput("Date", "Select Date", Icons.calendar_today),
-            ),
-            SizedBox(width: 15.w),
-            Expanded(
-              child: _iconInput("Time", "Select Time", Icons.access_time),
-            ),
-          ],
+        Obx(
+          () => _labelDropdown(
+            label: "Method",
+            hint: "Select Method",
+            items: controller.methodOptions,
+            selectedValue: controller.selectedMethod.value,
+            onChanged: (val) => controller.selectedMethod.value = val ?? "",
+          ),
+        ),
+        Obx(
+          () => _labelDropdown(
+            label: "Bait / Lure Type",
+            hint: "Select bait",
+            items: controller.baitOptions,
+            selectedValue: controller.selectedBait.value,
+            onChanged: (val) => controller.selectedBait.value = val ?? "",
+          ),
+        ),
+        Obx(
+          () => Row(
+            children: [
+              Expanded(
+                child: _iconInput(
+                  "Date",
+                  controller.selectedDate.value,
+                  Icons.calendar_today,
+                  onTap: () => controller.pickDate(Get.context!),
+                ),
+              ),
+              SizedBox(width: 15.w),
+              Expanded(
+                child: _iconInput(
+                  "Time",
+                  controller.selectedTime.value,
+                  Icons.access_time,
+                  onTap: () => controller.pickTime(Get.context!),
+                ),
+              ),
+            ],
+          ),
         ),
         SizedBox(height: 15.h),
         Text(
@@ -406,6 +515,8 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
         SizedBox(height: 8.h),
         TextField(
           maxLines: 3,
+          controller: controller.notesController,
+          style: getTextStyle(color: Colors.white),
           decoration: InputDecoration(
             hintText: "Additional details about your catch...",
             hintStyle: getTextStyle(
@@ -425,37 +536,48 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
   }
 
   // Small Helper Widgets
-  Widget _patternTab(String title, bool active) {
+  Widget _patternTab(String title, bool active, VoidCallback onTap) {
     return Expanded(
-      child: Container(
-        height: 40.h,
-        margin: EdgeInsets.symmetric(horizontal: 4.w),
-        decoration: BoxDecoration(
-          color: active ? AppColors.tealColor117A88 : AppColors.blue1B2134Color,
-          borderRadius: BorderRadius.circular(8.r),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          title,
-          style: getTextStyle(
-            fontSize: 12,
-            color: active ? Colors.white : AppColors.grey8B95A5Color,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 40.h,
+          margin: EdgeInsets.symmetric(horizontal: 4.w),
+          decoration: BoxDecoration(
+            color: active
+                ? AppColors.teal0C98AFColor
+                : AppColors.blue1B2134Color,
+            borderRadius: BorderRadius.circular(8.r),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            title,
+            style: getTextStyle(
+              fontSize: 12,
+              color: active ? Colors.white : AppColors.grey8B95A5Color,
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _miniInput(String label, String hint) {
+  Widget _miniInput(
+    String label,
+    String hint, {
+    TextEditingController? controller,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: getTextStyle(fontSize: 12, color: AppColors.grey8B95A5Color),
+          style: getTextStyle(fontSize: 12, color: AppColors.whiteColor),
         ),
         SizedBox(height: 8.h),
         TextField(
+          controller: controller,
+          style: getTextStyle(color: Colors.white),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: getTextStyle(color: Colors.white),
@@ -470,7 +592,13 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
     );
   }
 
-  Widget _labelDropdown(String label, String hint) {
+  Widget _labelDropdown({
+    required String label,
+    required String hint,
+    required List<String> items,
+    required String selectedValue,
+    required Function(String?) onChanged,
+  }) {
     return Padding(
       padding: EdgeInsets.only(bottom: 15.h),
       child: Column(
@@ -481,31 +609,56 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
             style: getTextStyle(fontSize: 12, color: AppColors.grey8B95A5Color),
           ),
           SizedBox(height: 8.h),
-          _customDropdown(hint),
+          _customDropdown(
+            items: items,
+            selectedValue: selectedValue,
+            onChanged: onChanged,
+            hint: hint,
+          ),
         ],
       ),
     );
   }
 
-  Widget _customDropdown(String text) {
+  Widget _customDropdown({
+    required List<String> items,
+    required String selectedValue,
+    required Function(String?) onChanged,
+    String? hint,
+  }) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+      padding: EdgeInsets.symmetric(horizontal: 12.w),
       decoration: BoxDecoration(
         color: AppColors.blue1B2134Color,
         borderRadius: BorderRadius.circular(8.r),
         border: Border.all(color: AppColors.blue153A56Color),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(text, style: getTextStyle(color: AppColors.greyC8D0DBColor)),
-          Icon(Icons.keyboard_arrow_down, color: Colors.white),
-        ],
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: items.contains(selectedValue) ? selectedValue : null,
+          hint: Text(
+            hint ?? "",
+            style: getTextStyle(color: AppColors.greyC8D0DBColor),
+          ),
+          dropdownColor: AppColors.blue1B2134Color,
+          icon: Icon(Icons.keyboard_arrow_down, color: Colors.white),
+          isExpanded: true,
+          style: getTextStyle(color: AppColors.greyC8D0DBColor),
+          items: items.map((String value) {
+            return DropdownMenuItem<String>(value: value, child: Text(value));
+          }).toList(),
+          onChanged: onChanged,
+        ),
       ),
     );
   }
 
-  Widget _iconInput(String label, String text, IconData icon) {
+  Widget _iconInput(
+    String label,
+    String text,
+    IconData icon, {
+    VoidCallback? onTap,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -514,24 +667,27 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
           style: getTextStyle(fontSize: 12, color: AppColors.grey8B95A5Color),
         ),
         SizedBox(height: 8.h),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
-          decoration: BoxDecoration(
-            color: AppColors.blue1B2134Color,
-            borderRadius: BorderRadius.circular(8.r),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                text,
-                style: getTextStyle(
-                  fontSize: 12,
-                  color: AppColors.greyC8D0DBColor,
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+            decoration: BoxDecoration(
+              color: AppColors.blue1B2134Color,
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  text,
+                  style: getTextStyle(
+                    fontSize: 12,
+                    color: AppColors.greyC8D0DBColor,
+                  ),
                 ),
-              ),
-              Icon(icon, color: Colors.white, size: 18.sp),
-            ],
+                Icon(icon, color: Colors.white, size: 18.sp),
+              ],
+            ),
           ),
         ),
       ],

@@ -36,6 +36,7 @@ class SummaryTabWidget extends GetView<SummaryController> {
           _buildTopSpecies(),
           SizedBox(height: 30.h),
           _buildSpeciesDistribution(),
+          SizedBox(height: 30.h),
         ],
       );
     });
@@ -189,27 +190,33 @@ class SummaryTabWidget extends GetView<SummaryController> {
           ),
           child: Column(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _marineItem(Icons.air, "12", "mph SE"),
-                  _marineItem(Icons.waves, "2.5", "ft"),
-                  _marineItem(Icons.thermostat, "78°", "F"),
-                  _marineItem(Icons.water_drop, "1.2", "Rising"),
-                  _marineItem(
-                    Icons.cloud_queue,
-                    "Partly",
-                    "Cloudy",
-                    isWeather: true,
-                  ),
-                ],
+              IntrinsicHeight(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _marineItem(Icons.air, "12", "mph SE"),
+                    _vDivider(),
+                    _marineItem(Icons.waves, "2.5", "ft"),
+                    _vDivider(),
+                    _marineItem(Icons.thermostat, "78°", "F"),
+                    _vDivider(),
+                    _marineItem(Icons.water_drop, "1.2", "Rising"),
+                    _vDivider(),
+                    _marineItem(
+                      Icons.cloud_queue,
+                      "Partly",
+                      "Cloudy",
+                      isWeather: true,
+                    ),
+                  ],
+                ),
               ),
               SizedBox(height: 25.h),
               GestureDetector(
                 onTap: () =>
                     Get.snackbar("Forecast", "Loading full marine forecast..."),
                 child: Container(
-                  height: 48.h,
+                  height: 38.h,
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: AppColors.blue00F0FFColor,
@@ -259,6 +266,13 @@ class SummaryTabWidget extends GetView<SummaryController> {
     );
   }
 
+  Widget _vDivider() {
+    return Container(
+      width: 1,
+      color: AppColors.blue153A56Color.withOpacity(0.5),
+    );
+  }
+
   Widget _statCard(
     String label,
     String val,
@@ -276,7 +290,7 @@ class SummaryTabWidget extends GetView<SummaryController> {
           border: Border.all(color: accent.withOpacity(0.3)),
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Row(
@@ -296,7 +310,6 @@ class SummaryTabWidget extends GetView<SummaryController> {
                 ),
               ],
             ),
-            SizedBox(height: 12.h),
             Text(
               val,
               style: getTextStyle(
@@ -305,9 +318,8 @@ class SummaryTabWidget extends GetView<SummaryController> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 8.h),
             Text(
-              sub.isNotEmpty ? sub : "",
+              sub.isNotEmpty ? sub : " ",
               style: getTextStyle(fontSize: 9, color: accent),
             ),
           ],
@@ -469,7 +481,7 @@ class SummaryTabWidget extends GetView<SummaryController> {
                         vertical: 8.h,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.tealColor117A88.withOpacity(0.2),
+                        color: AppColors.teal0C98AFColor.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(20.r),
                         border: Border.all(
                           color: AppColors.blue00F0FFColor.withOpacity(0.3),

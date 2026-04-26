@@ -29,7 +29,7 @@ class ProfileMainScreen extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  CustomBackButton(ontap: Get.back),
+                  // CustomBackButton(ontap: Get.back),
                   Expanded(
                     child: Text(
                       'Profile',

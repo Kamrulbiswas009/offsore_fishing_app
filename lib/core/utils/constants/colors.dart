@@ -14,6 +14,8 @@ class AppColors {
   static const Color secondaryColor = Color(0xFFEB1555);
   static const Color accentColor = Color(0xFFEB1555);
   static const Color tealColor117A88 = Color(0xFF117A88);
+  static const Color teal0C98AFColor = Color(0xFF0C98AF);
+
   static const Color black2A2F3AColor = Color(0xFF2A2F3A);
   static const Color black0F1E33Color = Color(0xFF0F1E33);
   static const Color navy12253BColor = Color(0xFF12253B);
@@ -34,6 +36,7 @@ class AppColors {
   //button text
   static const Color orangeColor = Color(0xFFE25301);
   static const Color orangeFF6B35Color = Color(0xFFFF6B35);
+  static const Color yellowFCEA74Color = Color(0xFFFCEA74);
 
   //text Color
   static const Color blue00D4FF66Color = Color(0xFF00D4FF);

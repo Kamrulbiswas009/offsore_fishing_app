@@ -42,4 +42,5 @@ class IconPath {
   static const String redFish = "assets/icons/red_fish.png";
   static const String ratioGraph = "assets/icons/ratio_graph.png";
   static const String redGroupsIcon = "assets/icons/red_groups.png";
+  static const String filterIcon = "assets/icons/filter.png";
 }
