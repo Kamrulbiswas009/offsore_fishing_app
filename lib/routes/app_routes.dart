@@ -14,6 +14,8 @@ import 'package:paytonpieper/features/onboarding/presentation/screen/onboarding_
 import 'package:paytonpieper/features/onboarding/presentation/screen/onboarding_screen4.dart';
 import 'package:paytonpieper/features/profile_and_setting/presentation/screen/settings_screen.dart';
 import 'package:paytonpieper/features/splash_screen/presentation/screen/splash_screen1.dart';
+import 'package:paytonpieper/features/report_main/summary/screen/summary_details.dart';
+import 'package:paytonpieper/features/report_main/summary/controller/summary_details_controller.dart';
 
 class AppRoute {
   static String splashScreen1 = "/splashScreen1";
@@ -30,7 +32,8 @@ class AppRoute {
   static String groupDetailsScreen = "/groupDetailsScreen";
   static String settingsScreen = "/settingsScreen";
   static String notificationScreen = "/notificationScreen";
-  static String zoneMapScreen = "/zoneMapScreen";
+  static String zoneMapScreen = "/zone_map_screen";
+  static String summaryScreen = "/summary-details";
 
   static String getSplashScreen1() => splashScreen1;
   static String getOnboardingScreen1() => onboardingScreen1;
@@ -47,6 +50,7 @@ class AppRoute {
   static String getSettingsScreen() => settingsScreen;
   static String getNotificationScreen() => notificationScreen;
   static String getZoneMapScreen() => zoneMapScreen;
+  static String getSummaryScreen() => summaryScreen;
 
   static List<GetPage> routes = [
     GetPage(name: splashScreen1, page: () => SplashScreen1()),
@@ -84,6 +88,14 @@ class AppRoute {
     GetPage(
       name: zoneMapScreen,
       page: () => const ZoneMapScreen(),
+      transition: Transition.leftToRight,
+    ),
+    GetPage(
+      name: summaryScreen,
+      page: () => const SummaryScreen(),
+      binding: BindingsBuilder(() {
+        Get.put(SummaryController());
+      }),
       transition: Transition.leftToRight,
     ),
   ];

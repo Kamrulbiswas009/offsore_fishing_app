@@ -21,9 +21,29 @@ class SummaryScreen extends GetView<SummaryController> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            const GlobalRealMapBox(
-              center: LatLng(25.7617, -80.1918),
-              zoom: 13.0,
+            Stack(
+              children: [
+                const GlobalRealMapBox(
+                  center: LatLng(25.7617, -80.1918),
+                  zoom: 13.0,
+                ),
+                Positioned(
+                  top: 50.h,
+                  left: 20.w,
+                  child: GestureDetector(
+                    onTap: () => Get.back(),
+                    child: CircleAvatar(
+                      radius: 20.r,
+                      backgroundColor: Colors.black.withOpacity(0.5),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20.w),

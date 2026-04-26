@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:paytonpieper/features/groups/presentation/screen/group_main_screen.dart';
 import 'package:paytonpieper/features/map/screen/zone_map_screen.dart';
+import 'package:paytonpieper/features/profile_and_setting/presentation/screen/profile_main_screen.dart';
 import 'package:paytonpieper/features/report_main/summary/screen/summary_details.dart';
 import '../controller/main_screen_controller.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
@@ -22,8 +24,8 @@ class MainScreen extends GetView<MainScreenController> {
               children: [
                 const ZoneMapScreen(), // The Map Content (Code below)
                 const SummaryScreen(),
-                const Center(child: Text("Groups")),
-                const Center(child: Text("Profile")),
+                GroupMainScreen(),
+                ProfileMainScreen(),
               ],
             ),
           ),

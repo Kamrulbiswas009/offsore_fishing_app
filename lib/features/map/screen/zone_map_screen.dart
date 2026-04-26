@@ -447,14 +447,7 @@ class _ZoneDetailPanel extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      zone.name,
-                      style: getTextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
+                    _buildDynamicZoneName(zone.name, fontSize: 26),
                     SizedBox(height: 4.h),
                     Text(
                       '${zone.reports} reports  •  Last updated ${zone.lastUpdated}',
@@ -575,7 +568,9 @@ class _ZoneDetailPanel extends StatelessWidget {
                   ),
                 ),
                 child: InkWell(
-                  onTap: () {},
+                  onTap: () {
+                    Get.toNamed('/summary-details', arguments: zone);
+                  },
                   splashColor: Colors.white24,
                   child: SizedBox(
                     width: double.infinity,
@@ -597,6 +592,42 @@ class _ZoneDetailPanel extends StatelessWidget {
           ),
           SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 0 : 8.h),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDynamicZoneName(String name, {required double fontSize}) {
+    final parts = name.split('-');
+    if (parts.length >= 2) {
+      return RichText(
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: parts[0],
+              style: getTextStyle(
+                fontSize: fontSize,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            TextSpan(
+              text: '-${parts.sublist(1).join("-")}',
+              style: getTextStyle(
+                fontSize: fontSize,
+                fontWeight: FontWeight.bold,
+                color: AppColors.blue00F0FFColor,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return Text(
+      name,
+      style: getTextStyle(
+        fontSize: fontSize,
+        fontWeight: FontWeight.bold,
+        color: Colors.white,
       ),
     );
   }
