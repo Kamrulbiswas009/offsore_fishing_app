@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
+import 'package:paytonpieper/features/report_main/report_catch/screen/report_catch_screen.dart';
 
 import '../controller/summary_details_controller.dart';
 
@@ -950,7 +951,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
             right: 0,
             bottom: 62.h,
             child: GestureDetector(
-              onTap: () => Get.snackbar('Action', 'Add forecast note...'),
+              onTap: () => Get.to(ReportCatchStep1Screen()),
               child: Container(
                 width: 46.w,
                 height: 46.w,

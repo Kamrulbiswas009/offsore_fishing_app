@@ -9,124 +9,224 @@ import 'package:paytonpieper/features/main_screen/widgets/filter_dialog.dart';
 import '../controller/map_screen_controller.dart';
 import '../model/map_zone_model.dart';
 
-class ZoneMapScreen extends GetView<MapScreenController> {
+// ─── Mapbox API Key ────────────────────────────────────────────────────────────
+const _mapboxToken =
+    'pk.eyJ1Ijoib250aGViaXRlIiwiYSI6ImNtb2VheTVndjA3YzAycXE0NnJkcXFremQifQ.KLolpMGFvBjx0-zJe4njCA';
+
+const _mapboxSatelliteUrl =
+    'https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token=$_mapboxToken';
+
+// ─── Screen ────────────────────────────────────────────────────────────────────
+class ZoneMapScreen extends StatefulWidget {
   const ZoneMapScreen({super.key});
+
+  @override
+  State<ZoneMapScreen> createState() => _ZoneMapScreenState();
+}
+
+class _ZoneMapScreenState extends State<ZoneMapScreen>
+    with TickerProviderStateMixin {
+  final controller = Get.find<MapScreenController>();
+
+  late final AnimationController _panelAnim;
+  late final Animation<Offset> _slideAnim;
+  late final AnimationController _pulseAnim;
+  late final Animation<double> _pulseScale;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _panelAnim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 380),
+    );
+    _slideAnim = Tween<Offset>(
+      begin: const Offset(0, 1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _panelAnim, curve: Curves.easeOutCubic));
+
+    _pulseAnim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _pulseScale = Tween<double>(
+      begin: 1.0,
+      end: 1.18,
+    ).animate(CurvedAnimation(parent: _pulseAnim, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _panelAnim.dispose();
+    _pulseAnim.dispose();
+    super.dispose();
+  }
+
+  void _onZoneTap(MapZoneModel zone) {
+    controller.selectZone(zone);
+    _panelAnim.forward(from: 0);
+  }
+
+  void _dismissPanel() {
+    _panelAnim.reverse().then((_) => controller.deselectZone());
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // 1. Real Satellite Map Layer
+          // ── 1. Mapbox Satellite Map ──────────────────────────────────────
           FlutterMap(
             options: MapOptions(
               initialCenter: controller.mapCenter,
-              initialZoom: 13.0,
+              initialZoom: 9.5,
+              onTap: (tapPos, latLng) => _dismissPanel(),
             ),
             children: [
               TileLayer(
-                urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                urlTemplate: _mapboxSatelliteUrl,
+                tileDimension: 512,
+                zoomOffset: -1,
                 userAgentPackageName: 'com.paytonpieper.app',
+                additionalOptions: const {'access_token': _mapboxToken},
               ),
-              
-              // Tactical Grid Overlay
-              _buildTacticalGrid(),
 
-              // Active Zone Markers
-              Obx(() => MarkerLayer(
-                markers: controller.activeZones.map((zone) => _buildMarker(zone)).toList(),
-              )),
+              // Tactical Grid Overlay
+              _TacticalGridLayer(),
+
+              // Zone Markers (interactive)
+              Obx(
+                () => MarkerLayer(
+                  markers: controller.activeZones
+                      .map((z) => _buildMarker(z))
+                      .toList(),
+                ),
+              ),
             ],
           ),
 
-          // 2. Tactical Tint Overlay
+          // ── 2. Dark tint ─────────────────────────────────────────────────
           IgnorePointer(
-            child: Container(color: AppColors.backgroundDarkColor.withOpacity(0.35)),
+            child: Container(
+              color: AppColors.backgroundDarkColor.withValues(alpha: 0.30),
+            ),
           ),
 
-          // 3. UI Elements
+          // ── 3. Header ────────────────────────────────────────────────────
           _buildHeader(),
+
+          // ── 4. Compass ───────────────────────────────────────────────────
           _buildCompass(),
+
+          // ── 5. Legend ────────────────────────────────────────────────────
           _buildLegend(),
+
+          // ── 6. Action Buttons ────────────────────────────────────────────
           _buildActionButtons(),
+
+          // ── 7. Bottom Detail Panel ───────────────────────────────────────
+          Obx(() {
+            final zone = controller.selectedZone.value;
+            if (zone == null) return const SizedBox.shrink();
+            // Sit panel above the floating nav bar (75.h bar + 25.h margin)
+            return Positioned(
+              bottom: 100.h,
+              left: 0,
+              right: 0,
+              child: SlideTransition(
+                position: _slideAnim,
+                child: _ZoneDetailPanel(zone: zone, onClose: _dismissPanel),
+              ),
+            );
+          }),
         ],
       ),
     );
   }
 
-  // --- Sub-Widgets ---
-
+  // ─── Marker builder ────────────────────────────────────────────────────────
   Marker _buildMarker(MapZoneModel zone) {
     return Marker(
       point: zone.location,
-      width: 45.w,
-      height: 45.w,
-      child: Container(
-        decoration: BoxDecoration(
-          color: zone.color.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(4.r),
-          boxShadow: zone.level == ActivityLevel.high 
-            ? [BoxShadow(color: zone.color, blurRadius: 15, spreadRadius: 2)] 
-            : [],
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          zone.count.toString(),
-          style: getTextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
-        ),
+      width: 50.w,
+      height: 50.w,
+      child: GestureDetector(
+        onTap: () => _onZoneTap(zone),
+        child: Obx(() {
+          final isSelected = controller.selectedZone.value?.id == zone.id;
+          if (isSelected) {
+            return AnimatedBuilder(
+              animation: _pulseScale,
+              builder: (_, child) =>
+                  Transform.scale(scale: _pulseScale.value, child: child),
+              child: _MarkerBox(zone: zone, isSelected: true),
+            );
+          }
+          return _MarkerBox(zone: zone, isSelected: false);
+        }),
       ),
     );
   }
 
-  Widget _buildTacticalGrid() {
-    return MobileLayerTransformer(
-      child: CustomPaint(
-        painter: GridPainter(),
-        size: Size.infinite,
-      ),
-    );
-  }
-
+  // ─── Header ────────────────────────────────────────────────────────────────
   Widget _buildHeader() {
     return Positioned(
-      top: 60.h, left: 20.w,
+      top: 60.h,
+      left: 20.w,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("ZONE ACTIVITY MAP", style: getTextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-          Text("Tap any zone to view offshore intel", style: getTextStyle(fontSize: 14, color: AppColors.blue00F0FFColor)),
+          Text(
+            'ZONE ACTIVITY MAP',
+            style: getTextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          Text(
+            'Tap any zone to view offshore intel',
+            style: getTextStyle(fontSize: 14, color: AppColors.blue00F0FFColor),
+          ),
         ],
       ),
     );
   }
 
+  // ─── Compass ───────────────────────────────────────────────────────────────
   Widget _buildCompass() {
     return Positioned(
-      top: 140.h, left: 20.w,
+      top: 140.h,
+      left: 20.w,
       child: CircleAvatar(
         radius: 25.r,
-        backgroundColor: AppColors.blue1B2134Color.withOpacity(0.8),
+        backgroundColor: AppColors.blue1B2134Color.withValues(alpha: 0.85),
         child: Icon(Icons.explore, color: AppColors.orangeColor, size: 28.sp),
       ),
     );
   }
 
+  // ─── Legend ────────────────────────────────────────────────────────────────
   Widget _buildLegend() {
     return Positioned(
-      bottom: 120.h, left: 20.w,
+      bottom: 220.h,
+      left: 20.w,
       child: Container(
         padding: EdgeInsets.all(12.w),
         decoration: BoxDecoration(
-          color: AppColors.blue0D2B43Color.withOpacity(0.9),
+          color: AppColors.blue0D2B43Color.withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(color: AppColors.blue153A56Color),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _legendRow(AppColors.orangeColor, "High Activity"),
-            _legendRow(AppColors.blue00F0FFColor, "Medium"),
-            _legendRow(AppColors.grey516173Color, "Low"),
+            _legendRow(AppColors.orangeColor, 'High Activity'),
+            _legendRow(AppColors.blue00F0FFColor, 'Medium'),
+            _legendRow(AppColors.grey516173Color, 'Low'),
           ],
         ),
       ),
@@ -138,7 +238,14 @@ class ZoneMapScreen extends GetView<MapScreenController> {
       padding: EdgeInsets.symmetric(vertical: 4.h),
       child: Row(
         children: [
-          Container(width: 12.w, height: 12.h, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2))),
+          Container(
+            width: 12.w,
+            height: 12.h,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
           SizedBox(width: 8.w),
           Text(text, style: getTextStyle(fontSize: 12, color: Colors.white)),
         ],
@@ -146,20 +253,20 @@ class ZoneMapScreen extends GetView<MapScreenController> {
     );
   }
 
+  // ─── Action Buttons ────────────────────────────────────────────────────────
   Widget _buildActionButtons() {
     return Positioned(
-      bottom: 120.h, right: 20.w,
+      bottom: 220.h,
+      right: 20.w,
       child: Column(
         children: [
-   GestureDetector(
-  onTap: () {
-    Get.dialog(
-      const FilterDialog(),
-      barrierColor: Colors.black.withOpacity(0.5),
-    );
-  },
-  child: _badgeButton(Icons.tune),
-),
+          GestureDetector(
+            onTap: () => Get.dialog(
+              const FilterDialog(),
+              barrierColor: Colors.black.withValues(alpha: 0.5),
+            ),
+            child: _badgeButton(Icons.tune),
+          ),
           SizedBox(height: 16.h),
           _gradientAddButton(),
         ],
@@ -171,31 +278,374 @@ class ZoneMapScreen extends GetView<MapScreenController> {
     return Stack(
       alignment: Alignment.topRight,
       children: [
-        CircleAvatar(radius: 28.r, backgroundColor: AppColors.blue134D67Color, child: Icon(icon, color: Colors.white)),
-        CircleAvatar(radius: 9.r, backgroundColor: Colors.red, child: Text("3", style: TextStyle(fontSize: 10.sp, color: Colors.white))),
+        CircleAvatar(
+          radius: 28.r,
+          backgroundColor: AppColors.blue134D67Color,
+          child: Icon(icon, color: Colors.white),
+        ),
+        CircleAvatar(
+          radius: 9.r,
+          backgroundColor: Colors.red,
+          child: Text(
+            '3',
+            style: TextStyle(fontSize: 10.sp, color: Colors.white),
+          ),
+        ),
       ],
     );
   }
 
   Widget _gradientAddButton() {
     return Container(
-      width: 56.r, height: 56.r,
+      width: 56.r,
+      height: 56.r,
       decoration: const BoxDecoration(
         shape: BoxShape.circle,
-        gradient: LinearGradient(colors: [Color(0xFFFF8C42), Color(0xFFE25301)]),
+        gradient: LinearGradient(
+          colors: [Color(0xFFFF8C42), Color(0xFFE25301)],
+        ),
       ),
       child: Icon(Icons.add, color: Colors.white, size: 30.sp),
     );
   }
 }
 
-class GridPainter extends CustomPainter {
+// ─── Marker Box ───────────────────────────────────────────────────────────────
+class _MarkerBox extends StatelessWidget {
+  final MapZoneModel zone;
+  final bool isSelected;
+  const _MarkerBox({required this.zone, required this.isSelected});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: zone.color.withValues(alpha: isSelected ? 1.0 : 0.85),
+        borderRadius: BorderRadius.circular(6.r),
+        border: isSelected
+            ? Border.all(color: const Color(0xFFFF8C42), width: 2.5)
+            : Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1),
+        boxShadow: [
+          if (isSelected)
+            BoxShadow(
+              color: const Color(0xFFFF8C42).withValues(alpha: 0.8),
+              blurRadius: 18,
+              spreadRadius: 4,
+            )
+          else if (zone.level == ActivityLevel.high)
+            BoxShadow(
+              color: zone.color.withValues(alpha: 0.5),
+              blurRadius: 10,
+              spreadRadius: 1,
+            ),
+        ],
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        zone.count.toString(),
+        style: getTextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Tactical Grid Layer ──────────────────────────────────────────────────────
+class _TacticalGridLayer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MobileLayerTransformer(
+      child: CustomPaint(painter: _GridPainter(), size: Size.infinite),
+    );
+  }
+}
+
+class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = const Color(0xFF00F0FF).withOpacity(0.1)..strokeWidth = 0.5;
-    for (double i = 0; i < size.width; i += 40.w) { canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint); }
-    for (double i = 0; i < size.height; i += 40.w) { canvas.drawLine(Offset(0, i), Offset(size.width, i), paint); }
+    final paint = Paint()
+      ..color = const Color(0xFF00F0FF).withValues(alpha: 0.12)
+      ..strokeWidth = 0.6;
+    final step = 40.0;
+    for (double x = 0; x < size.width; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (double y = 0; y < size.height; y += step) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
   }
+
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter old) => false;
+}
+
+// ─── Zone Detail Panel ────────────────────────────────────────────────────────
+class _ZoneDetailPanel extends StatelessWidget {
+  final MapZoneModel zone;
+  final VoidCallback onClose;
+  const _ZoneDetailPanel({required this.zone, required this.onClose});
+
+  @override
+  Widget build(BuildContext context) {
+    final trendColor = zone.trend == TrendDirection.rising
+        ? const Color(0xFF00E676)
+        : zone.trend == TrendDirection.falling
+        ? const Color(0xFFFF5252)
+        : Colors.white70;
+    final trendIcon = zone.trend == TrendDirection.rising
+        ? Icons.trending_up
+        : zone.trend == TrendDirection.falling
+        ? Icons.trending_down
+        : Icons.trending_flat;
+    final trendLabel = zone.trend == TrendDirection.rising
+        ? 'Rising'
+        : zone.trend == TrendDirection.falling
+        ? 'Falling'
+        : 'Stable';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF0D1B2A),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        border: const Border(
+          top: BorderSide(color: Color(0xFF1E3A4C), width: 1),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.5),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 20.h),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Handle bar ────────────────────────────────────────────────
+          Center(
+            child: Container(
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(2.r),
+              ),
+            ),
+          ),
+          SizedBox(height: 16.h),
+
+          // ── Title row ─────────────────────────────────────────────────
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      zone.name,
+                      style: getTextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      '${zone.reports} reports  •  Last updated ${zone.lastUpdated}',
+                      style: getTextStyle(fontSize: 13, color: Colors.white54),
+                    ),
+                  ],
+                ),
+              ),
+              GestureDetector(
+                onTap: onClose,
+                child: Container(
+                  width: 32.w,
+                  height: 32.w,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white12,
+                  ),
+                  child: const Icon(
+                    Icons.close,
+                    color: Colors.white70,
+                    size: 18,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 20.h),
+
+          // ── Activity Score ────────────────────────────────────────────
+          Container(
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              color: const Color(0xFF121F2E),
+              borderRadius: BorderRadius.circular(14.r),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Activity Score',
+                      style: getTextStyle(fontSize: 14, color: Colors.white54),
+                    ),
+                    Text(
+                      '${(zone.activityScore * 100).round()}%',
+                      style: getTextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFFFF8C42),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12.h),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6.r),
+                  child: LinearProgressIndicator(
+                    value: zone.activityScore,
+                    minHeight: 8.h,
+                    backgroundColor: Colors.white10,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      zone.activityScore > 0.7
+                          ? const Color(0xFFFF8C42)
+                          : zone.activityScore > 0.4
+                          ? const Color(0xFF00F0FF)
+                          : const Color(0xFF516173),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 14.h),
+
+          // ── Stat Cards ────────────────────────────────────────────────
+          Row(
+            children: [
+              Expanded(
+                child: _StatCard(
+                  label: 'Top Species',
+                  value: zone.topSpecies,
+                  valueColor: Colors.white,
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: _StatCard(
+                  label: 'Avg Depth',
+                  value: zone.avgDepth,
+                  valueColor: Colors.white,
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: _StatCard(
+                  label: 'Trend',
+                  value: trendLabel,
+                  valueColor: trendColor,
+                  leadingIcon: Icon(trendIcon, color: trendColor, size: 16.sp),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 20.h),
+
+          // ── View Full Details Button ──────────────────────────────────
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14.r),
+            child: Material(
+              color: Colors.transparent,
+              child: Ink(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF00D4F5), Color(0xFF00AACC)],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                ),
+                child: InkWell(
+                  onTap: () {},
+                  splashColor: Colors.white24,
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 54.h,
+                    child: Center(
+                      child: Text(
+                        'View Full Details',
+                        style: getTextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 0 : 8.h),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Stat Card ────────────────────────────────────────────────────────────────
+class _StatCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color valueColor;
+  final Widget? leadingIcon;
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.valueColor,
+    this.leadingIcon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: const Color(0xFF121F2E),
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: getTextStyle(fontSize: 11, color: Colors.white38)),
+          SizedBox(height: 6.h),
+          Row(
+            children: [
+              if (leadingIcon != null) ...[leadingIcon!, SizedBox(width: 4.w)],
+              Flexible(
+                child: Text(
+                  value,
+                  style: getTextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: valueColor,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
