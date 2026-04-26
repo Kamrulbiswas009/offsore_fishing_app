@@ -4,13 +4,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:paytonpieper/features/map/model/map_zone_model.dart';
 import 'package:paytonpieper/features/report_main/report/model/report_model.dart';
 
 class SummaryController extends GetxController {
   var selectedTab = "Summary".obs;
   var selectedTimeRange = "Last 3 Days".obs;
 
-  // Mock data for fl_chart
+  var selectedZone = Rxn<MapZoneModel>();
+
+  @override
+  void onInit() {
+    super.onInit();
+    if (Get.arguments is MapZoneModel) {
+      selectedZone.value = Get.arguments;
+    }
+  }
+
   List<BarChartGroupData> get activityData => [
     _makeGroupData(0, 3),
     _makeGroupData(1, 5),
@@ -81,8 +91,13 @@ class SummaryController extends GetxController {
   ];
 
   void confirmBite(int index) {
-    Get.snackbar("Confirmed", "You confirmed this bite!", 
-      snackPosition: SnackPosition.BOTTOM, backgroundColor: const Color(0xFF10B981), colorText: Colors.white);
+    Get.snackbar(
+      "Confirmed",
+      "You confirmed this bite!",
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: const Color(0xFF10B981),
+      colorText: Colors.white,
+    );
   }
   // Main Tab (Summary, Reports, Weather)
 
