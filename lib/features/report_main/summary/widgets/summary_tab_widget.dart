@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
+import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/map/model/map_zone_model.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 
@@ -133,37 +134,40 @@ class SummaryTabWidget extends GetView<SummaryController> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _sectionTitle(Icons.query_stats, "Activity Overview"),
-        Row(
-          children: [
-            _statCard(
-              "LAST 24H",
-              "${zone?.reports ?? 8}",
-              "Reports",
-              AppColors.blue00F0FFColor,
-              Icons.bolt,
-            ),
-            _statCard(
-              "SUCCESS",
-              "78%",
-              "Hit Rate",
-              AppColors.orangeColor,
-              Icons.track_changes,
-            ),
-            _statCard(
-              "Peak Time",
-              "6-9 am",
-              "",
-              AppColors.blue00F0FFColor,
-              Icons.access_time_filled,
-            ),
-            _statCard(
-              "GROUPS",
-              "3",
-              "Networks",
-              AppColors.orangeColor,
-              Icons.groups,
-            ),
-          ],
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _statCard(
+                "LAST 24H",
+                "${zone?.reports ?? 8}",
+                "Reports",
+                AppColors.blue00F0FFColor,
+                IconPath.ratioGraph,
+              ),
+              _statCard(
+                "SUCCESS",
+                "78%",
+                "Hit Rate",
+                AppColors.orangeColor,
+                IconPath.redFish,
+              ),
+              _statCard(
+                "Peak Time",
+                "6-9 am",
+                "Peak Window",
+                AppColors.blue00F0FFColor,
+                IconPath.timeScheduleIcon,
+              ),
+              _statCard(
+                "GROUPS",
+                "3",
+                "Networks",
+                AppColors.orangeColor,
+                IconPath.redGroupsIcon,
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -260,23 +264,25 @@ class SummaryTabWidget extends GetView<SummaryController> {
     String val,
     String sub,
     Color accent,
-    IconData icon,
+    String icon,
   ) {
     return Expanded(
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: 4.w),
-        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 15.h),
+        padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 10.h),
         decoration: BoxDecoration(
           color: AppColors.blue0D2B43Color,
           borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: AppColors.blue153A56Color.withOpacity(0.5)),
+          border: Border.all(color: accent.withOpacity(0.3)),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, color: accent, size: 14.sp),
+                Image.asset(icon, color: accent, height: 14.h, width: 14.w),
                 SizedBox(width: 4.w),
                 Flexible(
                   child: Text(
@@ -284,7 +290,7 @@ class SummaryTabWidget extends GetView<SummaryController> {
                     style: getTextStyle(
                       fontSize: 8,
                       color: Colors.white54,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -299,10 +305,11 @@ class SummaryTabWidget extends GetView<SummaryController> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            if (sub.isNotEmpty) ...[
-              SizedBox(height: 8.h),
-              Text(sub, style: getTextStyle(fontSize: 9, color: accent)),
-            ],
+            SizedBox(height: 8.h),
+            Text(
+              sub.isNotEmpty ? sub : "",
+              style: getTextStyle(fontSize: 9, color: accent),
+            ),
           ],
         ),
       ),

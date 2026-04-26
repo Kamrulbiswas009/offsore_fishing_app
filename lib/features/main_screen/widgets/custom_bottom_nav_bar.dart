@@ -13,8 +13,8 @@ class CustomBottomNavBar extends GetView<MainScreenController> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 75.h,
-      margin: EdgeInsets.only(left: 20.w, right: 20.w, bottom: 25.h),
+      height: 55.h,
+      margin: EdgeInsets.only(left: 20.w, right: 20.w, bottom: 15.h),
       padding: EdgeInsets.symmetric(horizontal: 10.w),
       decoration: BoxDecoration(
         color: AppColors.blue1B2134Color,
