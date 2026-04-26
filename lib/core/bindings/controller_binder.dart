@@ -12,6 +12,9 @@ import 'package:paytonpieper/features/notification/controller/notification_scree
 import 'package:paytonpieper/features/onboarding/controller/onboarding_screen_controller.dart';
 import 'package:paytonpieper/features/profile_and_setting/controller/profile_main_screen_controller.dart';
 import 'package:paytonpieper/features/profile_and_setting/controller/settings_screen_controller.dart';
+import 'package:paytonpieper/features/report_main/offline_report/controller/offline_report_controller.dart';
+import 'package:paytonpieper/features/report_main/report_catch/controller/report_catch_step1_screen.dart';
+import 'package:paytonpieper/features/report_main/report_catch2/controller/report_catch2_controller.dart';
 import 'package:paytonpieper/features/report_main/summary/controller/summary_details_controller.dart';
 import 'package:paytonpieper/features/splash_screen/controller/splash_screen_controller.dart';
 
@@ -66,5 +69,17 @@ class ControllerBinder extends Bindings {
     );
     Get.lazyPut<FilterController>(() => FilterController(), fenix: true);
     Get.lazyPut<SummaryController>(() => SummaryController(), fenix: true);
+    Get.lazyPut<ReportCatchController>(
+      () => ReportCatchController(),
+      fenix: true,
+    );
+    Get.lazyPut<ReportCatch2Controller>(
+      () => ReportCatch2Controller(),
+      fenix: true,
+    );
+    Get.lazyPut<OfflineReportsTabController>(
+      () => OfflineReportsTabController(),
+      fenix: true,
+    );
   }
 }

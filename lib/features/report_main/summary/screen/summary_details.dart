@@ -22,10 +22,9 @@ class SummaryScreen extends GetView<SummaryController> {
         child: Column(
           children: [
             const GlobalRealMapBox(
-              center: LatLng(25.7617, -80.1918), // Focused on Miami Coast
-              height: 240,
+              center: LatLng(25.7617, -80.1918),
+              zoom: 13.0,
             ),
-
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20.w),
               child: Column(
