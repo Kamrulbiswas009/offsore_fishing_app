@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:paytonpieper/core/services/permissions/location_permission_service.dart';
 import 'package:paytonpieper/features/authentication/controllers/create_account_screen_controller.dart';
 import 'package:paytonpieper/features/authentication/controllers/forgot_password_screen_controller.dart';
 import 'package:paytonpieper/features/authentication/controllers/login_controller.dart';
@@ -21,6 +22,10 @@ import 'package:paytonpieper/features/splash_screen/controller/splash_screen_con
 class ControllerBinder extends Bindings {
   @override
   void dependencies() {
+    Get.lazyPut<LocationPermissionService>(
+      () => LocationPermissionService(),
+      fenix: true,
+    );
     Get.lazyPut<SplashScreenController>(
       () => SplashScreenController(),
       fenix: true,
@@ -63,10 +68,7 @@ class ControllerBinder extends Bindings {
       fenix: true,
     );
     Get.lazyPut<MapScreenController>(() => MapScreenController(), fenix: true);
-    Get.lazyPut<MainScreenController>(
-      () => MainScreenController(),
-      fenix: true,
-    );
+    Get.put( MainScreenController(), permanent: true);
     Get.lazyPut<FilterController>(() => FilterController(), fenix: true);
     Get.lazyPut<SummaryController>(() => SummaryController(), fenix: true);
     Get.lazyPut<ReportCatchController>(

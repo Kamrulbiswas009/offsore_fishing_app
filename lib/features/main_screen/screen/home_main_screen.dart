@@ -15,27 +15,31 @@ class MainScreen extends GetView<MainScreenController> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true, // Allows content to flow behind the floating nav bar
-      body: Stack(
-        children: [
-          // The body switches based on Nav Bar selection
-          Obx(
-            () => IndexedStack(
-              index: controller.currentIndex.value,
-              children: [
-                const ZoneMapScreen(), // The Map Content (Code below)
-                const SummaryScreen(),
-                GroupMainScreen(),
-                ProfileMainScreen(),
-              ],
+      body: SafeArea(
+        top: true,
+        bottom: true,
+        child: Stack(
+          children: [
+            // The body switches based on Nav Bar selection
+            Obx(
+              () => IndexedStack(
+                index: controller.currentIndex.value,
+                children: [
+                  const ZoneMapScreen(), // The Map Content (Code below)
+                  const SummaryScreen(isReportMainScreen: true,),
+                  GroupMainScreen(),
+                  ProfileMainScreen(),
+                ],
+              ),
             ),
-          ),
-
-          // Floating Bottom Navigation Bar
-          const Align(
-            alignment: Alignment.bottomCenter,
-            child: CustomBottomNavBar(),
-          ),
-        ],
+        
+            // Floating Bottom Navigation Bar
+            const Align(
+              alignment: Alignment.bottomCenter,
+              child: CustomBottomNavBar(),
+            ),
+          ],
+        ),
       ),
     );
   }

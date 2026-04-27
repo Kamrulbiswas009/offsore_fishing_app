@@ -22,7 +22,7 @@ class NotificationItemWidget extends StatelessWidget {
         border: showDivider
             ? Border(
                 bottom: BorderSide(
-                  color: AppColors.blue00D4FF66Color.withValues(alpha: 0.45),
+                  color: AppColors.blue00D4FFColor.withValues(alpha: 0.45),
                 ),
               )
             : null,

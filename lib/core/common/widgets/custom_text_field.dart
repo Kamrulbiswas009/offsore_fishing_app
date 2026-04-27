@@ -46,7 +46,7 @@ class CustomTextField extends StatelessWidget {
           color: AppColors.whiteColor,
           fontSize: 15,
           fontWeight: FontWeight.w400,
-          lineHeight: 20,
+          lineHeight: 12,
         ),
         cursorColor: AppColors.blue00F0FFColor,
         decoration: _inputDecoration(

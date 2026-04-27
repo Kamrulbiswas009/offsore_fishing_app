@@ -73,10 +73,10 @@ class AuthSocialButton extends StatelessWidget {
         ontap: onTap,
         title: title,
         bgColor: const Color(0xFF29303C),
-        borderColor: const Color(0xFF3B4351),
-        borderRadius: 11.r,
+        borderColor: AppColors.whiteColor.withValues(alpha: 0.10),
+        borderRadius: 16.r,
         padding: EdgeInsets.symmetric(horizontal: 12.w),
-        fontSize: 14,
+        fontSize: 16,
         lineHeight: 10,
         titleColor: AppColors.whiteColor,
         prefixIcon: Padding(

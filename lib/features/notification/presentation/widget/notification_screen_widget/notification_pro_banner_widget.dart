@@ -15,7 +15,7 @@ class NotificationProBannerWidget extends StatelessWidget {
         color: AppColors.blue0D2B43Color.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(
-          color: AppColors.blue00D4FF66Color.withValues(alpha: 0.65),
+          color: AppColors.blue00D4FFColor.withValues(alpha: 0.65),
         ),
       ),
       child: Row(

@@ -32,7 +32,7 @@ class NotificationTabBarWidget extends GetView<NotificationScreenController> {
                       ? LinearGradient(
                           colors: <Color>[
                             AppColors.tealColor117A88,
-                            AppColors.blue00D4FF66Color.withValues(alpha: 0.7),
+                            AppColors.blue00D4FFColor.withValues(alpha: 0.7),
                           ],
                         )
                       : null,
@@ -45,7 +45,7 @@ class NotificationTabBarWidget extends GetView<NotificationScreenController> {
                   boxShadow: isSelected
                       ? <BoxShadow>[
                           BoxShadow(
-                            color: AppColors.blue00D4FF66Color.withValues(
+                            color: AppColors.blue00D4FFColor.withValues(
                               alpha: 0.18,
                             ),
                             blurRadius: 16.r,

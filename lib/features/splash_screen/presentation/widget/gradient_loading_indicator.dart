@@ -47,7 +47,7 @@ class GradientLoadingIndicator extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.blue00D4FF66Color.withValues(alpha: 0.45),
+                  color: AppColors.blue00D4FFColor.withValues(alpha: 0.45),
                   blurRadius: 12.r,
                 ),
               ],

@@ -27,7 +27,7 @@ class JoinGroupBottomSheet extends GetView<GroupMainScreenController> {
           child: Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: AppColors.navy12253BColor,
+              color: Color(0xFF0F1E33),
               borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
               border: Border.all(
                 color: AppColors.tealColor117A88.withValues(alpha: 0.55),
@@ -56,16 +56,16 @@ class JoinGroupBottomSheet extends GetView<GroupMainScreenController> {
                                       fontSize: 20,
                                       fontWeight: FontWeight.w500,
                                       color: AppColors.whiteColor,
-                                      lineHeight: 14,
+                                      lineHeight: 12,
                                     ),
                                   ),
-                                  SizedBox(height: 4.h),
+                                  //SizedBox(height: 4.h),
                                   Text(
                                     'Enter invite code',
                                     style: getTextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
-                                      color: AppColors.blue00D4FF66Color,
+                                      color: AppColors.blue00D4FFColor,
                                       lineHeight: 10,
                                     ),
                                   ),
@@ -127,10 +127,10 @@ class _JoinGroupFormContent extends GetView<GroupMainScreenController> {
         Container(
           padding: EdgeInsets.all(16.r),
           decoration: BoxDecoration(
-            color: AppColors.blue153A56Color.withValues(alpha: 0.88),
+            color: AppColors.blue00D4FFColor.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(16.r),
             border: Border.all(
-              color: AppColors.blue00D4FF66Color.withValues(alpha: 0.55),
+              color: AppColors.blue00D4FFColor.withValues(alpha: 0.55),
             ),
           ),
           child: Row(
@@ -191,7 +191,7 @@ class _JoinGroupFormContent extends GetView<GroupMainScreenController> {
             color: AppColors.whiteColor,
             lineHeight: 12,
           ),
-          cursorColor: AppColors.blue00D4FF66Color,
+          cursorColor: AppColors.blue00D4FFColor,
           decoration: InputDecoration(
             hintText: 'G1ABCD',
             hintStyle: getTextStyle(
@@ -217,7 +217,7 @@ class _JoinGroupFormContent extends GetView<GroupMainScreenController> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14.r),
               borderSide: BorderSide(
-                color: AppColors.blue00D4FF66Color.withValues(alpha: 0.75),
+                color: AppColors.blue00D4FFColor.withValues(alpha: 0.75),
               ),
             ),
           ),
@@ -249,7 +249,7 @@ class _JoinGroupFormContent extends GetView<GroupMainScreenController> {
                   ? AppColors.whiteColor
                   : AppColors.grey8B95A5Color,
               borderRadius: 12.r,
-              padding: EdgeInsets.symmetric(vertical: 16.h),
+              padding: EdgeInsets.symmetric(vertical: 8.h),
               prefixIcon: Padding(
                 padding: EdgeInsets.only(right: 8.w),
                 child: Icon(
@@ -257,10 +257,10 @@ class _JoinGroupFormContent extends GetView<GroupMainScreenController> {
                   color: isEnabled
                       ? AppColors.whiteColor
                       : AppColors.grey8B95A5Color,
-                  size: 20.r,
+                  size: 18.r,
                 ),
               ),
-              fontSize: 18,
+              fontSize: 16,
               lineHeight: 12,
             ),
           );
@@ -269,7 +269,7 @@ class _JoinGroupFormContent extends GetView<GroupMainScreenController> {
         Container(
           padding: EdgeInsets.all(16.r),
           decoration: BoxDecoration(
-            color: AppColors.navy12253BColor,
+            color: Color(0xFF0F1E33).withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(16.r),
             border: Border.all(
               color: AppColors.whiteColor.withValues(alpha: 0.16),
@@ -334,16 +334,15 @@ class _JoinGroupSuccessContent extends GetView<GroupMainScreenController> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 82.r,
-          height: 82.r,
+          padding: EdgeInsets.all(16.r),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: AppColors.blue134D67Color.withValues(alpha: 0.75),
           ),
-          child: Icon(
-            Icons.check_circle_outline_rounded,
-            color: AppColors.blue00D4FF66Color,
-            size: 48.r,
+          child: Image.asset(
+            IconPath.checkCircleBreakIcon,
+            height: 48.r,
+            width: 48.r,
           ),
         ),
         SizedBox(height: 24.h),
@@ -373,8 +372,8 @@ class _JoinGroupSuccessContent extends GetView<GroupMainScreenController> {
                 text: controller.joinedGroupName,
                 style: getTextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.blue00D4FF66Color,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.blue00D4FFColor,
                   lineHeight: 12,
                 ),
               ),
@@ -386,10 +385,10 @@ class _JoinGroupSuccessContent extends GetView<GroupMainScreenController> {
           width: double.infinity,
           padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 20.h),
           decoration: BoxDecoration(
-            color: AppColors.blue153A56Color.withValues(alpha: 0.88),
+            color: AppColors.blue00D4FFColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16.r),
             border: Border.all(
-              color: AppColors.blue00D4FF66Color.withValues(alpha: 0.55),
+              color: AppColors.blue00D4FFColor.withValues(alpha: 0.30),
             ),
           ),
           child: Text(
@@ -398,7 +397,7 @@ class _JoinGroupSuccessContent extends GetView<GroupMainScreenController> {
             style: getTextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w400,
-              color: AppColors.whiteE5E7EBColor,
+              color: const Color(0xFFF5F6FD),
               lineHeight: 10,
             ),
           ),

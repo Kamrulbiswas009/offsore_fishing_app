@@ -14,7 +14,7 @@ class CommonMessage {
       title,
       message,
       backgroundColor:
-          backgroundColor ?? AppColors.blue00D4FF66Color.withValues(alpha: 0.4),
+          backgroundColor ?? AppColors.blue00D4FFColor.withValues(alpha: 0.4),
       colorText: colorText ?? Colors.white,
       snackPosition: snackPosition ?? SnackPosition.BOTTOM,
     );

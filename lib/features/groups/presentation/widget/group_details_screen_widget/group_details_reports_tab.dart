@@ -31,8 +31,8 @@ class GroupDetailsReportsTab extends GetView<GroupDetailsScreenController> {
               ontap: () {},
               title: ' Add Report',
               fontSize: 14,
-              lineHeight: 11,
-              bgColor: AppColors.tealColor117A88,
+              lineHeight: 10,
+              bgColor: Color(0xFF055467),
               prefixIcon: Icon(
                 Icons.add,
                 color: AppColors.whiteColor,
@@ -131,12 +131,12 @@ class _ReportCard extends StatelessWidget {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                 decoration: BoxDecoration(
-                  color: AppColors.blue00D4FF66Color.withValues(alpha: 0.20),
+                  color: AppColors.blue00D4FFColor.withValues(alpha: 0.20),
                   borderRadius: BorderRadius.circular(6.r),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.done_sharp, color: AppColors.blue00D4FF66Color, size: 12.r),
+                    Icon(Icons.done_sharp, color: AppColors.blue00D4FFColor, size: 12.r),
                     
                     SizedBox(width: 4.w),
                     Text(
@@ -144,7 +144,7 @@ class _ReportCard extends StatelessWidget {
                       style: getTextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
-                        color: AppColors.blue00D4FF66Color,
+                        color: AppColors.blue00D4FFColor,
                         lineHeight: 9,
                       ),
                     ),

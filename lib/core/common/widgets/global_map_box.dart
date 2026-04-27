@@ -1,61 +1,69 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 
 class GlobalRealMapBox extends StatelessWidget {
   final double height;
-  final LatLng center; // Real coordinates
+  final LatLng center;
   final double zoom;
 
   const GlobalRealMapBox({
     super.key,
-    this.height = 250,
-    required this.center, // e.g. LatLng(25.7617, -80.1918)
+    this.height = 200,
+    required this.center,
     this.zoom = 13.0,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: height.h,
       width: double.infinity,
       child: Stack(
         children: [
-          // 1. REAL SATELLITE MAP LAYER
-          FlutterMap(
-            options: MapOptions(
-              initialCenter: center,
-              initialZoom: zoom,
-              interactionOptions: const InteractionOptions(
-                flags: InteractiveFlag
-                    .none, // Lock map interaction for the header box
-              ),
+          mapbox.MapWidget(
+            key: ValueKey(
+              'global-mapbox-${center.latitude}-${center.longitude}',
             ),
-            children: [
-              TileLayer(
-                urlTemplate:
-                    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                userAgentPackageName: 'com.paytonpieper.app',
+            styleUri: mapbox.MapboxStyles.SATELLITE,
+            cameraOptions: mapbox.CameraOptions(
+              center: mapbox.Point(
+                coordinates: mapbox.Position(center.longitude, center.latitude),
               ),
-            ],
+              zoom: zoom,
+            ),
+            onMapCreated: (mapboxMap) {
+              mapboxMap.gestures.updateSettings(
+                mapbox.GesturesSettings(
+                  scrollEnabled: false,
+                  pinchToZoomEnabled: false,
+                  rotateEnabled: false,
+                  pitchEnabled: false,
+                  quickZoomEnabled: false,
+                  doubleTapToZoomInEnabled: false,
+                  doubleTouchToZoomOutEnabled: false,
+                  pinchPanEnabled: false,
+                ),
+              );
+            },
           ),
 
-          // 2. TACTICAL OVERLAY (Dark Tint)
-          IgnorePointer(child: Container(color: Colors.black.withOpacity(0.3))),
+          IgnorePointer(
+            child: Container(color: Colors.black.withValues(alpha: 0.3)),
+          ),
 
-          // 3. ORANGE HIGHLIGHTED ZONE SQUARE (Tactical UI)
           Center(
             child: Container(
               height: 60.h,
               width: 60.h,
               decoration: BoxDecoration(
-                color: AppColors.orangeColor.withOpacity(0.15),
+                color: AppColors.orangeColor.withValues(alpha: 0.15),
                 border: Border.all(color: AppColors.orangeColor, width: 2),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.orangeColor.withOpacity(0.5),
+                    color: AppColors.orangeColor.withValues(alpha: 0.5),
                     blurRadius: 20,
                     spreadRadius: 5,
                   ),
@@ -63,20 +71,6 @@ class GlobalRealMapBox extends StatelessWidget {
               ),
             ),
           ),
-
-          // 4. TOP NAVIGATION (Back Button)
-          // Positioned(
-          //   top: 50.h,
-          //   left: 20.w,
-          //   child: GestureDetector(
-          //     onTap: () => Get.back(),
-          //     child: CircleAvatar(
-          //       radius: 20.r,
-          //       backgroundColor: Colors.black.withOpacity(0.5),
-          //       child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
-          //     ),
-          //   ),
-          // ),
         ],
       ),
     );

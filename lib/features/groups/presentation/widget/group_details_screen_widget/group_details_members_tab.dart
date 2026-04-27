@@ -6,9 +6,22 @@ import 'package:paytonpieper/core/common/widgets/custom_button.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/groups/controller/group_details_screen_controller.dart';
+import 'package:paytonpieper/features/groups/presentation/widget/group_details_screen_widget/invite_member_bottom_sheet_widget.dart';
 
 class GroupDetailsMembersTab extends GetView<GroupDetailsScreenController> {
   const GroupDetailsMembersTab({super.key});
+
+  void _openInviteMembersSheet(BuildContext context) {
+    controller.resetInviteMembersSheet();
+    showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      backgroundColor: AppColors.transparentColor,
+      barrierColor: AppColors.blackColor.withValues(alpha: 0.55),
+      builder: (_) => const InviteMemberBottomSheetWidget(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,16 +30,20 @@ class GroupDetailsMembersTab extends GetView<GroupDetailsScreenController> {
         padding: EdgeInsets.zero,
         children: [
           CustomButton(
-            ontap: () {},
+            ontap: () => _openInviteMembersSheet(context),
             title: ' Invite Members',
             fontSize: 16,
             lineHeight: 13,
             bgColor: AppColors.orangeFF6B35Color,
             borderRadius: 12,
-            prefixIcon: Icon(
-              Icons.share_outlined,
-              size: 16.r,
-              color: AppColors.whiteColor,
+            prefixIcon: Padding(
+              padding: EdgeInsets.only(right: 8.w),
+              child: Image.asset(
+                IconPath.doublePersonWhiteIcon,
+                width: 16.r,
+                height: 16.r,
+                color: AppColors.whiteColor,
+              ),
             ),
           ),
           SizedBox(height: 16.h),
@@ -144,7 +161,7 @@ class _PendingRequestCard extends GetView<GroupDetailsScreenController> {
                   title: 'Approve',
                   fontSize: 14,
                   lineHeight: 11,
-                  bgColor: AppColors.blue00D4FF66Color,
+                  bgColor: AppColors.blue00D4FFColor,
                   titleColor: AppColors.whiteColor,
                   borderRadius: 12,
                 ),
@@ -214,7 +231,11 @@ class _MemberCard extends StatelessWidget {
                     ),
                     if (member.isLeader) ...[
                       SizedBox(width: 6.w),
-                      Image.asset(IconPath.crownIcon, width: 14.r, height: 14.r),
+                      Image.asset(
+                        IconPath.crownIcon,
+                        width: 14.r,
+                        height: 14.r,
+                      ),
                     ],
                   ],
                 ),

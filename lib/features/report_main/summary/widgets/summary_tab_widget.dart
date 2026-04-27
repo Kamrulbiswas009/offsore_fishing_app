@@ -9,8 +9,10 @@ import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 
 import '../controller/summary_details_controller.dart';
 
-class SummaryTabWidget extends GetView<SummaryController> {
-  const SummaryTabWidget({super.key});
+class SummaryTabWidget extends StatelessWidget {
+  final bool isReportMainScreen;
+  final SummaryController controller = Get.put(SummaryController());
+  SummaryTabWidget({super.key, required this.isReportMainScreen});
 
   @override
   Widget build(BuildContext context) {
@@ -20,21 +22,24 @@ class SummaryTabWidget extends GetView<SummaryController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildAddReportButton(),
-          SizedBox(height: 20.h),
-          _buildZoneHeader(zone),
-          SizedBox(height: 15.h),
+          SizedBox(height: 12.h),
+          if (isReportMainScreen == false) ...[
+            _buildZoneHeader(zone),
+            SizedBox(height: 15.h),
+          ],
           _buildUpdateHeader(),
           SizedBox(height: 25.h),
           _buildActivityOverview(zone),
-          SizedBox(height: 30.h),
+          SizedBox(height: 18.h),
           _buildMarineConditions(),
-          SizedBox(height: 30.h),
+          SizedBox(height: 12.h),
           _buildPatternIntelligence(),
-          SizedBox(height: 30.h),
+          SizedBox(height: 16.h),
           _buildActivityTiming(),
-          SizedBox(height: 30.h),
+          SizedBox(height: 16.h),
           _buildTopSpecies(),
-          SizedBox(height: 30.h),
+          SizedBox(height: 16.h),
+          if(isReportMainScreen == false)
           _buildSpeciesDistribution(),
           SizedBox(height: 30.h),
         ],
@@ -46,7 +51,11 @@ class SummaryTabWidget extends GetView<SummaryController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildDynamicZoneName(zone?.name ?? 'GOM-12', fontSize: 28),
+        _buildDynamicZoneName(
+          zone?.name ?? 'GOM-12',
+          fontSize: 28,
+          lineHeight: 20,
+        ),
         SizedBox(height: 4.h),
         Text(
           '${zone?.reports ?? 24} reports • Last updated ${zone?.lastUpdated ?? "6 hours ago"}',
@@ -60,25 +69,24 @@ class SummaryTabWidget extends GetView<SummaryController> {
     return InkWell(
       onTap: controller.onAddReport,
       child: Container(
-        height: 55.h,
+        padding: EdgeInsets.symmetric(vertical: 8.h),
         width: double.infinity,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFFF8C42), Color(0xFFE25301)],
-          ),
+          color: AppColors.orangeFF6B35Color,
           borderRadius: BorderRadius.circular(12.r),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.add, color: Colors.white),
-            SizedBox(width: 10.w),
+            SizedBox(width: 8.w),
             Text(
               "Add Report",
               style: getTextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 color: Colors.white,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w700,
+                lineHeight: 12,
               ),
             ),
           ],
@@ -94,16 +102,21 @@ class SummaryTabWidget extends GetView<SummaryController> {
         Container(
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
           decoration: BoxDecoration(
-            color: AppColors.blue1B2134Color,
+            color: Color(0xFF08131D),
+            border: Border.all(color: Color(0xFF2D3748)),
             borderRadius: BorderRadius.circular(8.r),
           ),
           child: Row(
             children: [
-              const Icon(Icons.calendar_today, size: 14, color: Colors.white),
+              Image.asset(IconPath.calendarIcon, height: 14.h, width: 14.w),
               SizedBox(width: 10.w),
               Text(
                 "Last 3 Days",
-                style: getTextStyle(fontSize: 12, color: Colors.white),
+                style: getTextStyle(
+                  fontSize: 12,
+                  color: Colors.white,
+                  lineHeight: 9,
+                ),
               ),
               const Icon(Icons.keyboard_arrow_down, color: Colors.white),
             ],
@@ -114,16 +127,14 @@ class SummaryTabWidget extends GetView<SummaryController> {
             Text(
               "Updated 2 min ago",
               style: getTextStyle(
-                fontSize: 11,
-                color: AppColors.blue00F0FFColor,
+                fontSize: 12,
+                color: Color(0xFF018896),
+                fontWeight: FontWeight.w500,
+                lineHeight: 9,
               ),
             ),
             SizedBox(width: 5.w),
-            const Icon(
-              Icons.refresh,
-              size: 16,
-              color: AppColors.blue00F0FFColor,
-            ),
+            Image.asset(IconPath.refreshIcon, height: 14.h, width: 14.w),
           ],
         ),
       ],
@@ -134,38 +145,39 @@ class SummaryTabWidget extends GetView<SummaryController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle(Icons.query_stats, "Activity Overview"),
+        _sectionTitle(IconPath.activityIcon, "Activity Overview"),
         IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _statCard(
-                "LAST 24H",
-                "${zone?.reports ?? 8}",
-                "Reports",
-                AppColors.blue00F0FFColor,
-                IconPath.ratioGraph,
+                label: "LAST 24H",
+                //"${zone?.reports ?? 8}",
+                sub: "Reports",
+                borderColor: AppColors.blue00F0FFColor,
+                icon: IconPath.goalIcon,
+                val: '8',
               ),
               _statCard(
-                "SUCCESS",
-                "78%",
-                "Hit Rate",
-                AppColors.orangeColor,
-                IconPath.redFish,
+                label: "SUCCESS",
+                val: "78%",
+                sub: "Hit Rate",
+                borderColor: AppColors.orangeColor,
+                icon: IconPath.redFish,
               ),
               _statCard(
-                "Peak Time",
-                "6-9 am",
-                "Peak Window",
-                AppColors.blue00F0FFColor,
-                IconPath.timeScheduleIcon,
+                label: "Hot zone",
+                val: "2",
+                sub: "Active",
+                borderColor: AppColors.blue00F0FFColor,
+                icon: IconPath.curveArrowIcon,
               ),
               _statCard(
-                "GROUPS",
-                "3",
-                "Networks",
-                AppColors.orangeColor,
-                IconPath.redGroupsIcon,
+                label: "GROUPS",
+                val: "3",
+                sub: "Networks",
+                borderColor: AppColors.orangeColor,
+                icon: IconPath.redGroupsIcon,
               ),
             ],
           ),
@@ -178,14 +190,19 @@ class SummaryTabWidget extends GetView<SummaryController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle(Icons.waves, "Marine Conditions - Zone A-7"),
+        _sectionTitle(IconPath.airIcon, "Marine Conditions - Zone A-7"),
         Container(
-          padding: EdgeInsets.all(20.w),
+          padding: EdgeInsets.all(16.w),
           decoration: BoxDecoration(
-            color: AppColors.blue0D2B43Color,
+            gradient: LinearGradient(
+              colors: [
+                AppColors.blue0D2B43Color.withValues(alpha: 0.1),
+                AppColors.orangeFF6B35Color.withValues(alpha: 0.1),
+              ],
+            ),
             borderRadius: BorderRadius.circular(16.r),
             border: Border.all(
-              color: AppColors.blue153A56Color.withOpacity(0.5),
+              color: AppColors.blue153A56Color.withValues(alpha: 0.5),
             ),
           ),
           child: Column(
@@ -194,16 +211,16 @@ class SummaryTabWidget extends GetView<SummaryController> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _marineItem(Icons.air, "12", "mph SE"),
+                    _marineItem(IconPath.airIcon, "12", "mph SE"),
                     _vDivider(),
-                    _marineItem(Icons.waves, "2.5", "ft"),
+                    _marineItem(IconPath.waveIcon, "2.5", "ft"),
                     _vDivider(),
-                    _marineItem(Icons.thermostat, "78°", "F"),
+                    _marineItem(IconPath.thermometerIcon, "78°", "F"),
                     _vDivider(),
-                    _marineItem(Icons.water_drop, "1.2", "Rising"),
+                    _marineItem(IconPath.dropIcon, "1.2", "Rising"),
                     _vDivider(),
                     _marineItem(
-                      Icons.cloud_queue,
+                      IconPath.cloudIcon,
                       "Partly",
                       "Cloudy",
                       isWeather: true,
@@ -219,16 +236,17 @@ class SummaryTabWidget extends GetView<SummaryController> {
                   height: 38.h,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: AppColors.blue00F0FFColor,
-                    borderRadius: BorderRadius.circular(30.r),
+                    color: AppColors.blue00D4FFColor,
+                    borderRadius: BorderRadius.circular(20.r),
                   ),
                   alignment: Alignment.center,
                   child: Text(
                     "View Full Forecast",
                     style: getTextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.blue0D2B43Color,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF0A1628),
+                      lineHeight: 10,
                     ),
                   ),
                 ),
@@ -241,26 +259,37 @@ class SummaryTabWidget extends GetView<SummaryController> {
   }
 
   Widget _marineItem(
-    IconData icon,
+    String icon,
     String val,
     String unit, {
     bool isWeather = false,
   }) {
     return Column(
       children: [
-        Icon(icon, color: AppColors.blue00F0FFColor, size: 20.sp),
-        SizedBox(height: 8.h),
+        Image.asset(
+          icon,
+          color: AppColors.blue00F0FFColor,
+          height: 20.h,
+          width: 20.w,
+        ),
+        SizedBox(height: 4.h),
         Text(
           val,
           style: getTextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
             color: Colors.white,
+            lineHeight: 14,
           ),
         ),
         Text(
           unit,
-          style: getTextStyle(fontSize: 10, color: AppColors.grey8B95A5Color),
+          style: getTextStyle(
+            fontSize: 12,
+            color: AppColors.grey8B95A5Color,
+            lineHeight: 9,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ],
     );
@@ -269,25 +298,26 @@ class SummaryTabWidget extends GetView<SummaryController> {
   Widget _vDivider() {
     return Container(
       width: 1,
-      color: AppColors.blue153A56Color.withOpacity(0.5),
+      color: AppColors.grey8B95A5Color.withValues(alpha: 0.3),
     );
   }
 
-  Widget _statCard(
-    String label,
-    String val,
-    String sub,
-    Color accent,
-    String icon,
-  ) {
+  Widget _statCard({
+    required String label,
+    required String val,
+    required String sub,
+    required Color borderColor,
+    required String icon,
+    Color? backgroundColor,
+  }) {
     return Expanded(
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: 4.w),
         padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 10.h),
         decoration: BoxDecoration(
-          color: AppColors.blue0D2B43Color,
+          color: backgroundColor ?? Color(0xFF09151F),
           borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: accent.withOpacity(0.3)),
+          border: Border.all(color: borderColor.withValues(alpha: 0.3)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -296,31 +326,38 @@ class SummaryTabWidget extends GetView<SummaryController> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset(icon, color: accent, height: 14.h, width: 14.w),
+                Image.asset(icon, height: 14.h, width: 14.w),
                 SizedBox(width: 4.w),
-                Flexible(
+                Expanded(
                   child: Text(
                     label,
                     style: getTextStyle(
-                      fontSize: 8,
-                      color: Colors.white54,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 10,
+                      color: AppColors.grey8B95A5Color,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               ],
             ),
+            SizedBox(height: 5.h),
             Text(
               val,
               style: getTextStyle(
-                fontSize: 18,
+                fontSize: 24,
                 color: Colors.white,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w800,
+                lineHeight: 14,
               ),
             ),
             Text(
               sub.isNotEmpty ? sub : " ",
-              style: getTextStyle(fontSize: 9, color: accent),
+              style: getTextStyle(
+                fontSize: 12,
+                color: borderColor,
+                lineHeight: 9,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -330,11 +367,20 @@ class SummaryTabWidget extends GetView<SummaryController> {
 
   Widget _buildPatternIntelligence() {
     return Container(
-      padding: EdgeInsets.all(20.w),
+      padding: EdgeInsets.all(16.r),
       decoration: BoxDecoration(
-        color: AppColors.blue0D2B43Color,
+        border: Border.all(
+          color: AppColors.blue00D4FFColor.withValues(alpha: 0.3),
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.blue00D4FFColor.withValues(alpha: 0.1),
+            AppColors.orangeFF6B35Color.withValues(alpha: 0.1),
+          ],
+        ),
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.blue153A56Color.withOpacity(0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -342,47 +388,51 @@ class SummaryTabWidget extends GetView<SummaryController> {
           Text(
             "PATTERN INTELLIGENCE",
             style: getTextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
               color: Colors.white,
+              lineHeight: 12,
             ),
           ),
-          SizedBox(height: 25.h),
+          SizedBox(height: 18.h),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: _patternItem(
-                  "MOST COMMON DEPTH",
-                  "120-180 ft",
-                  AppColors.blue00F0FFColor,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _patternMetric(
+                      "MOST COMMON DEPTH",
+                      "120-180 ft",
+                      AppColors.blue00D4FFColor,
+                    ),
+                    SizedBox(height: 16.h),
+                    _patternMetric(
+                      "TOP BAIT / LURE",
+                      "Blue/White Ilander",
+                      AppColors.blue00D4FFColor,
+                    ),
+                  ],
                 ),
               ),
+              SizedBox(width: 18.w),
               Expanded(
-                child: _patternItem(
-                  "MOST EFFECTIVE METHOD",
-                  "Trolling",
-                  AppColors.blue00F0FFColor,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 25.h),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _patternItem(
-                  "TOP BAIT / LURE",
-                  "Blue/White Ilander",
-                  AppColors.blue00F0FFColor,
-                ),
-              ),
-              Expanded(
-                child: _patternItem(
-                  "STRIKE ZONE",
-                  "Mid Column / Thermocline",
-                  AppColors.orangeColor,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _patternMetric(
+                      "MOST EFFECTIVE METHOD",
+                      "Trolling",
+                      AppColors.blue00D4FFColor,
+                    ),
+                    SizedBox(height: 16.h),
+                    _patternMetric(
+                      "STRIKE ZONE",
+                      "Mid Column / Thermocline",
+                      const Color(0xFFFF4842),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -392,25 +442,27 @@ class SummaryTabWidget extends GetView<SummaryController> {
     );
   }
 
-  Widget _patternItem(String label, String value, Color valueColor) {
+  Widget _patternMetric(String label, String value, Color valueColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: getTextStyle(
-            fontSize: 11,
-            color: AppColors.greyC8D0DBColor,
-            fontWeight: FontWeight.w500,
+            fontSize: 12,
+            color: AppColors.whiteColor,
+            fontWeight: FontWeight.w400,
+            lineHeight: 9,
           ),
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: 5.h),
         Text(
           value,
           style: getTextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
             color: valueColor,
+            lineHeight: 9,
           ),
         ),
       ],
@@ -421,9 +473,16 @@ class SummaryTabWidget extends GetView<SummaryController> {
     return Container(
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        color: AppColors.blue0D2B43Color,
+        gradient: LinearGradient(
+          colors: [
+            AppColors.blue0D2B43Color.withValues(alpha: 0.1),
+            AppColors.orangeFF6B35Color.withValues(alpha: 0.1),
+          ],
+        ),
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.blue153A56Color.withOpacity(0.5)),
+        border: Border.all(
+          color: AppColors.blue153A56Color.withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -434,16 +493,19 @@ class SummaryTabWidget extends GetView<SummaryController> {
               Text(
                 "ACTIVITY TIMING",
                 style: getTextStyle(
-                  fontSize: 15,
+                  fontSize: 16,
                   color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w500,
+                  lineHeight: 12,
                 ),
               ),
               Text(
                 "24 Hours Ago",
                 style: getTextStyle(
                   fontSize: 12,
-                  color: AppColors.blue00F0FFColor,
+                  color: AppColors.blue00D4FFColor,
+                  fontWeight: FontWeight.w400,
+                  lineHeight: 9,
                 ),
               ),
             ],
@@ -458,21 +520,32 @@ class SummaryTabWidget extends GetView<SummaryController> {
                   children: [
                     Text(
                       "peak window",
-                      style: getTextStyle(fontSize: 12, color: Colors.white70),
+                      style: getTextStyle(
+                        fontSize: 12,
+                        color: AppColors.whiteColor,
+                        lineHeight: 9,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                     SizedBox(height: 4.h),
                     Text(
                       "6.00 AM - 10.00 AM",
                       style: getTextStyle(
-                        fontSize: 13,
-                        color: AppColors.blue00F0FFColor,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        color: AppColors.blue00D4FFColor,
+                        fontWeight: FontWeight.w400,
+                        lineHeight: 9,
                       ),
                     ),
                     SizedBox(height: 20.h),
                     Text(
                       "Most Effective\nTechnique",
-                      style: getTextStyle(fontSize: 12, color: Colors.white70),
+                      style: getTextStyle(
+                        fontSize: 12,
+                        color: AppColors.whiteColor,
+                        lineHeight: 9,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     SizedBox(height: 8.h),
                     Container(
@@ -481,11 +554,10 @@ class SummaryTabWidget extends GetView<SummaryController> {
                         vertical: 8.h,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.teal0C98AFColor.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20.r),
-                        border: Border.all(
-                          color: AppColors.blue00F0FFColor.withOpacity(0.3),
+                        color: AppColors.blue00D4FFColor.withValues(
+                          alpha: 0.12,
                         ),
+                        borderRadius: BorderRadius.circular(20.r),
                       ),
                       child: Text(
                         "Trolling",
@@ -558,26 +630,32 @@ class SummaryTabWidget extends GetView<SummaryController> {
     ];
 
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 25.h, horizontal: 15.w),
+      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 15.w),
       decoration: BoxDecoration(
-        color: AppColors.blue0D2B43Color,
+        gradient: LinearGradient(
+          colors: [
+            AppColors.blue0D2B43Color.withValues(alpha: 0.1),
+            AppColors.orangeFF6B35Color.withValues(alpha: 0.1),
+          ],
+        ),
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.blue153A56Color.withOpacity(0.5)),
+        border: Border.all(
+          color: AppColors.blue153A56Color.withValues(alpha: 0.5),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: EdgeInsets.only(left: 5.w, bottom: 25.h),
-            child: Text(
-              "TOP SPECIES (LAST 24H)",
-              style: getTextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+          Text(
+            "TOP SPECIES (LAST 24H)",
+            style: getTextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+              lineHeight: 12,
             ),
           ),
+          SizedBox(height: 16.h),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(speciesData.length * 2 - 1, (index) {
@@ -585,7 +663,7 @@ class SummaryTabWidget extends GetView<SummaryController> {
                 return Container(
                   height: 40.h,
                   width: 1,
-                  color: AppColors.grey3A4B62Color.withOpacity(0.3),
+                  color: AppColors.grey3A4B62Color.withValues(alpha: 0.3),
                 );
               }
               final dataIndex = index ~/ 2;
@@ -604,8 +682,7 @@ class SummaryTabWidget extends GetView<SummaryController> {
     return Column(
       children: [
         Image.asset(
-          "assets/icons/fish_icon.png",
-          color: AppColors.blue00F0FFColor,
+          IconPath.fishRealIcon,
           width: 24.w,
           height: 18.h,
           fit: BoxFit.contain,
@@ -614,14 +691,20 @@ class SummaryTabWidget extends GetView<SummaryController> {
         Text(
           count,
           style: getTextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
             color: Colors.white,
+            lineHeight: 9,
           ),
         ),
         Text(
           name,
-          style: getTextStyle(fontSize: 11, color: AppColors.grey516173Color),
+          style: getTextStyle(
+            fontSize: 12,
+            color: Color(0xFF767E8A),
+            lineHeight: 9,
+            fontWeight: FontWeight.w400,
+          ),
         ),
       ],
     );
@@ -731,19 +814,20 @@ class SummaryTabWidget extends GetView<SummaryController> {
     );
   }
 
-  Widget _sectionTitle(IconData icon, String title) {
+  Widget _sectionTitle(String icon, String title) {
     return Padding(
       padding: EdgeInsets.only(bottom: 15.h),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.blue00F0FFColor, size: 20.sp),
+          Image.asset(icon, height: 20.h, width: 20.w),
           SizedBox(width: 10.w),
           Text(
             title,
             style: getTextStyle(
               fontSize: 18,
               color: Colors.white,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w500,
+              lineHeight: 12,
             ),
           ),
         ],
@@ -751,7 +835,11 @@ class SummaryTabWidget extends GetView<SummaryController> {
     );
   }
 
-  Widget _buildDynamicZoneName(String name, {required double fontSize}) {
+  Widget _buildDynamicZoneName(
+    String name, {
+    required double fontSize,
+    required double lineHeight,
+  }) {
     final parts = name.split('-');
     if (parts.length >= 2) {
       return RichText(
@@ -763,6 +851,7 @@ class SummaryTabWidget extends GetView<SummaryController> {
                 fontSize: fontSize,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
+                lineHeight: lineHeight,
               ),
             ),
             TextSpan(
@@ -771,6 +860,7 @@ class SummaryTabWidget extends GetView<SummaryController> {
                 fontSize: fontSize,
                 fontWeight: FontWeight.bold,
                 color: AppColors.blue00F0FFColor,
+                lineHeight: lineHeight,
               ),
             ),
           ],
