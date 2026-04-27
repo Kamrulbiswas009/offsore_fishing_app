@@ -210,7 +210,10 @@ class ReportCatchStep1Screen extends GetView<ReportCatchController> {
         decoration: BoxDecoration(
           color: AppColors.blue1B2134Color,
           borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: Colors.transparent, width: 0),
+          border: Border.all(
+            color: isSelected ? AppColors.tealColor117A88 : Colors.transparent,
+            width: 1.5.w,
+          ),
         ),
         child: Column(
           children: [
@@ -238,14 +241,16 @@ class ReportCatchStep1Screen extends GetView<ReportCatchController> {
                         title,
                         style: getTextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
                           color: Colors.white,
                         ),
                       ),
+
                       Text(
                         subtitle,
                         style: getTextStyle(
-                          fontSize: 13,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
                           color: AppColors.grey8B95A5Color,
                         ),
                       ),
@@ -261,12 +266,12 @@ class ReportCatchStep1Screen extends GetView<ReportCatchController> {
               ],
             ),
             if (footer != null) ...[
-              SizedBox(height: 15.h),
+              SizedBox(height: 5.h),
               Divider(
                 color: AppColors.grey3A4B62Color.withOpacity(0.3),
                 thickness: 1,
               ),
-              SizedBox(height: 10.h),
+              // SizedBox(height: 5.h),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

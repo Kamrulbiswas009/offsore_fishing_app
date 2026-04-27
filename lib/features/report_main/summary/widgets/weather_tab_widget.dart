@@ -386,7 +386,8 @@ class WeatherTabWidget extends GetView<SummaryController> {
             style: getTextStyle(
               fontSize: 12,
               color: Colors.white,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w700,
+              lineHeight: 20,
             ),
           ),
         ],
@@ -479,66 +480,62 @@ class WeatherTabWidget extends GetView<SummaryController> {
 
   // ── Sun & Moon ──────────────────────────────────────────────────────────────
   Widget _buildSunMoon() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Sun & Moon',
-          style: getTextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        SizedBox(height: 12.h),
-        Container(
-          padding: EdgeInsets.all(16.w),
-          decoration: BoxDecoration(
-            color: AppColors.blue0D2B43Color,
-            borderRadius: BorderRadius.circular(14.r),
-            border: Border.all(
-              color: AppColors.blue153A56Color.withOpacity(0.5),
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: AppColors.blue0D2B43Color.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: AppColors.blue153A56Color.withOpacity(0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Sun & Moon',
+            style: getTextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+              lineHeight: 28,
             ),
           ),
-          child: Column(
+          SizedBox(height: 16.h),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 12.w,
+            crossAxisSpacing: 12.w,
+            childAspectRatio: 1.5,
             children: [
-              Row(
-                children: [
-                  _sunMoonItem(
-                    icon: Icons.wb_sunny_outlined,
-                    iconColor: const Color(0xFFFFAA00),
-                    label: 'Sunrise',
-                    value: '6:42 AM',
-                  ),
-                  _sunMoonItem(
-                    icon: Icons.wb_sunny,
-                    iconColor: const Color(0xFFFF6B35),
-                    label: 'Sunset',
-                    value: '7:28 PM',
-                  ),
-                ],
+              _sunMoonItem(
+                icon: Icons.wb_sunny_outlined,
+                iconColor: const Color(0xFFFFAA00),
+                label: 'Sunrise',
+                value: '6:42 AM',
               ),
-              SizedBox(height: 16.h),
-              Row(
-                children: [
-                  _sunMoonItem(
-                    icon: Icons.nightlight_round,
-                    iconColor: AppColors.blue00F0FFColor,
-                    label: 'Moonrise',
-                    value: '8:15 PM',
-                  ),
-                  _sunMoonItem(
-                    icon: Icons.nightlight,
-                    iconColor: AppColors.blue00F0FFColor.withOpacity(0.7),
-                    label: 'Moon Phase',
-                    value: 'Waxing',
-                  ),
-                ],
+              _sunMoonItem(
+                icon: Icons.wb_sunny_outlined,
+                iconColor: const Color(0xFFFF6B35),
+                label: 'Sunset',
+                value: '7:28 PM',
+              ),
+              _sunMoonItem(
+                icon: Icons.nightlight_outlined,
+                iconColor: AppColors.blue00F0FFColor,
+                label: 'Moonrise',
+                value: '8:15 PM',
+              ),
+              _sunMoonItem(
+                icon: Icons.nightlight_outlined,
+                iconColor: AppColors.blue00F0FFColor,
+                label: 'Moon Phase',
+                value: 'Waxing',
               ),
             ],
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -548,30 +545,40 @@ class WeatherTabWidget extends GetView<SummaryController> {
     required String label,
     required String value,
   }) {
-    return Expanded(
-      child: Row(
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: iconColor.withOpacity(0.2), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(icon, color: iconColor, size: 20.sp),
-          SizedBox(width: 8.w),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: [
+              Icon(icon, color: iconColor, size: 20.sp),
+              SizedBox(width: 8.w),
               Text(
                 label,
                 style: getTextStyle(
-                  fontSize: 10,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  lineHeight: 16,
                   color: AppColors.grey8B95A5Color,
                 ),
               ),
-              Text(
-                value,
-                style: getTextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
             ],
+          ),
+          Text(
+            value,
+            style: getTextStyle(
+              fontSize: 18,
+              lineHeight: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
         ],
       ),
@@ -798,7 +805,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
             );
           }),
         ),
-        SizedBox(height: 10.h),
+        SizedBox(height: 15.h),
         Center(
           child: Text(
             'TODAY - SAT 18',
@@ -818,7 +825,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
     final periods = controller.timePeriods;
     return Obx(() {
       return Container(
-        height: 46.h,
+        height: 36.h,
         decoration: BoxDecoration(
           color: AppColors.blue0D2B43Color,
           borderRadius: BorderRadius.circular(10.r),
@@ -869,18 +876,20 @@ class WeatherTabWidget extends GetView<SummaryController> {
             children: [
               // Main card
               Container(
+                width: double.infinity,
                 padding: EdgeInsets.all(16.w),
                 decoration: BoxDecoration(
                   color: AppColors.blue0D2B43Color,
                   borderRadius: BorderRadius.circular(14.r),
                   border: Border.all(
-                    color: AppColors.blue153A56Color.withOpacity(0.5),
+                    color: AppColors.blue153A56Color.withValues(alpha: 0.5),
                   ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
                           width: 44.w,
@@ -895,28 +904,25 @@ class WeatherTabWidget extends GetView<SummaryController> {
                             size: 22.sp,
                           ),
                         ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                period,
-                                style: getTextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              period,
+                              style: getTextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
-                              Text(
-                                data['time'] as String,
-                                style: getTextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.grey8B95A5Color,
-                                ),
+                            ),
+                            Text(
+                              data['time'] as String,
+                              style: getTextStyle(
+                                fontSize: 12,
+                                color: AppColors.grey8B95A5Color,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                         Container(
                           padding: EdgeInsets.symmetric(
@@ -940,6 +946,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
                     ),
                     SizedBox(height: 20.h),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         _forecastStat(
                           Icons.air,
@@ -947,14 +954,12 @@ class WeatherTabWidget extends GetView<SummaryController> {
                           'Wind',
                           'mph',
                         ),
-                        SizedBox(width: 28.w),
                         _forecastStat(
                           Icons.waves,
                           data['seas'] as String,
                           'Seas',
                           'ft',
                         ),
-                        SizedBox(width: 28.w),
                         _forecastStat(
                           Icons.cloud_outlined,
                           data['sky'] as String,
