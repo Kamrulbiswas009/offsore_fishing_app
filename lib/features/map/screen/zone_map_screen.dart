@@ -224,7 +224,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
             final zone = controller.selectedZone.value;
             if (zone == null) return const SizedBox.shrink();
             return Positioned(
-              bottom: 100.h,
+              bottom: 60.h,
               left: 0,
               right: 0,
               child: SlideTransition(
@@ -349,10 +349,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
         Container(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(
-              color: AppColors.blue00D4FFColor,
-              width: 1.5.w,
-            ),
+            border: Border.all(color: AppColors.blue00D4FFColor, width: 1.5.w),
           ),
           child: CircleAvatar(
             radius: 28.r,
@@ -632,7 +629,7 @@ class _ZoneDetailPanel extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF8C42),
+                backgroundColor: Color(0xFF00D4FF),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14.r),
@@ -640,7 +637,7 @@ class _ZoneDetailPanel extends StatelessWidget {
                 padding: EdgeInsets.symmetric(vertical: 15.h),
               ),
               onPressed: () {
-                Get.to(()=>SummaryScreen(isReportMainScreen: false,));
+                Get.to(() => SummaryScreen(isReportMainScreen: false));
               },
               child: Text(
                 'View Full Report',

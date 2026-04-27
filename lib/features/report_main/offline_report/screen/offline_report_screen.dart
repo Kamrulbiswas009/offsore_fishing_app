@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/common/widgets/global_map_box.dart';
+import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/report_main/offline_report/controller/offline_report_controller.dart';
 import 'package:paytonpieper/features/report_main/offline_report/model/offline_report_model.dart';
 import '../../../../core/utils/constants/colors.dart';
@@ -30,12 +31,12 @@ class OfflineReportsScreen extends GetView<OfflineReportsTabController> {
                   _buildAddReportButton(),
                   SizedBox(height: 20.h),
                   _buildPendingSyncCard(),
-                  SizedBox(height: 25.h),
+                  SizedBox(height: 10.h),
                   Text(
                     "My Reports",
                     style: getTextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
                       color: Colors.white,
                     ),
                   ),
@@ -43,6 +44,7 @@ class OfflineReportsScreen extends GetView<OfflineReportsTabController> {
                     "Track your fishing activity",
                     style: getTextStyle(
                       fontSize: 14,
+                      fontWeight: FontWeight.w400,
                       color: AppColors.grey8B95A5Color,
                     ),
                   ),
@@ -433,7 +435,7 @@ class OfflineReportsScreen extends GetView<OfflineReportsTabController> {
     return GestureDetector(
       onTap: () => controller.onConfirmBite(id),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [Color(0xFFFF8C42), Color(0xFFE25301)],
@@ -443,8 +445,9 @@ class OfflineReportsScreen extends GetView<OfflineReportsTabController> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.looks, color: Colors.white, size: 16.sp),
-            SizedBox(width: 8.w),
+            Image.asset(IconPath.hookIcon, height: 24.h, width: 24.w),
+
+            SizedBox(width: 4.w),
             Text(
               "Confirm Bite",
               style: getTextStyle(

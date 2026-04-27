@@ -303,6 +303,7 @@ class ReportCatchStep1Screen extends GetView<ReportCatchController> {
       child: ElevatedButton(
         onPressed: controller.confirmGrid,
         style: ElevatedButton.styleFrom(
+          side: BorderSide(color: Colors.transparent),
           backgroundColor: AppColors.orangeColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30.r),

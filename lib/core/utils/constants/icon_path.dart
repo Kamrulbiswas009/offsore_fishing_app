@@ -43,11 +43,13 @@ class IconPath {
   static const String ratioGraph = "assets/icons/ratio_graph.png";
   static const String redGroupsIcon = "assets/icons/red_groups.png";
   static const String filterIcon = "assets/icons/filter.png";
-  static const String checkCircleBreakIcon = "assets/icons/check_circle_break_icon.png";
+  static const String checkCircleBreakIcon =
+      "assets/icons/check_circle_break_icon.png";
   static const String calendarIcon = "assets/icons/calendar_icon.png";
   static const String refreshIcon = "assets/icons/refresh_icon.png";
   static const String activityIcon = "assets/icons/activity_icon.png";
-  static const String doublePersonRedIcon = "assets/icons/double_person_red_icon.png";
+  static const String doublePersonRedIcon =
+      "assets/icons/double_person_red_icon.png";
   static const String fishRedIcon = "assets/icons/fish_red_icon.png";
   static const String goalIcon = "assets/icons/goal_icon.png";
   static const String airIcon = "assets/icons/air_icon.png";
@@ -57,13 +59,5 @@ class IconPath {
   static const String waveIcon = "assets/icons/wave_icon.png";
   static const String fishRealIcon = "assets/icons/fish_real_icon.png";
   static const String hookIcon = "assets/icons/hook.png";
-
-
-
-
-
-
-
-
-
+  static const String world = "assets/icons/world.png";
 }
