@@ -78,7 +78,7 @@ class LoginScreen extends StatelessWidget {
                     child: Text(
                       'Forgot Password?',
                       style: getTextStyle(
-                        color: const Color(0xFF00A6B4),
+                        color: const Color(0xFF117A88),
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
                         lineHeight: 9,
@@ -92,9 +92,10 @@ class LoginScreen extends StatelessWidget {
                   child: CustomButton(
                     ontap: controller.login,
                     title: 'Log in',
-                    borderRadius: 7.r,
+                    borderRadius: 10.r,
                     //padding: EdgeInsets.zero,
-                    //fontSize: 14,
+                    fontSize: 16,
+                    lineHeight: 12,
                   ),
                 ),
                 SizedBox(height: 39.h),
@@ -126,10 +127,10 @@ class LoginScreen extends StatelessWidget {
                     Text(
                       "Don't have an account? ",
                       style: getTextStyle(
-                        color: AppColors.grey8B95A5Color,
-                        fontSize: 12,
+                        color: Color(0xFF9CA3AF),
+                        fontSize: 14,
                         fontWeight: FontWeight.w400,
-                        lineHeight: 9,
+                        lineHeight: 10,
                       ),
                     ),
                     GestureDetector(
@@ -138,10 +139,10 @@ class LoginScreen extends StatelessWidget {
                       child: Text(
                         'Create Account',
                         style: getTextStyle(
-                          color: const Color(0xFF00A6B4),
-                          fontSize: 12,
+                          color: const Color(0xFF117A88),
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          lineHeight: 9,
+                          lineHeight: 10,
                         ),
                       ),
                     ),

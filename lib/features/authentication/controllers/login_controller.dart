@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:paytonpieper/core/services/permissions/location_permission_service.dart';
 import 'package:paytonpieper/features/main_screen/screen/home_main_screen.dart';
 import 'package:paytonpieper/routes/app_routes.dart';
 
@@ -13,8 +14,31 @@ class LoginController extends GetxController {
     isPasswordObscured.value = !isPasswordObscured.value;
   }
 
-  void login() {
-    // Navigate to bottom navigation screen
+  Future<void> login() async {
+    final locationPermissionService = Get.find<LocationPermissionService>();
+    final permissionResult =
+        await locationPermissionService.requestLocationWhenInUse();
+
+    if (permissionResult == LocationPermissionResult.permanentlyDenied) {
+      Get.snackbar(
+        'Location Permission',
+        'Location access is blocked. You can enable it later from app settings.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } else if (permissionResult == LocationPermissionResult.restricted) {
+      Get.snackbar(
+        'Location Permission',
+        'Location access is restricted on this device.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } else if (permissionResult == LocationPermissionResult.error) {
+      Get.snackbar(
+        'Location Permission',
+        'Location permission could not be checked right now.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+
     Get.offAll(() => const MainScreen());
   }
 

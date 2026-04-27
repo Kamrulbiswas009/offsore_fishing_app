@@ -131,10 +131,15 @@ class VeriryOtpScreen extends StatelessWidget {
                     : SizedBox(height: 22.h),
               ),
               const Spacer(),
-              CustomButton(
-                ontap: controller.verifyOtp,
-                title: 'Verify OTP',
-                borderRadius: 7.r,
+              SizedBox(
+                width: double.infinity,
+                child: CustomButton(
+                  ontap: controller.verifyOtp,
+                  title: 'Verify OTP',
+                  borderRadius: 12.r,
+                  fontSize: 16,
+                  lineHeight: 12,
+                ),
               ),
               SizedBox(height: 51.h),
             ],

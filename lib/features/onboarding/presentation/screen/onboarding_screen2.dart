@@ -9,7 +9,6 @@ import 'package:paytonpieper/core/utils/constants/image_path.dart';
 import 'package:paytonpieper/features/authentication/presentation/screens/login_screen.dart';
 import 'package:paytonpieper/features/onboarding/controller/onboarding_screen_controller.dart';
 import 'package:paytonpieper/features/onboarding/presentation/screen/onboardin_screen3.dart';
-import 'package:paytonpieper/features/onboarding/presentation/widget/onboarding_index_tracker.dart';
 
 class OnboardingScreen2 extends StatelessWidget {
   final OnboardingScreenController controller =
@@ -79,7 +78,7 @@ class OnboardingScreen2 extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 SizedBox(height: 18.h),
-                OnboardingIndexTracker(controller: controller),
+                //OnboardingIndexTracker(controller: controller),
                 Spacer(flex: 3),
                 CustomButton2(
                   ontap: () {

@@ -3,13 +3,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/common/widgets/custom_button.dart';
-import 'package:paytonpieper/core/common/widgets/custom_button2.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/core/utils/constants/image_path.dart';
 import 'package:paytonpieper/features/authentication/presentation/screens/login_screen.dart';
 import 'package:paytonpieper/features/onboarding/controller/onboarding_screen_controller.dart';
-import 'package:paytonpieper/features/onboarding/presentation/widget/onboarding_index_tracker.dart';
 
 class OnboardingScreen4 extends StatelessWidget {
   final OnboardingScreenController controller =
@@ -83,7 +81,7 @@ class OnboardingScreen4 extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 SizedBox(height: 18.h),
-                OnboardingIndexTracker(controller: controller),
+                //OnboardingIndexTracker(controller: controller),
                 Spacer(flex: 3),
                 Row(
                   children: [
@@ -102,13 +100,49 @@ class OnboardingScreen4 extends StatelessWidget {
                     ),
                     SizedBox(width: 12.w),
                     Expanded(
-                      child: SizedBox(
-                        height: 36.h,
-                        child: CustomButton2(
-                          ontap: () {
-                            Get.to(() => LoginScreen());
-                          },
-                          title: 'Next',
+                      child: GestureDetector(
+                        onTap: () {
+                          Get.to(()=>LoginScreen());
+                        },
+                        child: Container(
+                          height: 36.h,
+                          decoration: BoxDecoration(
+                            color: AppColors.orangeFF6B35Color,
+                            borderRadius: BorderRadius.circular(50.r),
+                          ),
+                          child: Row(
+                            children: [
+                              SizedBox(width: 12.w),
+                              Text(
+                                "Next",
+                                style: getTextStyle(
+                                  color: AppColors.blackColor,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  lineHeight: 10,
+                                ),
+                              ),
+                              Spacer(),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: AppColors.whiteColor.withValues(
+                                    alpha: 0.2,
+                                  ),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4.0),
+                                  child: Image.asset(
+                                    IconPath.arrowUpRight,
+                                    width: 20.r,
+                                    height: 20.r,
+                                    color: AppColors.whiteColor,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 12.w),
+                            ],
+                          ),
                         ),
                       ),
                     ),

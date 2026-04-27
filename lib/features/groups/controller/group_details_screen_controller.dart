@@ -1,18 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/utils/constants/image_path.dart';
 
 enum GroupDetailsTab { reports, chat, members }
 
+enum GroupInviteMethod { friends, code, email }
+
 class GroupDetailsScreenController extends GetxController {
   final Rx<GroupDetailsTab> selectedTab = GroupDetailsTab.reports.obs;
   final TextEditingController messageController = TextEditingController();
+  final TextEditingController inviteEmailController = TextEditingController();
+  final Rx<GroupInviteMethod> selectedInviteMethod =
+      GroupInviteMethod.friends.obs;
+  final RxList<String> selectedFriendIds = <String>[].obs;
+  final RxBool hasInviteEmails = false.obs;
 
   String groupName = 'Miami Offshore Crew';
   String groupMembers = '24 members';
   String groupCreatedBy = 'Created by Captain Mike';
   String groupDescription = 'South Florida offshore fishing community';
   String groupImage = ImagePath.miamiOffShoreCrewImage;
+  final String inviteCode = 'G13K7O';
 
   final RxList<GroupReportItem> reports = <GroupReportItem>[
     const GroupReportItem(
@@ -109,6 +118,33 @@ class GroupDetailsScreenController extends GetxController {
     ),
   ].obs;
 
+  final RxList<InvitableFriendItem> invitableFriends = <InvitableFriendItem>[
+    const InvitableFriendItem(
+      id: 'marvin-mckinney',
+      name: 'Marvin McKinney',
+      subtitle: 'crew',
+      avatarPath: ImagePath.miamiOffShoreCrewImage,
+    ),
+    const InvitableFriendItem(
+      id: 'devon-lane',
+      name: 'Devon Lane',
+      subtitle: 'crew',
+      avatarPath: ImagePath.messageProfileImage,
+    ),
+    const InvitableFriendItem(
+      id: 'wade-warren',
+      name: 'Wade Warren',
+      subtitle: 'crew',
+      avatarPath: ImagePath.miamiOffShoreCrewImage,
+    ),
+  ].obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    inviteEmailController.addListener(_handleInviteEmailsChanged);
+  }
+
   void setGroupDetails(dynamic arguments) {
     final args = Map<String, dynamic>.from(arguments ?? <String, dynamic>{});
     groupName = args['groupName'] as String? ?? 'Miami Offshore Crew';
@@ -130,6 +166,73 @@ class GroupDetailsScreenController extends GetxController {
 
   void changeTab(GroupDetailsTab tab) {
     selectedTab.value = tab;
+  }
+
+  void selectInviteMethod(GroupInviteMethod method) {
+    selectedInviteMethod.value = method;
+  }
+
+  void toggleFriendSelection(String friendId) {
+    if (selectedFriendIds.contains(friendId)) {
+      selectedFriendIds.remove(friendId);
+      return;
+    }
+
+    selectedFriendIds.add(friendId);
+  }
+
+  bool isFriendSelected(String friendId) {
+    return selectedFriendIds.contains(friendId);
+  }
+
+  void inviteSelectedFriends() {
+    if (selectedFriendIds.isEmpty) {
+      return;
+    }
+
+    final int invitedCount = selectedFriendIds.length;
+    closeInviteMembersSheet();
+    _showInviteFeedback(
+      invitedCount == 1 ? '1 friend invited' : '$invitedCount friends invited',
+    );
+  }
+
+  Future<void> copyInviteCode() async {
+    await Clipboard.setData(ClipboardData(text: inviteCode));
+    _showInviteFeedback('Invite code copied');
+  }
+
+  void sendEmailInvites() {
+    final int emailCount = parsedInviteEmails.length;
+    if (emailCount == 0) {
+      return;
+    }
+
+    closeInviteMembersSheet();
+    _showInviteFeedback(
+      emailCount == 1
+          ? 'Invite sent to 1 email'
+          : 'Invites sent to $emailCount emails',
+    );
+  }
+
+  void closeInviteMembersSheet([BuildContext? context]) {
+    resetInviteMembersSheet();
+    if (context != null && Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+      return;
+    }
+
+    if (Get.isOverlaysOpen) {
+      Get.back();
+    }
+  }
+
+  void resetInviteMembersSheet() {
+    selectedInviteMethod.value = GroupInviteMethod.friends;
+    selectedFriendIds.clear();
+    inviteEmailController.clear();
+    hasInviteEmails.value = false;
   }
 
   void approveRequest(GroupMemberRequest request) {
@@ -159,8 +262,36 @@ class GroupDetailsScreenController extends GetxController {
     messageController.clear();
   }
 
+  List<String> get parsedInviteEmails {
+    return inviteEmailController.text
+        .split(',')
+        .map((email) => email.trim())
+        .where((email) => email.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  void _handleInviteEmailsChanged() {
+    hasInviteEmails.value = parsedInviteEmails.isNotEmpty;
+  }
+
+  void _showInviteFeedback(String message) {
+    Get.closeAllSnackbars();
+    Get.snackbar(
+      'Invite Members',
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: const Color(0xFF12253B),
+      colorText: Colors.white,
+      margin: const EdgeInsets.all(12),
+      duration: const Duration(seconds: 2),
+    );
+  }
+
   @override
   void onClose() {
+    inviteEmailController
+      ..removeListener(_handleInviteEmailsChanged)
+      ..dispose();
     messageController.dispose();
     super.onClose();
   }
@@ -229,5 +360,19 @@ class GroupMemberItem {
     required this.role,
     required this.avatarPath,
     this.isLeader = false,
+  });
+}
+
+class InvitableFriendItem {
+  final String id;
+  final String name;
+  final String subtitle;
+  final String avatarPath;
+
+  const InvitableFriendItem({
+    required this.id,
+    required this.name,
+    required this.subtitle,
+    required this.avatarPath,
   });
 }

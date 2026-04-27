@@ -12,103 +12,130 @@ import '../widgets/summary_tab_widget.dart';
 import '../widgets/weather_tab_widget.dart';
 
 class SummaryScreen extends GetView<SummaryController> {
-  const SummaryScreen({super.key});
+  final bool isReportMainScreen;
+  const SummaryScreen({super.key, required this.isReportMainScreen});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundDarkColor,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Stack(
-              children: [
-                const GlobalRealMapBox(
-                  center: LatLng(25.7617, -80.1918),
-                  zoom: 13.0,
-                ),
-                // Positioned(
-                //   top: 50.h,
-                //   left: 20.w,
-                //   child: GestureDetector(
-                //     onTap: () => Get.back(),
-                //     child: CircleAvatar(
-                //       radius: 20.r,
-                //       backgroundColor: Colors.black.withOpacity(0.5),
-                //       child: const Icon(
-                //         Icons.arrow_back,
-                //         color: Colors.white,
-                //         size: 20,
-                //       ),
-                //     ),
-                //   ),
-                // ),
-              ],
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
-              child: Column(
+      body: SafeArea(
+        top: true,
+        bottom: true,
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              Stack(
                 children: [
-                  SizedBox(height: 20.h),
-                  _buildTabSwitcher(),
-                  SizedBox(height: 20.h),
-                  Obx(() {
-                    final selectedTab = controller.selectedTab.value;
-                    if (selectedTab == 'Reports') {
-                      return const ReportTabWidget();
-                    }
-                    if (selectedTab == 'Weather') {
-                      return const WeatherTabWidget();
-                    }
-                    return const SummaryTabWidget();
-                  }),
-                  SizedBox(height: 40.h),
+                  const GlobalRealMapBox(
+                    center: LatLng(25.76721, -80.1918),
+                    zoom: 13.0,
+                  ),
+                  // Positioned(
+                  //   top: 50.h,
+                  //   left: 20.w,
+                  //   child: GestureDetector(
+                  //     onTap: () => Get.back(),
+                  //     child: CircleAvatar(
+                  //       radius: 20.r,
+                  //       backgroundColor: Colors.black.withOpacity(0.5),
+                  //       child: const Icon(
+                  //         Icons.arrow_back,
+                  //         color: Colors.white,
+                  //         size: 20,
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
-            ),
-          ],
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                child: Column(
+                  children: [
+                    SizedBox(height: 20.h),
+                    _buildTabSwitcher(),
+                    SizedBox(height: 20.h),
+                    Obx(() {
+                      final selectedTab = controller.selectedTab.value;
+                      if (selectedTab == 'Reports') {
+                        return const ReportTabWidget();
+                      }
+                      if (selectedTab == 'Weather') {
+                        return const WeatherTabWidget();
+                      }
+                      return  SummaryTabWidget(isReportMainScreen: isReportMainScreen,);
+                    }),
+                    SizedBox(height: 40.h),
+                  ],
+                ),
+              ),
+              SizedBox(height: 25.h),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildTabSwitcher() {
-    return Row(
-      children: ["Summary", "Reports", "Weather"]
-          .map(
-            (tab) => Expanded(
-              child: Obx(
-                () => GestureDetector(
-                  onTap: () => controller.selectedTab.value = tab,
-                  child: Container(
-                    margin: EdgeInsets.symmetric(horizontal: 4.w),
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    decoration: BoxDecoration(
-                      color: controller.selectedTab.value == tab
-                          ? AppColors.tealColor117A88.withOpacity(0.4)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(10.r),
-                      border: Border.all(
-                        color: controller.selectedTab.value == tab
-                            ? AppColors.blue00F0FFColor
-                            : AppColors.grey3A4B62Color,
-                      ),
+    final tabs = ["Summary", "Reports", "Weather"];
+
+    return Obx(
+      () => Row(
+        children: List.generate(tabs.length, (index) {
+          final tab = tabs[index];
+          final isSelected = controller.selectedTab.value == tab;
+
+          return Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(
+                right: index == tabs.length - 1 ? 0 : 12.w,
+              ),
+              child: GestureDetector(
+                onTap: () => controller.selectedTab.value = tab,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOut,
+                  height: 40.h,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.tealColor117A88
+                        : AppColors.transparentColor,
+                    borderRadius: BorderRadius.circular(14.r),
+                    border: Border.all(
+                      color: isSelected
+                          ? AppColors.tealColor117A88
+                          : AppColors.grey516173Color,
+                      width: 1.2,
                     ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      tab,
-                      style: getTextStyle(
-                        fontSize: 14,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: AppColors.tealColor117A88.withValues(
+                                alpha: 0.4,
+                              ),
+                              blurRadius: 18,
+                              offset: const Offset(10, 10),
+                            ),
+                          ]
+                        : [],
+                  ),
+                  child: Text(
+                    tab,
+                    style: getTextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               ),
             ),
-          )
-          .toList(),
+          );
+        }),
+      ),
     );
   }
 }

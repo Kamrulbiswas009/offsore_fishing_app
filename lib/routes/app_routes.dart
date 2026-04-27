@@ -92,7 +92,7 @@ class AppRoute {
     ),
     GetPage(
       name: summaryScreen,
-      page: () => const SummaryScreen(),
+      page: () =>  SummaryScreen(isReportMainScreen: Get.arguments as bool,),
       binding: BindingsBuilder(() {
         Get.put(SummaryController());
       }),

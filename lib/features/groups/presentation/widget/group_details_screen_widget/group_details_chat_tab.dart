@@ -202,7 +202,7 @@ class _MessageBubble extends StatelessWidget {
                   constraints: BoxConstraints(maxWidth: 210.w),
                   padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
                   decoration: BoxDecoration(
-                    color: AppColors.tealColor117A88,
+                    color: Color(0xFF117E97),
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(10.r),
                       topRight: Radius.circular(10.r),

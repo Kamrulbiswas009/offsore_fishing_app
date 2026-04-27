@@ -38,7 +38,7 @@ class SplashScreen1 extends StatelessWidget {
                   child: Text(
                     "25°46'N 80°11'W",
                     style: getTextStyle(
-                      color: AppColors.blue00D4FF66Color.withValues(alpha: 0.6),
+                      color: AppColors.blue00D4FFColor.withValues(alpha: 0.6),
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
                       lineHeight: 9,
@@ -73,7 +73,7 @@ class SplashScreen1 extends StatelessWidget {
                             Text(
                               "Offshore Intelligence Network",
                               style: getTextStyle(
-                                color: AppColors.blue00D4FF66Color,
+                                color: AppColors.blue00D4FFColor,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 lineHeight: 10,
@@ -101,7 +101,7 @@ class SplashScreen1 extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 CircleAvatar(
-                                  backgroundColor: AppColors.blue00D4FF66Color,
+                                  backgroundColor: AppColors.blue00D4FFColor,
                                   radius: 4.r,
                                 ),
                                 SizedBox(width: 8.w),
@@ -131,7 +131,7 @@ class SplashScreen1 extends StatelessWidget {
                   child: Text(
                     "OFFSHORE INTEL",
                     style: getTextStyle(
-                      color: AppColors.blue00D4FF66Color.withValues(alpha: 0.4),
+                      color: AppColors.blue00D4FFColor.withValues(alpha: 0.4),
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
                       lineHeight: 9,

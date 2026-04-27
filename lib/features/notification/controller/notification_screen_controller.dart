@@ -23,7 +23,7 @@ class NotificationScreenController extends GetxController {
           time: '1 hour ago',
           isUnread: true,
           icon: Icons.group_outlined,
-          iconColor: AppColors.blue00D4FF66Color,
+          iconColor: AppColors.blue00D4FFColor,
           iconBackgroundColor: AppColors.blue0D2B43Color,
         ),
         NotificationItemModel(
@@ -47,7 +47,7 @@ class NotificationScreenController extends GetxController {
           description: 'Sarah Johnson joined Gulf Coast Crew',
           time: '1 day ago',
           icon: Icons.group_outlined,
-          iconColor: AppColors.blue00D4FF66Color,
+          iconColor: AppColors.blue00D4FFColor,
           iconBackgroundColor: AppColors.blue0D2B43Color,
         ),
       ];

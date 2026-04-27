@@ -34,7 +34,7 @@ class CreateAccountScreen extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: getTextStyle(
                     color: AppColors.whiteColor,
-                    fontSize: 30,
+                    fontSize: 32,
                     fontWeight: FontWeight.w700,
                     lineHeight: 20,
                   ),
@@ -44,7 +44,7 @@ class CreateAccountScreen extends StatelessWidget {
                   'Join the offshore fishing community',
                   textAlign: TextAlign.center,
                   style: getTextStyle(
-                    color: AppColors.grey8B95A5Color,
+                    color: Color(0xFFDFE3E8),
                     fontSize: 16,
                     fontWeight: FontWeight.w400,
                     lineHeight: 12,
@@ -90,14 +90,14 @@ class CreateAccountScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 36.h),
                 SizedBox(
-                  height: 43.h,
+                  height: 42.h,
                   child: CustomButton(
                     ontap: controller.createAccount,
                     title: 'Create Account',
-                    borderRadius: 7.r,
+                    borderRadius: 10.r,
                     padding: EdgeInsets.zero,
-                    fontSize: 14,
-                    lineHeight: 10,
+                    fontSize: 16,
+                    lineHeight: 12,
                   ),
                 ),
                 SizedBox(height: 40.h),
@@ -110,6 +110,7 @@ class CreateAccountScreen extends StatelessWidget {
                         title: 'Google',
                         iconPath: IconPath.googleIcon,
                         onTap: controller.continueWithGoogle,
+                        
                       ),
                     ),
                     SizedBox(width: 12.w),
@@ -129,10 +130,10 @@ class CreateAccountScreen extends StatelessWidget {
                     Text(
                       'Do You have an account? ',
                       style: getTextStyle(
-                        color: AppColors.grey8B95A5Color,
-                        fontSize: 12,
+                        color:const Color(0xFF9CA3AF),
+                        fontSize: 14,
                         fontWeight: FontWeight.w400,
-                        lineHeight: 9,
+                        lineHeight: 10,
                       ),
                     ),
                     GestureDetector(
@@ -140,10 +141,10 @@ class CreateAccountScreen extends StatelessWidget {
                       child: Text(
                         'Log In Account',
                         style: getTextStyle(
-                          color: const Color(0xFF00A6B4),
-                          fontSize: 12,
+                          color: const Color(0xFF117A88),
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          lineHeight: 9,
+                          lineHeight: 10,
                         ),
                       ),
                     ),
