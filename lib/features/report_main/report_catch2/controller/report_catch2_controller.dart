@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/features/report_main/offline_report/screen/offline_report_screen.dart';
+import 'package:paytonpieper/features/submit_report/screen/submit_report_screen.dart';
+import 'package:paytonpieper/core/utils/device/device_utility.dart';
 
 class ReportCatch2Controller extends GetxController {
   // Pattern Toggle
@@ -123,14 +125,12 @@ class ReportCatch2Controller extends GetxController {
     }
   }
 
-  void submitReport() {
-    Get.to(() => const OfflineReportsScreen());
-    Get.snackbar(
-      "Success",
-      "Report Submitted Successfully",
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-    );
+  Future<void> submitReport() async {
+    bool hasInternet = await AppDeviceUtility.hasInternetConnection();
+    if (!hasInternet) {
+      Get.to(() => const OfflineReportsScreen());
+    } else {
+      Get.dialog(const VisibilitySharingDialog(), barrierDismissible: true);
+    }
   }
 }

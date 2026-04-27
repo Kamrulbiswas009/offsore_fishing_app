@@ -718,10 +718,11 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
   Widget _buildSubmitButton() {
     return SizedBox(
       width: double.infinity,
-      height: 56.h,
+      height: 46.h,
       child: ElevatedButton(
         onPressed: controller.submitReport,
         style: ElevatedButton.styleFrom(
+          side: BorderSide(color: Colors.transparent),
           backgroundColor: AppColors.orangeColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30.r),
