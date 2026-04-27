@@ -124,7 +124,7 @@ class ReportCatch2Controller extends GetxController {
   }
 
   void submitReport() {
-    Get.to(OfflineReportsScreen());
+    Get.to(() => const OfflineReportsScreen());
     Get.snackbar(
       "Success",
       "Report Submitted Successfully",

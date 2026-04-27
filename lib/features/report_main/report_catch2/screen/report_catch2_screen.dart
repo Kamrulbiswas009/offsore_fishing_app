@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
+import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/report_main/report_catch2/controller/report_catch2_controller.dart';
 import '../../../../core/utils/constants/colors.dart';
 
@@ -24,13 +25,14 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
               _buildStepper(),
               SizedBox(height: 25.h),
               _buildPatternToggle(),
-              SizedBox(height: 25.h),
+              SizedBox(height: 20.h),
               Text(
                 "Species Caught",
                 style: getTextStyle(
                   fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w500,
                   color: Colors.white,
+                  lineHeight: 27,
                 ),
               ),
               SizedBox(height: 15.h),
@@ -224,7 +226,7 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: AppColors.blue0D2B43Color,
+        color: Color(0xFF0B1C25),
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: AppColors.blue00F0FFColor.withOpacity(0.5)),
       ),
@@ -235,8 +237,9 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
             "Species 1",
             style: getTextStyle(
               fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w500,
               color: Colors.white,
+              lineHeight: 27,
             ),
           ),
           SizedBox(height: 15.h),
@@ -253,13 +256,23 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
             ),
           ),
           SizedBox(height: 12.h),
-          Obx(
-            () => Wrap(
-              spacing: 8.w,
-              children: controller.selectedSpeciesList
-                  .map((s) => _speciesChip(s))
-                  .toList(),
-            ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return Obx(
+                () => Wrap(
+                  spacing: 10.w,
+                  runSpacing: 5.h,
+                  children: controller.selectedSpeciesList
+                      .map(
+                        (s) => SizedBox(
+                          width: (constraints.maxWidth - 10.w) / 2,
+                          child: _speciesChip(s),
+                        ),
+                      )
+                      .toList(),
+                ),
+              );
+            },
           ),
           SizedBox(height: 20.h),
           _buildFishingDetailsCard(),
@@ -279,11 +292,17 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
         border: Border.all(color: AppColors.blue00F0FFColor),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.set_meal, color: AppColors.blue00F0FFColor, size: 14.sp),
+          Image.asset(IconPath.fishRealIcon, height: 20.h, width: 20.w),
           SizedBox(width: 5.w),
-          Text(name, style: getTextStyle(fontSize: 12, color: Colors.white)),
+          Expanded(
+            child: Text(
+              name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: getTextStyle(fontSize: 12, color: Colors.white),
+            ),
+          ),
           SizedBox(width: 5.w),
           GestureDetector(
             onTap: () => controller.removeSpecies(name),
@@ -308,8 +327,9 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
             "Fishing Details",
             style: getTextStyle(
               fontSize: 14,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w500,
               color: Colors.white,
+              lineHeight: 15,
             ),
           ),
           Obx(
@@ -354,9 +374,9 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
         children: [
           Text(
             "Quantity",
-            style: getTextStyle(fontSize: 12, color: AppColors.grey8B95A5Color),
+            style: getTextStyle(fontSize: 12, color: AppColors.whiteColor),
           ),
-          SizedBox(height: 5.h),
+          SizedBox(height: 7.h),
           Container(
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
             decoration: BoxDecoration(
@@ -413,15 +433,16 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
         Text(
           "Fishing Patterns",
           style: getTextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
             color: Colors.white,
+            lineHeight: 27,
           ),
         ),
         SizedBox(height: 15.h),
         Text(
           "Water Column Position",
-          style: getTextStyle(fontSize: 12, color: AppColors.grey8B95A5Color),
+          style: getTextStyle(fontSize: 14, color: AppColors.grey8B95A5Color),
         ),
         SizedBox(height: 10.h),
         Obx(
