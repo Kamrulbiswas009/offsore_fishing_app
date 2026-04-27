@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
+import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/report_main/report_catch/screen/report_catch_screen.dart';
 
 import '../controller/summary_details_controller.dart';
@@ -35,11 +36,27 @@ class WeatherTabWidget extends GetView<SummaryController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        SizedBox(height: 16.h),
         _buildActivityOverview(),
         SizedBox(height: 16.h),
-        _buildLastUpdated(),
-        SizedBox(height: 20.h),
-        _buildMarineDetails(),
+        Container(
+          padding: EdgeInsets.all(16.w),
+          decoration: BoxDecoration(
+            color: AppColors.blue0D2B43Color.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(
+              color: AppColors.blue153A56Color.withValues(alpha: 0.5),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildLastUpdated(),
+              SizedBox(height: 20.h),
+              _buildMarineDetails(),
+            ],
+          ),
+        ),
         SizedBox(height: 20.h),
         _buildSunMoon(),
         SizedBox(height: 20.h),
@@ -55,9 +72,9 @@ class WeatherTabWidget extends GetView<SummaryController> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildLastUpdated(),
-        SizedBox(height: 20.h),
+        SizedBox(height: 14.h),
         _buildSelectDay(),
-        SizedBox(height: 16.h),
+        SizedBox(height: 26.h),
         _buildTimePeriodToggle(),
         SizedBox(height: 16.h),
         _buildForecastCard(),
@@ -142,45 +159,44 @@ class WeatherTabWidget extends GetView<SummaryController> {
   Widget _buildNowForecastToggle() {
     return Obx(() {
       final isNow = controller.selectedWeatherType.value == 'Now';
-      return Container(
-        height: 48.h,
-        decoration: BoxDecoration(
-          color: AppColors.blue0D2B43Color,
-          borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(color: AppColors.blue153A56Color.withOpacity(0.5)),
-        ),
-        child: Row(
-          children: ['Now', 'Forecast'].map((label) {
-            final selected = (label == 'Now') == isNow;
-            return Expanded(
-              child: GestureDetector(
-                onTap: () => controller.selectedWeatherType.value = label,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin: EdgeInsets.all(4.w),
-                  decoration: BoxDecoration(
+      return Row(
+        children: ['Now', 'Forecast'].map((label) {
+          final selected = (label == 'Now') == isNow;
+          return Expanded(
+            flex: selected ? 2 : 1,
+            child: GestureDetector(
+              onTap: () => controller.selectedWeatherType.value = label,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                height: 34.h,
+                margin: EdgeInsets.only(right: label == 'Now' ? 12.w : 0),
+                decoration: BoxDecoration(
+                  color: selected
+                      ? AppColors.teal0C98AFColor
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10.r),
+                  border: Border.all(
                     color: selected
-                        ? AppColors.teal0C98AFColor.withOpacity(0.5)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(8.r),
-                    border: selected
-                        ? Border.all(color: AppColors.blue00F0FFColor)
-                        : null,
+                        ? AppColors.blue00F0FFColor
+                        : AppColors.grey3A4B62Color.withOpacity(0.5),
+                    width: 1,
                   ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    label,
-                    style: getTextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  label,
+                  style: getTextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                    lineHeight: 24,
                   ),
                 ),
               ),
-            );
-          }).toList(),
-        ),
+            ),
+          );
+        }).toList(),
       );
     });
   }
@@ -192,49 +208,65 @@ class WeatherTabWidget extends GetView<SummaryController> {
       children: [
         Row(
           children: [
-            Icon(
-              Icons.electric_bolt,
-              color: AppColors.blue00F0FFColor,
-              size: 18.sp,
-            ),
+            Image.asset(IconPath.activityIcon, width: 18.w, height: 18.h),
             SizedBox(width: 6.w),
             Text(
               'Activity Overview',
               style: getTextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
                 color: Colors.white,
+                lineHeight: 27,
               ),
             ),
           ],
         ),
         SizedBox(height: 14.h),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-          decoration: BoxDecoration(
-            color: AppColors.blue0D2B43Color,
-            borderRadius: BorderRadius.circular(14.r),
-            border: Border.all(
-              color: AppColors.blue153A56Color.withOpacity(0.5),
+        GridView.count(
+          crossAxisCount: 4,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 8.w,
+          crossAxisSpacing: 8.w,
+          childAspectRatio: 0.75,
+          children: [
+            _overviewItem(
+              Icons.air,
+              '12 mph',
+              'NE',
+              label: 'Wind',
+              iconColor: AppColors.orangeColor,
+              borderColor: AppColors.blue00F0FFColor,
+              subtitleColor: AppColors.blue00F0FFColor,
             ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _overviewItem(Icons.air, '12 mph', 'NE', subtitle2: null),
-              _divider(),
-              _overviewItem(
-                Icons.waves,
-                '2-3 ft',
-                'Moderate',
-                valueColor: AppColors.orangeColor,
-              ),
-              _divider(),
-              _overviewItem(Icons.thermostat, '78°F', 'Stable'),
-              _divider(),
-              _overviewItem(Icons.water_drop_outlined, '72%', 'Normal'),
-            ],
-          ),
+            _overviewItem(
+              Icons.waves,
+              '2-3 ft',
+              'Moderate',
+              label: 'Waves',
+              iconColor: AppColors.blue00F0FFColor,
+              borderColor: AppColors.orangeColor,
+              subtitleColor: AppColors.orangeColor,
+            ),
+            _overviewItem(
+              Icons.thermostat,
+              '78°F',
+              'Stable',
+              label: 'Water Temp',
+              iconColor: AppColors.orangeColor,
+              borderColor: AppColors.blue00F0FFColor,
+              subtitleColor: AppColors.blue00F0FFColor,
+            ),
+            _overviewItem(
+              Icons.water_drop_outlined,
+              '72%',
+              'Normal',
+              label: 'Humidity',
+              iconColor: AppColors.blue00F0FFColor,
+              borderColor: AppColors.orangeColor,
+              subtitleColor: AppColors.orangeColor,
+            ),
+          ],
         ),
       ],
     );
@@ -243,43 +275,64 @@ class WeatherTabWidget extends GetView<SummaryController> {
   Widget _overviewItem(
     IconData icon,
     String value,
-    String label, {
-    Color? valueColor,
-    String? subtitle2,
+    String subtitle, {
+    required String label,
+    required Color iconColor,
+    required Color borderColor,
+    required Color subtitleColor,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, color: AppColors.blue00F0FFColor, size: 13.sp),
-            SizedBox(width: 4.w),
-            Text(
-              _labelFor(icon),
-              style: getTextStyle(
-                fontSize: 9,
-                color: AppColors.grey8B95A5Color,
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: AppColors.blue0D2B43Color,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: borderColor.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: iconColor, size: 12.sp),
+              SizedBox(width: 4.w),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: getTextStyle(
+                    fontSize: 9,
+                    color: AppColors.grey8B95A5Color,
+                  ),
+                ),
               ),
+            ],
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: getTextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
-          ],
-        ),
-        SizedBox(height: 6.h),
-        Text(
-          value,
-          style: getTextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
           ),
-        ),
-        Text(
-          label,
-          style: getTextStyle(
-            fontSize: 10,
-            color: valueColor ?? AppColors.grey8B95A5Color,
+          SizedBox(height: 4.h),
+          Text(
+            subtitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: getTextStyle(
+              fontSize: 10,
+              color: subtitleColor,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -303,9 +356,9 @@ class WeatherTabWidget extends GetView<SummaryController> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
       decoration: BoxDecoration(
-        color: AppColors.blue0D2B43Color,
+        color: AppColors.blue0D2B43Color.withOpacity(0.5),
         borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(color: AppColors.blue153A56Color.withOpacity(0.4)),
+        border: Border.all(color: AppColors.blue00F0FFColor.withOpacity(0.3)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -315,9 +368,9 @@ class WeatherTabWidget extends GetView<SummaryController> {
               Icon(
                 Icons.access_time,
                 size: 14.sp,
-                color: AppColors.grey8B95A5Color,
+                color: AppColors.blue00F0FFColor,
               ),
-              SizedBox(width: 6.w),
+              SizedBox(width: 8.w),
               Text(
                 'LAST UPDATED',
                 style: getTextStyle(
@@ -330,7 +383,11 @@ class WeatherTabWidget extends GetView<SummaryController> {
           ),
           Text(
             'about 2 hours ago',
-            style: getTextStyle(fontSize: 12, color: Colors.white),
+            style: getTextStyle(
+              fontSize: 12,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
@@ -354,7 +411,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
       ),
       _MarineItem(
         icon: Icons.thermostat,
-        iconColor: const Color(0xFF00BFFF),
+        iconColor: AppColors.blue00F0FFColor,
         label: 'Air Temperature',
         value: '82°F',
       ),
@@ -372,65 +429,50 @@ class WeatherTabWidget extends GetView<SummaryController> {
         Text(
           'Marine Details',
           style: getTextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            lineHeight: 26,
             color: Colors.white,
           ),
         ),
-        SizedBox(height: 12.h),
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.blue0D2B43Color,
-            borderRadius: BorderRadius.circular(14.r),
-            border: Border.all(
-              color: AppColors.blue153A56Color.withOpacity(0.5),
+        SizedBox(height: 16.h),
+        ...items.map((item) {
+          return Container(
+            margin: EdgeInsets.only(bottom: 10.h),
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+            decoration: BoxDecoration(
+              color: AppColors.blue0D2B43Color.withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: item.iconColor.withValues(alpha: 0.3)),
             ),
-          ),
-          child: Column(
-            children: List.generate(items.length, (index) {
-              final item = items[index];
-              final isLast = index == items.length - 1;
-              return Column(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 14.h,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(item.icon, color: item.iconColor, size: 18.sp),
-                        SizedBox(width: 10.w),
-                        Expanded(
-                          child: Text(
-                            item.label,
-                            style: getTextStyle(
-                              fontSize: 13,
-                              color: AppColors.grey8B95A5Color,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          item.value,
-                          style: getTextStyle(
-                            fontSize: 13,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+            child: Row(
+              children: [
+                Icon(item.icon, color: item.iconColor, size: 18.sp),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: Text(
+                    item.label,
+                    style: getTextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      lineHeight: 20,
+                      color: AppColors.grey8B95A5Color,
                     ),
                   ),
-                  if (!isLast)
-                    Divider(
-                      height: 1,
-                      color: AppColors.blue153A56Color.withOpacity(0.4),
-                    ),
-                ],
-              );
-            }),
-          ),
-        ),
+                ),
+                Text(
+                  item.value,
+                  style: getTextStyle(
+                    fontSize: 14,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    lineHeight: 20,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
       ],
     );
   }
@@ -556,7 +598,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
             color: AppColors.blue0D2B43Color,
             borderRadius: BorderRadius.circular(14.r),
             border: Border.all(
-              color: AppColors.blue153A56Color.withOpacity(0.5),
+              color: AppColors.blue153A56Color.withValues(alpha: 0.5),
             ),
           ),
           child: Column(
@@ -572,7 +614,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
               ),
               Divider(
                 height: 20.h,
-                color: AppColors.blue153A56Color.withOpacity(0.5),
+                color: AppColors.blue153A56Color.withValues(alpha: 0.5),
               ),
               _buildTideEntry(
                 icon: Icons.arrow_upward,
@@ -583,7 +625,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
               ),
               Divider(
                 height: 20.h,
-                color: AppColors.blue153A56Color.withOpacity(0.5),
+                color: AppColors.blue153A56Color.withValues(alpha: 0.5),
               ),
               _buildTideEntry(
                 icon: Icons.arrow_downward,
@@ -637,7 +679,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
           width: 32.w,
           height: 32.w,
           decoration: BoxDecoration(
-            color: AppColors.blue153A56Color.withOpacity(0.5),
+            color: AppColors.blue153A56Color.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(8.r),
           ),
           child: Icon(icon, color: AppColors.blue00F0FFColor, size: 16.sp),
@@ -680,10 +722,10 @@ class WeatherTabWidget extends GetView<SummaryController> {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
                 decoration: BoxDecoration(
-                  color: AppColors.teal0C98AFColor.withOpacity(0.3),
+                  color: AppColors.teal0C98AFColor.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(10.r),
                   border: Border.all(
-                    color: AppColors.blue00F0FFColor.withOpacity(0.5),
+                    color: AppColors.blue00F0FFColor.withValues(alpha: 0.5),
                   ),
                 ),
                 child: Text(
@@ -739,7 +781,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
                       border: Border.all(
                         color: isSelected
                             ? AppColors.blue00F0FFColor
-                            : AppColors.blue153A56Color.withOpacity(0.6),
+                            : AppColors.blue153A56Color.withValues(alpha: 0.6),
                       ),
                     ),
                     child: Text(
@@ -1102,8 +1144,8 @@ class _TideChartPainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          const Color(0xFF00F0FF).withOpacity(0.25),
-          const Color(0xFF00F0FF).withOpacity(0.02),
+          const Color(0xFF00F0FF).withValues(alpha: 0.25),
+          const Color(0xFF00F0FF).withValues(alpha: 0.02),
         ],
       ).createShader(Rect.fromLTWH(0, 0, w, h))
       ..style = PaintingStyle.fill;
