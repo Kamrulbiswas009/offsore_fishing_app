@@ -120,7 +120,7 @@ class ProfileMainScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(height: 40.h),
+              SizedBox(height: 70.h),
             ],
           ),
         ),
