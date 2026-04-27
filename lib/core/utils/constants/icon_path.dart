@@ -56,6 +56,7 @@ class IconPath {
   static const String thermometerIcon = "assets/icons/thermometer_icon.png";
   static const String waveIcon = "assets/icons/wave_icon.png";
   static const String fishRealIcon = "assets/icons/fish_real_icon.png";
+  static const String hookIcon = "assets/icons/hook.png";
 
 
 

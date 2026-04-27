@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
+import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/report_main/report/model/report_model.dart';
 
 import '../controller/summary_details_controller.dart';
@@ -18,14 +19,20 @@ class ReportTabWidget extends GetView<SummaryController> {
         Text(
           "My Reports",
           style: getTextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
             color: Colors.white,
+            lineHeight: 24,
           ),
         ),
+        SizedBox(height: 7.h),
         Text(
           "Track your fishing activity",
-          style: getTextStyle(fontSize: 14, color: AppColors.grey8B95A5Color),
+          style: getTextStyle(
+            fontSize: 14,
+            color: AppColors.grey8B95A5Color,
+            fontWeight: FontWeight.w400,
+          ),
         ),
         SizedBox(height: 20.h),
 
@@ -47,6 +54,7 @@ class ReportTabWidget extends GetView<SummaryController> {
             return _buildReportCard(controller.reports[index], index);
           },
         ),
+        SizedBox(height: 40.h),
       ],
     );
   }
@@ -128,7 +136,9 @@ class ReportTabWidget extends GetView<SummaryController> {
           child: Text(
             text,
             style: getTextStyle(
-              fontSize: 12,
+              lineHeight: 20,
+              fontWeight: FontWeight.w400,
+              fontSize: 14,
               color: AppColors.green10B981Color,
             ),
           ),
@@ -149,7 +159,9 @@ class ReportTabWidget extends GetView<SummaryController> {
       decoration: BoxDecoration(
         color: AppColors.blue0D2B43Color,
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.blue153A56Color),
+        border: Border.all(
+          color: AppColors.blue00D4FFColor.withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,9 +196,10 @@ class ReportTabWidget extends GetView<SummaryController> {
                 child: Text(
                   "${report.confirms} confirms",
                   style: getTextStyle(
-                    fontSize: 11,
+                    fontSize: 12,
                     color: AppColors.orangeColor,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w400,
+                    lineHeight: 16,
                   ),
                 ),
               ),
@@ -223,7 +236,7 @@ class ReportTabWidget extends GetView<SummaryController> {
                 fontSize: 13,
                 color: AppColors.greyC8D0DBColor,
                 fontWeight: FontWeight.w300,
-                lineHeight: 1.4,
+                lineHeight: 14,
               ),
             ),
           ],
@@ -244,14 +257,16 @@ class ReportTabWidget extends GetView<SummaryController> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.lock, color: Colors.white, size: 16.sp),
-                  SizedBox(width: 8.w),
+                  Image.asset(IconPath.hookIcon, width: 16.w, height: 16.h),
+
+                  SizedBox(width: 4.w),
                   Text(
                     "Confirm Bite",
                     style: getTextStyle(
                       fontSize: 14,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
                       color: Colors.white,
+                      lineHeight: 20,
                     ),
                   ),
                 ],
@@ -269,14 +284,18 @@ class ReportTabWidget extends GetView<SummaryController> {
         children: [
           TextSpan(
             text: "$label ",
-            style: getTextStyle(fontSize: 13, color: AppColors.grey8B95A5Color),
+            style: getTextStyle(
+              fontSize: 14,
+              color: AppColors.grey8B95A5Color,
+              fontWeight: FontWeight.w400,
+            ),
           ),
           TextSpan(
             text: value,
             style: getTextStyle(
-              fontSize: 13,
+              fontSize: 14,
               color: Colors.white,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w400,
             ),
           ),
         ],
