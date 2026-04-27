@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/features/success_submit_report/controller/success_controller.dart';
+import 'package:paytonpieper/core/common/widgets/custom_button.dart';
 import '../../../../core/utils/constants/colors.dart';
 
 class ReportSuccessScreen extends StatelessWidget {
@@ -178,30 +179,18 @@ class ReportSuccessScreen extends StatelessWidget {
         // View Report Button
         SizedBox(
           width: double.infinity,
-          height: 46.h,
-          child: ElevatedButton(
-            onPressed: controller.viewReport,
-            style: ElevatedButton.styleFrom(
-              side: BorderSide(color: Colors.transparent),
-              backgroundColor: AppColors.orangeColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15.r),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.assignment_outlined, size: 20.sp),
-                SizedBox(width: 10.w),
-                Text(
-                  "View My Report",
-                  style: getTextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
+          child: CustomButton(
+            ontap: controller.viewReport,
+            title: "View My Report",
+            bgColor: AppColors.orangeColor,
+            titleColor: Colors.white,
+            fontSize: 16,
+            padding: EdgeInsets.symmetric(vertical: 14.h),
+            borderRadius: 15.r,
+            borderColor: Colors.transparent,
+            prefixIcon: Padding(
+              padding: EdgeInsets.only(right: 10.w),
+              child: Icon(Icons.assignment_outlined, size: 20.sp, color: Colors.white),
             ),
           ),
         ),
@@ -210,29 +199,18 @@ class ReportSuccessScreen extends StatelessWidget {
         // Add Another Button
         SizedBox(
           width: double.infinity,
-          height: 46.h,
-          child: OutlinedButton(
-            onPressed: controller.addAnother,
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: AppColors.blue00F0FFColor, width: 1.5),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15.r),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.add, color: AppColors.blue00F0FFColor, size: 20.sp),
-                SizedBox(width: 10.w),
-                Text(
-                  "Add Another Report",
-                  style: getTextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.blue00F0FFColor,
-                  ),
-                ),
-              ],
+          child: CustomButton(
+            ontap: controller.addAnother,
+            title: "Add Another Report",
+            bgColor: Colors.transparent,
+            titleColor: AppColors.blue00F0FFColor,
+            fontSize: 16,
+            padding: EdgeInsets.symmetric(vertical: 14.h),
+            borderRadius: 15.r,
+            borderColor: AppColors.blue00F0FFColor,
+            prefixIcon: Padding(
+              padding: EdgeInsets.only(right: 10.w),
+              child: Icon(Icons.add, color: AppColors.blue00F0FFColor, size: 20.sp),
             ),
           ),
         ),

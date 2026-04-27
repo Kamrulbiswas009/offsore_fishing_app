@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/features/report_main/report_catch/controller/report_catch_step1_screen.dart';
+import 'package:paytonpieper/core/common/widgets/custom_button.dart';
 import '../../../../core/utils/constants/colors.dart';
 
 class ReportCatchStep1Screen extends GetView<ReportCatchController> {
@@ -299,25 +300,15 @@ class ReportCatchStep1Screen extends GetView<ReportCatchController> {
   Widget _buildConfirmButton() {
     return SizedBox(
       width: double.infinity,
-      height: 46.h,
-      child: ElevatedButton(
-        onPressed: controller.confirmGrid,
-        style: ElevatedButton.styleFrom(
-          side: BorderSide(color: Colors.transparent),
-          backgroundColor: AppColors.orangeColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30.r),
-          ),
-          elevation: 0,
-        ),
-        child: Text(
-          "Confirm Grid",
-          style: getTextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
+      child: CustomButton(
+        ontap: controller.confirmGrid,
+        title: "Confirm Grid",
+        bgColor: AppColors.orangeColor,
+        titleColor: Colors.white,
+        fontSize: 18,
+        padding: EdgeInsets.symmetric(vertical: 14.h),
+        borderRadius: 30.r,
+        borderColor: Colors.transparent,
       ),
     );
   }
