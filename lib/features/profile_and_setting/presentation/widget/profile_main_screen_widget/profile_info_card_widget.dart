@@ -23,9 +23,9 @@ class ProfileInfoCardWidget extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(12.r),
       decoration: BoxDecoration(
-        color: AppColors.black2A2F3AColor.withValues(alpha: 0.30),
+        color: AppColors.containerBackgroundColor,// AppColors.black2A2F3AColor.withValues(alpha: 0.30),
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.tealColor117A88),
+        border: Border.all(color: Color(0xFF117E97)),
       ),
       child: Row(
         children: [

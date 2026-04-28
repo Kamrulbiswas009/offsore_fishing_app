@@ -14,7 +14,7 @@ class ProfileStatCardWidget extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 18.h),
       decoration: BoxDecoration(
-        color: AppColors.black2A2F3AColor.withValues(alpha: 0.30),
+        color: AppColors.containerBackgroundColor,// AppColors.black2A2F3AColor.withValues(alpha: 0.30),
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: item.borderColor),
       ),
