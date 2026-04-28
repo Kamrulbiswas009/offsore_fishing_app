@@ -28,7 +28,7 @@ class InviteMemberBottomSheetWidget
           child: Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: AppColors.navy12253BColor,
+              color: Color(0xFF0F1E33),
               borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
               border: Border.all(
                 color: AppColors.tealColor117A88.withValues(alpha: 0.55),
@@ -168,7 +168,7 @@ class _InviteMethodCard extends GetView<GroupDetailsScreenController> {
       return GestureDetector(
         onTap: () => controller.selectInviteMethod(method),
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
           decoration: BoxDecoration(
             color: isSelected
                 ? AppColors.blue00D4FFColor
@@ -275,7 +275,7 @@ class _FriendsInviteContent extends GetView<GroupDetailsScreenController> {
                   ? AppColors.whiteColor
                   : AppColors.grey8B95A5Color,
               borderRadius: 12,
-              padding: EdgeInsets.symmetric(vertical: 16.h),
+              padding: EdgeInsets.symmetric(vertical: 6.h),
               prefixIcon: Padding(
                 padding: EdgeInsets.only(right: 8.w),
                 child: Image.asset(
@@ -395,7 +395,11 @@ class _CodeInviteContent extends GetView<GroupDetailsScreenController> {
         Container(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
           decoration: BoxDecoration(
-            color: AppColors.blue153A56Color.withValues(alpha: 0.88),
+            gradient: LinearGradient(colors: [
+              AppColors.blue00D4FFColor.withValues(alpha: 0.1),
+              AppColors.orangeFF6B35Color.withValues(alpha: 0.1),
+            ]),
+            //color: AppColors.blue153A56Color.withValues(alpha: 0.88),
             borderRadius: BorderRadius.circular(12.r),
             border: Border.all(
               color: AppColors.blue00D4FFColor.withValues(alpha: 0.55),
@@ -444,7 +448,7 @@ class _CodeInviteContent extends GetView<GroupDetailsScreenController> {
           lineHeight: 12,
           bgColor: AppColors.orangeFF6B35Color,
           borderRadius: 12,
-          padding: EdgeInsets.symmetric(vertical: 16.h),
+          padding: EdgeInsets.symmetric(vertical: 8.h),
           prefixIcon: Padding(
             padding: EdgeInsets.only(right: 8.w),
             child: Icon(
@@ -545,7 +549,7 @@ class _EmailInviteContent extends GetView<GroupDetailsScreenController> {
                   ? AppColors.whiteColor
                   : AppColors.grey8B95A5Color,
               borderRadius: 12,
-              padding: EdgeInsets.symmetric(vertical: 16.h),
+              padding: EdgeInsets.symmetric(vertical: 8.h),
               prefixIcon: Padding(
                 padding: EdgeInsets.only(right: 8.w),
                 child: Image.asset(

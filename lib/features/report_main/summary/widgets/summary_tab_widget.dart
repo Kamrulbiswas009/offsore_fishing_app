@@ -716,7 +716,7 @@ class SummaryTabWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.blue0D2B43Color,
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.blue153A56Color.withOpacity(0.5)),
+        border: Border.all(color: AppColors.blue153A56Color.withValues(alpha:  0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
