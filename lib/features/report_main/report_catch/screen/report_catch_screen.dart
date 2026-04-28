@@ -269,7 +269,7 @@ class ReportCatchStep1Screen extends GetView<ReportCatchController> {
             if (footer != null) ...[
               SizedBox(height: 5.h),
               Divider(
-                color: AppColors.grey3A4B62Color.withOpacity(0.3),
+                color: AppColors.grey3A4B62Color.withValues(alpha:  0.3),
                 thickness: 1,
               ),
               // SizedBox(height: 5.h),

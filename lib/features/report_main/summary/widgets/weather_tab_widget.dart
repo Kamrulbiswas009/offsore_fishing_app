@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use, unused_element
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -91,10 +93,10 @@ class WeatherTabWidget extends GetView<SummaryController> {
       decoration: BoxDecoration(
         color: AppColors.blue0D2B43Color,
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.blue153A56Color.withOpacity(0.5)),
+        border: Border.all(color: AppColors.blue153A56Color.withValues(alpha:  0.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha:  0.08),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -113,7 +115,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
                 borderRadius: BorderRadius.circular(20.r),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.teal0C98AFColor.withOpacity(0.25),
+                    color: AppColors.teal0C98AFColor.withValues(alpha:  0.25),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -179,7 +181,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
                   border: Border.all(
                     color: selected
                         ? AppColors.blue00F0FFColor
-                        : AppColors.grey3A4B62Color.withOpacity(0.5),
+                        : AppColors.grey3A4B62Color.withValues(alpha:  0.5),
                     width: 1,
                   ),
                 ),
@@ -286,7 +288,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
       decoration: BoxDecoration(
         color: AppColors.blue0D2B43Color,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: borderColor.withOpacity(0.3)),
+        border: Border.all(color: borderColor.withValues(alpha:  0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -473,6 +475,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
               ],
             ),
           );
+        // ignore: unnecessary_to_list_in_spreads
         }).toList(),
       ],
     );
@@ -550,7 +553,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: iconColor.withOpacity(0.2), width: 1),
+        border: Border.all(color: iconColor.withValues(alpha:  0.2), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

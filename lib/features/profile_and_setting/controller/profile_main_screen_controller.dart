@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:paytonpieper/core/common/widgets/common_message.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/core/utils/constants/image_path.dart';
@@ -54,7 +55,9 @@ class ProfileMainScreenController extends GetxController {
 
   void onEditProfile() {}
 
-  void onUpgradeToPro() {}
+  void onUpgradeToPro() {
+    CommonMessage.showMessage(title: "Alert", message: "This is under developement",);
+  }
 
   void onLogout() {}
 

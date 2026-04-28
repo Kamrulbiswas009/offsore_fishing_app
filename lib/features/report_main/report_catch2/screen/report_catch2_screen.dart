@@ -229,7 +229,7 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
       decoration: BoxDecoration(
         color: Color(0xFF0B1C25),
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.blue00F0FFColor.withOpacity(0.5)),
+        border: Border.all(color: AppColors.blue00F0FFColor.withValues(alpha:  0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

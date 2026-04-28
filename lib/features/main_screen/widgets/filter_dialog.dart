@@ -37,7 +37,7 @@ class FilterDialog extends StatelessWidget {
                   IconButton(
                     onPressed: () => Get.back(),
                     icon: Icon(Icons.close, color: Colors.white, size: 28.sp),
-                    style: IconButton.styleFrom(backgroundColor: Colors.white.withOpacity(0.1)),
+                    style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.1)),
                   )
                 ],
               ),
@@ -65,7 +65,7 @@ class FilterDialog extends StatelessWidget {
                   activeTrackColor: AppColors.blue00F0FFColor,
                   inactiveTrackColor: AppColors.blue1B2134Color,
                   thumbColor: AppColors.orangeColor,
-                  overlayColor: AppColors.orangeColor.withOpacity(0.2),
+                  overlayColor: AppColors.orangeColor.withValues(alpha:  0.2),
                 ),
                 child: Slider(
                   value: controller.depthValue.value,
@@ -181,7 +181,7 @@ class FilterDialog extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected ? AppColors.teal163A42Color : AppColors.blue1B2134Color,
           borderRadius: BorderRadius.circular(12.r),
-          boxShadow: isSelected ? [BoxShadow(color: AppColors.blue00F0FFColor.withOpacity(0.3), blurRadius: 10)] : [],
+          boxShadow: isSelected ? [BoxShadow(color: AppColors.blue00F0FFColor.withValues(alpha: 0.3), blurRadius: 10)] : [],
         ),
         child: Text(label, style: getTextStyle(fontSize: 14, color: Colors.white, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
       ),

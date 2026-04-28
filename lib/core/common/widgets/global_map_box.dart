@@ -82,7 +82,7 @@ class GlobalRealMapBox extends StatelessWidget {
               onTap: () => Get.back(),
               child: CircleAvatar(
                 radius: 20.r,
-                backgroundColor: Colors.black.withOpacity(0.5),
+                backgroundColor: Colors.black.withValues(alpha: 0.5),
                 child: const Icon(
                   Icons.arrow_back,
                   color: Colors.white,

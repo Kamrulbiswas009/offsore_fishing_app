@@ -72,7 +72,7 @@ class OfflineReportsScreen extends GetView<OfflineReportsTabController> {
           () => controller.isSyncing.value
               ? Container(
                   width: double.infinity,
-                  color: AppColors.orangeFF6B35Color.withOpacity(0.8),
+                  color: AppColors.orangeFF6B35Color.withValues(alpha: 0.8),
                   padding: EdgeInsets.symmetric(vertical: 4.h),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -109,7 +109,7 @@ class OfflineReportsScreen extends GetView<OfflineReportsTabController> {
                     padding: EdgeInsets.symmetric(vertical: 12.h),
                     decoration: BoxDecoration(
                       color: controller.selectedTab.value == tab
-                          ? AppColors.teal163A42Color.withOpacity(0.4)
+                          ? AppColors.teal163A42Color.withValues(alpha:  0.4)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(10.r),
                       border: Border.all(
@@ -168,7 +168,7 @@ class OfflineReportsScreen extends GetView<OfflineReportsTabController> {
       decoration: BoxDecoration(
         color: AppColors.blue0D2B43Color,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppColors.blue00F0FFColor.withOpacity(0.3)),
+        border: Border.all(color: AppColors.blue00F0FFColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -223,7 +223,7 @@ class OfflineReportsScreen extends GetView<OfflineReportsTabController> {
         color: AppColors.blue1B2134Color,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12.r),
-          side: BorderSide(color: AppColors.grey3A4B62Color.withOpacity(0.5)),
+          side: BorderSide(color: AppColors.grey3A4B62Color.withValues(alpha:  0.5)),
         ),
         itemBuilder: (BuildContext context) {
           return options.map((String option) {
@@ -263,7 +263,7 @@ class OfflineReportsScreen extends GetView<OfflineReportsTabController> {
     return Row(
       children: [
         Expanded(
-          child: Divider(color: AppColors.grey3A4B62Color.withOpacity(0.5)),
+          child: Divider(color: AppColors.grey3A4B62Color.withValues(alpha: 0.5)),
         ),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 4.w),
@@ -276,7 +276,7 @@ class OfflineReportsScreen extends GetView<OfflineReportsTabController> {
           ),
         ),
         Expanded(
-          child: Divider(color: AppColors.grey3A4B62Color.withOpacity(0.5)),
+          child: Divider(color: AppColors.grey3A4B62Color.withValues(alpha: 0.5)),
         ),
       ],
     );
@@ -417,7 +417,7 @@ class OfflineReportsScreen extends GetView<OfflineReportsTabController> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: AppColors.orangeColor.withOpacity(0.1),
+        color: AppColors.orangeColor.withValues(alpha:  0.1),
         borderRadius: BorderRadius.circular(20.r),
       ),
       child: Text(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
+import 'package:paytonpieper/core/common/widgets/common_message.dart';
 import 'package:paytonpieper/core/common/widgets/custom_back_button.dart';
 import 'package:paytonpieper/core/common/widgets/custom_button.dart';
 import 'package:paytonpieper/core/common/widgets/custom_text_field.dart';
@@ -85,6 +86,11 @@ class CreateGroupScreen extends StatelessWidget {
                   child: CustomButton(
                     ontap: () {
                       //create group method will be called here
+                      CommonMessage.showMessage(
+                        title: "Alert",
+                        message: "This is under development",
+                        snackPosition: SnackPosition.TOP,
+                      );
                     },
                     title: "Create Group",
                     borderRadius: 10.r,
