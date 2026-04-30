@@ -61,7 +61,9 @@ class JoinGroupBottomSheet extends GetView<GroupMainScreenController> {
                                   ),
                                   //SizedBox(height: 4.h),
                                   Text(
-                                    'Enter invite code',
+                                    controller.hasJoinedGroup.value
+                                        ? 'Sucessfully joined'
+                                        : 'Enter invite code',
                                     style: getTextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
