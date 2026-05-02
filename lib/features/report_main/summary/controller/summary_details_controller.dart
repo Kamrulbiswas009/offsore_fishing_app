@@ -1,13 +1,26 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:paytonpieper/features/map/model/map_zone_model.dart';
 import 'package:paytonpieper/features/report_main/report/model/report_model.dart';
+import 'package:paytonpieper/features/report_main/report_catch/screen/report_catch_screen.dart';
 
 class SummaryController extends GetxController {
   var selectedTab = "Summary".obs;
   var selectedTimeRange = "Last 3 Days".obs;
+
+  final List<String> timeRangeOptions = [
+    "Last 24 Hours",
+    "Last 3 Days",
+    "Last 7 Days",
+    "Last 30 Days",
+    "This Month",
+    "Custom Range",
+  ];
+
+  void changeTimeRange(String range) {
+    selectedTimeRange.value = range;
+  }
 
   var selectedZone = Rxn<MapZoneModel>();
 
@@ -48,7 +61,7 @@ class SummaryController extends GetxController {
     );
   }
 
-  void onAddReport() => Get.snackbar("Action", "Opening Report Form...");
+  void onAddReport() => Get.to(ReportCatchStep1Screen());
 
   // Filter States
   var selectedSpecies = "Tuna".obs;
