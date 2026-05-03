@@ -27,20 +27,21 @@ class SummaryTabWidget extends StatelessWidget {
             _buildZoneHeader(zone),
             SizedBox(height: 15.h),
           ],
-          _buildUpdateHeader(),
+          _buildUpdateHeader(context),
           SizedBox(height: 25.h),
           _buildActivityOverview(zone),
           SizedBox(height: 18.h),
+          _buildTopSpecies(),
+          SizedBox(height: 12.h),
+
           _buildMarineConditions(),
           SizedBox(height: 12.h),
           _buildPatternIntelligence(),
           SizedBox(height: 16.h),
           _buildActivityTiming(),
+
           SizedBox(height: 16.h),
-          _buildTopSpecies(),
-          SizedBox(height: 16.h),
-          if(isReportMainScreen == false)
-          _buildSpeciesDistribution(),
+          if (isReportMainScreen == false) _buildSpeciesDistribution(),
           SizedBox(height: 30.h),
         ],
       );
@@ -95,31 +96,67 @@ class SummaryTabWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildUpdateHeader() {
+  Widget _buildUpdateHeader(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-          decoration: BoxDecoration(
-            color: Color(0xFF08131D),
-            border: Border.all(color: Color(0xFF2D3748)),
+        PopupMenuButton<String>(
+          offset: const Offset(0, 45),
+          color: const Color(0xFF08131D),
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8.r),
+            side: const BorderSide(color: Color(0xFF2D3748)),
           ),
-          child: Row(
-            children: [
-              Image.asset(IconPath.calendarIcon, height: 14.h, width: 14.w),
-              SizedBox(width: 10.w),
-              Text(
-                "Last 3 Days",
-                style: getTextStyle(
-                  fontSize: 12,
-                  color: Colors.white,
-                  lineHeight: 9,
+          onSelected: (String value) {
+            controller.changeTimeRange(value);
+          },
+          itemBuilder: (BuildContext context) {
+            return controller.timeRangeOptions.map((String option) {
+              return PopupMenuItem<String>(
+                value: option,
+                child: Obx(() {
+                  final isSelected =
+                      controller.selectedTimeRange.value == option;
+                  return Text(
+                    option,
+                    style: getTextStyle(
+                      fontSize: 14,
+                      color: isSelected
+                          ? AppColors.blue00F0FFColor
+                          : Colors.white,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
+                  );
+                }),
+              );
+            }).toList();
+          },
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              color: const Color(0xFF08131D),
+              border: Border.all(color: const Color(0xFF2D3748)),
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            child: Row(
+              children: [
+                Image.asset(IconPath.calendarIcon, height: 14.h, width: 14.w),
+                SizedBox(width: 10.w),
+                Obx(
+                  () => Text(
+                    controller.selectedTimeRange.value,
+                    style: getTextStyle(
+                      fontSize: 12,
+                      color: Colors.white,
+                      lineHeight: 9,
+                    ),
+                  ),
                 ),
-              ),
-              const Icon(Icons.keyboard_arrow_down, color: Colors.white),
-            ],
+                const Icon(Icons.keyboard_arrow_down, color: Colors.white),
+              ],
+            ),
           ),
         ),
         Row(
@@ -329,12 +366,17 @@ class SummaryTabWidget extends StatelessWidget {
                 Image.asset(icon, height: 14.h, width: 14.w),
                 SizedBox(width: 4.w),
                 Expanded(
-                  child: Text(
-                    label,
-                    style: getTextStyle(
-                      fontSize: 10,
-                      color: AppColors.grey8B95A5Color,
-                      fontWeight: FontWeight.w600,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      style: getTextStyle(
+                        fontSize: 10,
+                        color: AppColors.grey8B95A5Color,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
@@ -716,7 +758,9 @@ class SummaryTabWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.blue0D2B43Color,
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.blue153A56Color.withValues(alpha:  0.5)),
+        border: Border.all(
+          color: AppColors.blue153A56Color.withValues(alpha: 0.5),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

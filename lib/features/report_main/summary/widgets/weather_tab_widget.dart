@@ -6,7 +6,6 @@ import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
-import 'package:paytonpieper/features/report_main/report_catch/screen/report_catch_screen.dart';
 
 import '../controller/summary_details_controller.dart';
 
@@ -38,6 +37,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _buildLastUpdated(),
         SizedBox(height: 16.h),
         _buildActivityOverview(),
         SizedBox(height: 16.h),
@@ -52,11 +52,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildLastUpdated(),
-              SizedBox(height: 20.h),
-              _buildMarineDetails(),
-            ],
+            children: [_buildMarineDetails()],
           ),
         ),
         SizedBox(height: 20.h),
@@ -73,8 +69,6 @@ class WeatherTabWidget extends GetView<SummaryController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLastUpdated(),
-        SizedBox(height: 14.h),
         _buildSelectDay(),
         SizedBox(height: 26.h),
         _buildTimePeriodToggle(),
@@ -93,10 +87,12 @@ class WeatherTabWidget extends GetView<SummaryController> {
       decoration: BoxDecoration(
         color: AppColors.blue0D2B43Color,
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.blue153A56Color.withValues(alpha:  0.5)),
+        border: Border.all(
+          color: AppColors.blue153A56Color.withValues(alpha: 0.5),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha:  0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -115,7 +111,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
                 borderRadius: BorderRadius.circular(20.r),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.teal0C98AFColor.withValues(alpha:  0.25),
+                    color: AppColors.teal0C98AFColor.withValues(alpha: 0.25),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -181,7 +177,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
                   border: Border.all(
                     color: selected
                         ? AppColors.blue00F0FFColor
-                        : AppColors.grey3A4B62Color.withValues(alpha:  0.5),
+                        : AppColors.grey3A4B62Color.withValues(alpha: 0.5),
                     width: 1,
                   ),
                 ),
@@ -263,7 +259,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
               Icons.water_drop_outlined,
               '72%',
               'Normal',
-              label: 'Humidity',
+              label: 'Storm Risk',
               iconColor: AppColors.blue00F0FFColor,
               borderColor: AppColors.orangeColor,
               subtitleColor: AppColors.orangeColor,
@@ -288,7 +284,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
       decoration: BoxDecoration(
         color: AppColors.blue0D2B43Color,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: borderColor.withValues(alpha:  0.3)),
+        border: Border.all(color: borderColor.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -353,7 +349,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
     );
   }
 
-  // ── Last Updated ────────────────────────────────────────────────────────────
+  //── Last Updated ────────────────────────────────────────────────────────────
   Widget _buildLastUpdated() {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
@@ -475,7 +471,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
               ],
             ),
           );
-        // ignore: unnecessary_to_list_in_spreads
+          // ignore: unnecessary_to_list_in_spreads
         }).toList(),
       ],
     );
@@ -553,7 +549,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: iconColor.withValues(alpha:  0.2), width: 1),
+        border: Border.all(color: iconColor.withValues(alpha: 0.2), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -594,7 +590,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Tide Currents',
+          'Tide Schedule',
           style: getTextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -997,26 +993,26 @@ class WeatherTabWidget extends GetView<SummaryController> {
             ],
           ),
           // Floating "+" button
-          Positioned(
-            right: 0,
-            bottom: 62.h,
-            child: GestureDetector(
-              onTap: () => Get.to(ReportCatchStep1Screen()),
-              child: Container(
-                width: 46.w,
-                height: 46.w,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [Color(0xFFFF8C42), Color(0xFFE25301)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: Icon(Icons.add, color: Colors.white, size: 24.sp),
-              ),
-            ),
-          ),
+          // Positioned(
+          //   right: 0,
+          //   bottom: 62.h,
+          //   child: GestureDetector(
+          //     onTap: () => Get.to(ReportCatchStep1Screen()),
+          //     child: Container(
+          //       width: 46.w,
+          //       height: 46.w,
+          //       decoration: const BoxDecoration(
+          //         shape: BoxShape.circle,
+          //         gradient: LinearGradient(
+          //           colors: [Color(0xFFFF8C42), Color(0xFFE25301)],
+          //           begin: Alignment.topLeft,
+          //           end: Alignment.bottomRight,
+          //         ),
+          //       ),
+          //       child: Icon(Icons.add, color: Colors.white, size: 24.sp),
+          //     ),
+          //   ),
+          // ),
         ],
       );
     });

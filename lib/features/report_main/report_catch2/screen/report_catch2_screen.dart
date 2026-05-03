@@ -171,28 +171,33 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
           ),
           SizedBox(height: 15.h),
           Obx(
-            () => Row(
+            () => Column(
               children: [
-                _toggleBtn(
-                  "Yes",
-                  controller.isSamePattern.value,
-                  () => controller.isSamePattern.value = true,
+                Row(
+                  children: [
+                    _toggleBtn(
+                      "Yes",
+                      controller.isSamePattern.value,
+                      () => controller.isSamePattern.value = true,
+                    ),
+                    SizedBox(width: 10.w),
+                    _toggleBtn(
+                      "No",
+                      !controller.isSamePattern.value,
+                      () => controller.isSamePattern.value = false,
+                    ),
+                  ],
                 ),
-                SizedBox(width: 10.w),
-                _toggleBtn(
-                  "No",
-                  !controller.isSamePattern.value,
-                  () => controller.isSamePattern.value = false,
+                SizedBox(height: 15.h),
+                Text(
+                  controller.isSamePattern.value
+                      ? "Yes=One pattern for all species on this report"
+                      : "No=Different pattern for some species on this report",
+                  style: getTextStyle(
+                      fontSize: 12, color: AppColors.greyC8D0DBColor),
                 ),
               ],
             ),
-          ),
-          SizedBox(height: 15.h),
-          Text(
-            controller.isSamePattern.value
-                ? "Yes=One Pattern for all species above"
-                : "No=Different Pattern for different species above",
-            style: getTextStyle(fontSize: 12, color: AppColors.greyC8D0DBColor),
           ),
         ],
       ),
@@ -395,11 +400,21 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
                       icon: Icon(
                         Icons.keyboard_arrow_down,
                         color: Colors.white,
+                        size: 20.sp,
                       ),
                       style: getTextStyle(color: Colors.white),
-                      isExpanded: false,
+                      isExpanded: true,
                       items: controller.speciesOptions.map((s) {
-                        return DropdownMenuItem(value: s, child: Text(s));
+                        return DropdownMenuItem(
+                          value: s,
+                          child: Row(
+                            children: [
+                              Image.asset(IconPath.fishRealIcon, height: 18.h, width: 18.w),
+                              SizedBox(width: 8.w),
+                              Text(s, style: getTextStyle(color: Colors.white, fontSize: 14)),
+                            ],
+                          ),
+                        );
                       }).toList(),
                       onChanged: (val) {
                         if (val != null && val != species) {
@@ -412,12 +427,34 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
                     ),
                   ),
                 ),
-                GestureDetector(
-                  onTap: () {
-                    final currentQty = controller.quantities[species] ?? 1;
-                    controller.updateQuantity(species, currentQty + 1);
-                  },
-                  child: Text(qty, style: getTextStyle(color: Colors.white)),
+                SizedBox(width: 10.w),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(qty, style: getTextStyle(color: Colors.white, fontSize: 14)),
+                    SizedBox(width: 8.w),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            final currentQty = controller.quantities[species] ?? 1;
+                            controller.updateQuantity(species, currentQty + 1);
+                          },
+                          child: Icon(Icons.keyboard_arrow_up, color: Colors.white, size: 20.sp),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            final currentQty = controller.quantities[species] ?? 1;
+                            if (currentQty > 1) {
+                              controller.updateQuantity(species, currentQty - 1);
+                            }
+                          },
+                          child: Icon(Icons.keyboard_arrow_down, color: Colors.white, size: 20.sp),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ],
             ),

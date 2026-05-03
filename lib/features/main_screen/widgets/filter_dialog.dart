@@ -43,7 +43,6 @@ class FilterDialog extends StatelessWidget {
               ),
               SizedBox(height: 25.h),
 
-              // --- Species Section ---
               _sectionHeader(Icons.sailing, "Species"),
               Obx(() => Wrap(
                 spacing: 10.w, runSpacing: 10.h,
@@ -51,7 +50,6 @@ class FilterDialog extends StatelessWidget {
               )),
               SizedBox(height: 25.h),
 
-              // --- Depth Range Section ---
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -76,7 +74,6 @@ class FilterDialog extends StatelessWidget {
               _depthLabels(),
               SizedBox(height: 25.h),
 
-              // --- Method Section ---
               _sectionHeader(Icons.lock, "Method"),
               Obx(() => Wrap(
                 spacing: 10.w, runSpacing: 10.h,
@@ -84,18 +81,16 @@ class FilterDialog extends StatelessWidget {
               )),
               SizedBox(height: 25.h),
 
-              // --- Report Visibility ---
               _sectionHeader(Icons.assignment, "Report Visibility"),
               Obx(() => Row(
                 children: [
-                  _radioOption("Public", controller.visibility.value == "Public", () => controller.visibility.value = "Public"),
+                  _visibilityOption("Public", controller.selectedVisibilities.contains("Public"), () => controller.toggleVisibility("Public")),
                   SizedBox(width: 20.w),
-                  _radioOption("Group", controller.visibility.value == "Group", () => controller.visibility.value = "Group"),
+                  _visibilityOption("Group", controller.selectedVisibilities.contains("Group"), () => controller.toggleVisibility("Group")),
                 ],
               )),
               SizedBox(height: 25.h),
 
-              // --- Time Range Section ---
               _sectionHeader(Icons.alarm, "Time Range"),
               Obx(() => Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -103,7 +98,6 @@ class FilterDialog extends StatelessWidget {
               )),
               SizedBox(height: 35.h),
 
-              // --- Action Buttons ---
               Row(
                 children: [
                   Expanded(child: _actionButton("Reset", AppColors.blue1B2134Color, () => controller.resetFilters())),
@@ -129,7 +123,6 @@ class FilterDialog extends StatelessWidget {
     );
   }
 
-  // --- Helper Widgets ---
 
   Widget _sectionHeader(IconData icon, String title) {
     return Padding(
@@ -159,12 +152,12 @@ class FilterDialog extends StatelessWidget {
     );
   }
 
-  Widget _radioOption(String label, bool isSelected, VoidCallback onTap) {
+  Widget _visibilityOption(String label, bool isSelected, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Row(
         children: [
-          Icon(isSelected ? Icons.radio_button_checked : Icons.radio_button_off, color: isSelected ? AppColors.blue00F0FFColor : AppColors.grey8B95A5Color),
+          Icon(isSelected ? Icons.check_box : Icons.check_box_outline_blank, color: isSelected ? AppColors.blue00F0FFColor : AppColors.grey8B95A5Color),
           SizedBox(width: 8.w),
           Text(label, style: getTextStyle(fontSize: 14, color: Colors.white)),
         ],

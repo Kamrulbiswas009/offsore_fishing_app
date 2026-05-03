@@ -7,6 +7,13 @@ import 'package:paytonpieper/features/submit_report/screen/submit_report_screen.
 import 'package:paytonpieper/core/utils/device/device_utility.dart';
 
 class ReportCatch2Controller extends GetxController {
+  @override
+  void onInit() {
+    super.onInit();
+    selectedDate.value = DateFormat('MM/dd/yyyy').format(DateTime.now());
+    selectedTime.value = DateFormat('hh:mm a').format(DateTime.now());
+  }
+
   // Pattern Toggle
   var isSamePattern = true.obs;
 
@@ -14,10 +21,10 @@ class ReportCatch2Controller extends GetxController {
   var speciesOptions = [
     "Tuna",
     "Snapper",
-    "Dolphin",
     "Marlin",
     "Grouper",
-    "Mackerel",
+    "Wahoo",
+    "Mahi",
   ].obs;
   var selectedSpeciesList = <String>["Tuna", "Snapper", "Dolphin"].obs;
 
@@ -28,13 +35,7 @@ class ReportCatch2Controller extends GetxController {
   var waterPosition = "Suspended".obs; // Topwater, Suspended, Bottom
 
   // Dropdown Options
-  var methodOptions = [
-    "Trolling",
-    "Bottom Fishing",
-    "Jigging",
-    "Casting",
-    "Fly Fishing",
-  ].obs;
+  var methodOptions = ["Trolling", "Bottom ", "Jigging", "Live Bailt"].obs;
   var baitOptions = [
     "Live Bait",
     "Artificial Lure",
@@ -52,8 +53,8 @@ class ReportCatch2Controller extends GetxController {
   final strikeZoneController = TextEditingController(text: "80");
   final notesController = TextEditingController();
 
-  var selectedDate = "Select Date".obs;
-  var selectedTime = "Select Time".obs;
+  var selectedDate = DateFormat('MM/dd/yyyy').format(DateTime.now()).obs;
+  var selectedTime = DateFormat('hh:mm a').format(DateTime.now()).obs;
 
   void addSpecies(String name) {
     if (!selectedSpeciesList.contains(name)) {
@@ -74,7 +75,7 @@ class ReportCatch2Controller extends GetxController {
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
+      lastDate: DateTime.now(),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -121,6 +122,26 @@ class ReportCatch2Controller extends GetxController {
         picked.hour,
         picked.minute,
       );
+
+      // Check if picked time is in the future if the selected date is today
+      final selectedDateObj = DateFormat(
+        'MM/dd/yyyy',
+      ).parse(selectedDate.value);
+      final today = DateTime(now.year, now.month, now.day);
+
+      if (selectedDateObj.isAtSameMomentAs(today)) {
+        if (dt.isAfter(now)) {
+          Get.snackbar(
+            "Invalid Time",
+            "You cannot select a future time for today.",
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+          return;
+        }
+      }
+
       selectedTime.value = DateFormat('hh:mm a').format(dt);
     }
   }

@@ -18,8 +18,10 @@ class ReportTabWidget extends GetView<SummaryController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _buildAddReportButton(),
+        SizedBox(height: 20.h),
         Text(
-          "My Reports",
+          "All Zone Reports",
           style: getTextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w700,
@@ -62,23 +64,59 @@ class ReportTabWidget extends GetView<SummaryController> {
   }
 
   Widget _buildReportFilters() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _filterDropdown(controller.selectedSpecies, controller.speciesList),
-          _filterDropdown(controller.selectedDepth, controller.depthList),
-          _filterDropdown(
-            controller.selectedTechnique,
-            controller.techniqueList,
+    return Row(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _filterDropdown(
+                  controller.selectedSpecies,
+                  controller.speciesList,
+                  "Species",
+                ),
+                _filterDropdown(
+                  controller.selectedDepth,
+                  controller.depthList,
+                  "Depth",
+                ),
+                _filterDropdown(
+                  controller.selectedTechnique,
+                  controller.techniqueList,
+                  "Technique",
+                ),
+                _filterDropdown(
+                  controller.selectedTime,
+                  controller.timeList,
+                  "Time",
+                ),
+              ],
+            ),
           ),
-          _filterDropdown(controller.selectedTime, controller.timeList),
-        ],
-      ),
+        ),
+        SizedBox(width: 8.w),
+        InkWell(
+          onTap: () => controller.resetFilters(),
+          child: Container(
+            padding: EdgeInsets.all(10.w),
+            decoration: BoxDecoration(
+              color: AppColors.blue1B2134Color,
+              borderRadius: BorderRadius.circular(8.r),
+              border: Border.all(color: AppColors.grey3A4B62Color),
+            ),
+            child: Icon(Icons.refresh, color: Colors.white, size: 20.sp),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _filterDropdown(RxString selectedValue, List<String> options) {
+  Widget _filterDropdown(
+    RxString selectedValue,
+    List<String> options,
+    String placeholder,
+  ) {
     return Obx(
       () => PopupMenuButton<String>(
         onSelected: (String value) {
@@ -112,7 +150,7 @@ class ReportTabWidget extends GetView<SummaryController> {
           child: Row(
             children: [
               Text(
-                selectedValue.value,
+                selectedValue.value.isEmpty ? placeholder : selectedValue.value,
                 style: getTextStyle(fontSize: 13, color: Colors.white),
               ),
               SizedBox(width: 5.w),
@@ -301,6 +339,36 @@ class ReportTabWidget extends GetView<SummaryController> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAddReportButton() {
+    return InkWell(
+      onTap: controller.onAddReport,
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 8.h),
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: AppColors.orangeFF6B35Color,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.add, color: Colors.white),
+            SizedBox(width: 8.w),
+            Text(
+              "Add Report",
+              style: getTextStyle(
+                fontSize: 16,
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                lineHeight: 12,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
