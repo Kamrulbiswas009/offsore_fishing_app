@@ -13,7 +13,7 @@ class FilterController extends GetxController {
   final List<String> methods = ["Trolling", "Bottom", "Jigging", "Live Bait"];
 
   // Visibility
-  var visibility = "Public".obs;
+  var selectedVisibilities = <String>["Public"].obs;
 
   // Time Range
   var selectedTime = "24h".obs;
@@ -27,11 +27,15 @@ class FilterController extends GetxController {
     selectedMethods.contains(name) ? selectedMethods.remove(name) : selectedMethods.add(name);
   }
 
+  void toggleVisibility(String name) {
+    selectedVisibilities.contains(name) ? selectedVisibilities.remove(name) : selectedVisibilities.add(name);
+  }
+
   void resetFilters() {
     selectedSpecies.clear();
     depthValue.value = 250.0;
     selectedMethods.clear();
-    visibility.value = "Public";
+    selectedVisibilities.assign("Public");
     selectedTime.value = "24h";
   }
 }

@@ -21,10 +21,10 @@ class ReportCatch2Controller extends GetxController {
   var speciesOptions = [
     "Tuna",
     "Snapper",
-    "Dolphin",
     "Marlin",
     "Grouper",
-    "Mackerel",
+    "Wahoo",
+    "Mahi",
   ].obs;
   var selectedSpeciesList = <String>["Tuna", "Snapper", "Dolphin"].obs;
 
@@ -35,13 +35,7 @@ class ReportCatch2Controller extends GetxController {
   var waterPosition = "Suspended".obs; // Topwater, Suspended, Bottom
 
   // Dropdown Options
-  var methodOptions = [
-    "Trolling",
-    "Bottom Fishing",
-    "Jigging",
-    "Casting",
-    "Fly Fishing",
-  ].obs;
+  var methodOptions = ["Trolling", "Bottom ", "Jigging", "Live Bailt"].obs;
   var baitOptions = [
     "Live Bait",
     "Artificial Lure",
@@ -130,7 +124,9 @@ class ReportCatch2Controller extends GetxController {
       );
 
       // Check if picked time is in the future if the selected date is today
-      final selectedDateObj = DateFormat('MM/dd/yyyy').parse(selectedDate.value);
+      final selectedDateObj = DateFormat(
+        'MM/dd/yyyy',
+      ).parse(selectedDate.value);
       final today = DateTime(now.year, now.month, now.day);
 
       if (selectedDateObj.isAtSameMomentAs(today)) {

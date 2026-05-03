@@ -640,7 +640,7 @@ class _ZoneDetailPanel extends StatelessWidget {
                 Get.to(() => SummaryScreen(isReportMainScreen: false));
               },
               child: Text(
-                'View Full Report',
+                'View Full Details',
                 style: getTextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

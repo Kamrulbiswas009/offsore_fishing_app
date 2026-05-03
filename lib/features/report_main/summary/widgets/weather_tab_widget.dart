@@ -37,6 +37,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _buildLastUpdated(),
         SizedBox(height: 16.h),
         _buildActivityOverview(),
         SizedBox(height: 16.h),
@@ -51,11 +52,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildLastUpdated(),
-              SizedBox(height: 20.h),
-              _buildMarineDetails(),
-            ],
+            children: [_buildMarineDetails()],
           ),
         ),
         SizedBox(height: 20.h),
@@ -72,8 +69,6 @@ class WeatherTabWidget extends GetView<SummaryController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLastUpdated(),
-        SizedBox(height: 14.h),
         _buildSelectDay(),
         SizedBox(height: 26.h),
         _buildTimePeriodToggle(),
@@ -354,7 +349,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
     );
   }
 
-  // ── Last Updated ────────────────────────────────────────────────────────────
+  //── Last Updated ────────────────────────────────────────────────────────────
   Widget _buildLastUpdated() {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),

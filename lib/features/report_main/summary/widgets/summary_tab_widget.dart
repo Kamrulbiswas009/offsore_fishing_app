@@ -31,13 +31,15 @@ class SummaryTabWidget extends StatelessWidget {
           SizedBox(height: 25.h),
           _buildActivityOverview(zone),
           SizedBox(height: 18.h),
+          _buildTopSpecies(),
+          SizedBox(height: 12.h),
+
           _buildMarineConditions(),
           SizedBox(height: 12.h),
           _buildPatternIntelligence(),
           SizedBox(height: 16.h),
           _buildActivityTiming(),
-          SizedBox(height: 16.h),
-          _buildTopSpecies(),
+
           SizedBox(height: 16.h),
           if (isReportMainScreen == false) _buildSpeciesDistribution(),
           SizedBox(height: 30.h),
@@ -364,12 +366,17 @@ class SummaryTabWidget extends StatelessWidget {
                 Image.asset(icon, height: 14.h, width: 14.w),
                 SizedBox(width: 4.w),
                 Expanded(
-                  child: Text(
-                    label,
-                    style: getTextStyle(
-                      fontSize: 10,
-                      color: AppColors.grey8B95A5Color,
-                      fontWeight: FontWeight.w600,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      style: getTextStyle(
+                        fontSize: 10,
+                        color: AppColors.grey8B95A5Color,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),

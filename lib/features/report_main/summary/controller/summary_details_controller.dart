@@ -64,16 +64,24 @@ class SummaryController extends GetxController {
   void onAddReport() => Get.to(ReportCatchStep1Screen());
 
   // Filter States
-  var selectedSpecies = "Tuna".obs;
-  var selectedDepth = "100-200 ft".obs;
-  var selectedTechnique = "Trolling".obs;
-  var selectedTime = "24h".obs;
+  var selectedSpecies = "".obs;
+  var selectedDepth = "".obs;
+  var selectedTechnique = "".obs;
+  var selectedTime = "".obs;
+
+  void resetFilters() {
+    selectedSpecies.value = "";
+    selectedDepth.value = "";
+    selectedTechnique.value = "";
+    selectedTime.value = "";
+  }
 
   final List<String> speciesList = [
     "Tuna",
     "Marlin",
-    "Mahi Mahi",
-    "Sailfish",
+    "Mahi",
+    "Snapper",
+    "Grouper",
     "Wahoo",
   ];
   final List<String> depthList = [

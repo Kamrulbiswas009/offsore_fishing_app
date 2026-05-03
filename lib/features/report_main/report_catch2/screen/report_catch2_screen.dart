@@ -171,28 +171,33 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
           ),
           SizedBox(height: 15.h),
           Obx(
-            () => Row(
+            () => Column(
               children: [
-                _toggleBtn(
-                  "Yes",
-                  controller.isSamePattern.value,
-                  () => controller.isSamePattern.value = true,
+                Row(
+                  children: [
+                    _toggleBtn(
+                      "Yes",
+                      controller.isSamePattern.value,
+                      () => controller.isSamePattern.value = true,
+                    ),
+                    SizedBox(width: 10.w),
+                    _toggleBtn(
+                      "No",
+                      !controller.isSamePattern.value,
+                      () => controller.isSamePattern.value = false,
+                    ),
+                  ],
                 ),
-                SizedBox(width: 10.w),
-                _toggleBtn(
-                  "No",
-                  !controller.isSamePattern.value,
-                  () => controller.isSamePattern.value = false,
+                SizedBox(height: 15.h),
+                Text(
+                  controller.isSamePattern.value
+                      ? "Yes=One pattern for all species on this report"
+                      : "No=Different pattern for some species on this report",
+                  style: getTextStyle(
+                      fontSize: 12, color: AppColors.greyC8D0DBColor),
                 ),
               ],
             ),
-          ),
-          SizedBox(height: 15.h),
-          Text(
-            controller.isSamePattern.value
-                ? "Yes=One Pattern for all species above"
-                : "No=Different Pattern for different species above",
-            style: getTextStyle(fontSize: 12, color: AppColors.greyC8D0DBColor),
           ),
         ],
       ),
