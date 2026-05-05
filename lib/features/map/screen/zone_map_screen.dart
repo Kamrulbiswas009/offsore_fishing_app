@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
@@ -22,23 +23,19 @@ class ZoneMapScreen extends StatefulWidget {
 }
 
 class _ZoneMapScreenState extends State<ZoneMapScreen>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   final controller = Get.find<MapScreenController>();
 
   late final AnimationController _panelAnim;
   late final Animation<Offset> _slideAnim;
-  late final AnimationController _pulseAnim;
-  late final Animation<double> _pulseScale;
 
   mapbox.MapboxMap? _mapboxMap;
-  Worker? _zonesWorker;
-  Timer? _markerProjectionDebounce;
-  final Map<String, Offset> _markerOffsets = <String, Offset>{};
+  bool _layersReady = false;
+  Timer? _gridDebounce;
 
   @override
   void initState() {
     super.initState();
-
     _panelAnim = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 380),
@@ -47,107 +44,101 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
       begin: const Offset(0, 1),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _panelAnim, curve: Curves.easeOutCubic));
-
-    _pulseAnim = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
-    _pulseScale = Tween<double>(
-      begin: 1.0,
-      end: 1.18,
-    ).animate(CurvedAnimation(parent: _pulseAnim, curve: Curves.easeInOut));
-
-    _zonesWorker = ever(
-      controller.activeZones,
-      (_) => _scheduleMarkerProjection(),
-    );
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scheduleMarkerProjection();
-    });
   }
 
   @override
   void dispose() {
-    _markerProjectionDebounce?.cancel();
-    _zonesWorker?.dispose();
+    _gridDebounce?.cancel();
     _panelAnim.dispose();
-    _pulseAnim.dispose();
     super.dispose();
   }
 
-  void _onMapCreated(mapbox.MapboxMap mapboxMap) {
-    _mapboxMap = mapboxMap;
-    _scheduleMarkerProjection();
+  // ── Map lifecycle ────────────────────────────────────────────────────────
+
+  Future<void> _onMapCreated(mapbox.MapboxMap map) async {
+    _mapboxMap = map;
   }
 
-  void _onZoneTap(MapZoneModel zone) {
-    controller.selectZone(zone);
-    _panelAnim.forward(from: 0);
+  Future<void> _onStyleLoaded(mapbox.StyleLoadedEventData _) async {
+    if (_layersReady) return;
+    _layersReady = true;
+    await controller.setupMapLayers(_mapboxMap!);
+    // Populate grid for the initial camera position
+    await _updateGridForViewport();
+  }
+
+  // ── Camera change → grid refresh ────────────────────────────────────────
+
+  void _onCameraChange(mapbox.CameraChangedEventData _) {
+    _gridDebounce?.cancel();
+    _gridDebounce = Timer(
+      const Duration(milliseconds: 150),
+      _updateGridForViewport,
+    );
+  }
+
+  Future<void> _updateGridForViewport() async {
+    final map = _mapboxMap;
+    if (map == null || !_layersReady) return;
+    try {
+      // Get current camera state
+      final cam = await map.getCameraState();
+
+      // Derive viewport bounds from camera state
+      final bounds = await map.coordinateBoundsForCamera(
+        mapbox.CameraOptions(
+          center: cam.center,
+          zoom: cam.zoom,
+          bearing: cam.bearing,
+          pitch: cam.pitch,
+          padding: mapbox.MbxEdgeInsets(top: 0, left: 0, bottom: 0, right: 0),
+        ),
+      );
+
+      final sw = LatLng(
+        bounds.southwest.coordinates.lat.toDouble(),
+        bounds.southwest.coordinates.lng.toDouble(),
+      );
+      final ne = LatLng(
+        bounds.northeast.coordinates.lat.toDouble(),
+        bounds.northeast.coordinates.lng.toDouble(),
+      );
+
+      await controller.updateGridForBounds(map, sw, ne);
+    } catch (_) {
+      // Skip transient errors during style/camera transitions
+    }
+  }
+
+  // ── Tap handling ─────────────────────────────────────────────────────────
+
+  Future<void> _onMapTap(mapbox.MapContentGestureContext ctx) async {
+    final coord = ctx.point.coordinates;
+    final zone = controller.zoneForCoordinate(
+      coord.lat.toDouble(),
+      coord.lng.toDouble(),
+    );
+    if (zone != null) {
+      controller.selectZone(zone);
+      _panelAnim.forward(from: 0);
+    } else {
+      _dismissPanel();
+    }
   }
 
   void _dismissPanel() {
     _panelAnim.reverse().then((_) => controller.deselectZone());
   }
 
-  void _scheduleMarkerProjection() {
-    _markerProjectionDebounce?.cancel();
-    _markerProjectionDebounce = Timer(const Duration(milliseconds: 16), () {
-      unawaited(_refreshMarkerOffsets());
-    });
-  }
-
-  Future<void> _refreshMarkerOffsets() async {
-    final mapboxMap = _mapboxMap;
-    if (!mounted || mapboxMap == null || controller.activeZones.isEmpty) {
-      return;
-    }
-
-    try {
-      final pixels = await mapboxMap.pixelsForCoordinates(
-        controller.activeZones.map(_pointForZone).toList(),
-      );
-
-      if (!mounted) {
-        return;
-      }
-
-      final offsets = <String, Offset>{};
-      for (var i = 0; i < controller.activeZones.length; i++) {
-        final pixel = pixels[i];
-        if (pixel == null) {
-          continue;
-        }
-        offsets[controller.activeZones[i].id] = Offset(pixel.x, pixel.y);
-      }
-
-      setState(() {
-        _markerOffsets
-          ..clear()
-          ..addAll(offsets);
-      });
-    } catch (_) {
-      // Skip transient map projection errors while the style/camera is settling.
-    }
-  }
-
-  mapbox.Point _pointForZone(MapZoneModel zone) {
-    return mapbox.Point(
-      coordinates: mapbox.Position(
-        zone.location.longitude,
-        zone.location.latitude,
-      ),
-    );
-  }
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    final markerSize = 50.w;
-
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
+          // ── Mapbox widget ──────────────────────────────────────────────
           mapbox.MapWidget(
             key: const ValueKey('zone-mapbox-widget'),
             styleUri: mapbox.MapboxStyles.SATELLITE_STREETS,
@@ -161,65 +152,24 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
               zoom: 9.5,
             ),
             onMapCreated: _onMapCreated,
-            onMapLoadedListener: (_) => _scheduleMarkerProjection(),
-            onMapIdleListener: (_) => _scheduleMarkerProjection(),
-            onCameraChangeListener: (_) => _scheduleMarkerProjection(),
-            onTapListener: (_) => _dismissPanel(),
+            onStyleLoadedListener: _onStyleLoaded,
+            onCameraChangeListener: _onCameraChange,
+            onTapListener: _onMapTap,
           ),
 
-          Positioned.fill(
-            child: IgnorePointer(child: CustomPaint(painter: _GridPainter())),
-          ),
-
-          ClipRect(
-            child: Obx(
-              () => Stack(
-                children: controller.activeZones.map((zone) {
-                  final offset = _markerOffsets[zone.id];
-                  if (offset == null) {
-                    return const SizedBox.shrink();
-                  }
-
-                  return Positioned(
-                    left: offset.dx - (markerSize / 2),
-                    top: offset.dy - (markerSize / 2),
-                    width: markerSize,
-                    height: markerSize,
-                    child: GestureDetector(
-                      onTap: () => _onZoneTap(zone),
-                      child: Obx(() {
-                        final isSelected =
-                            controller.selectedZone.value?.id == zone.id;
-                        if (isSelected) {
-                          return AnimatedBuilder(
-                            animation: _pulseScale,
-                            builder: (_, child) => Transform.scale(
-                              scale: _pulseScale.value,
-                              child: child,
-                            ),
-                            child: _MarkerBox(zone: zone, isSelected: true),
-                          );
-                        }
-                        return _MarkerBox(zone: zone, isSelected: false);
-                      }),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
-
+          // ── Marine dark overlay ────────────────────────────────────────
           IgnorePointer(
             child: Container(
-              color: AppColors.backgroundDarkColor.withValues(alpha: 0.30),
+              color: AppColors.backgroundDarkColor.withValues(alpha: 0.25),
             ),
           ),
 
+          // ── Fixed UI chrome ────────────────────────────────────────────
           _buildHeader(),
-          _buildCompass(),
           _buildLegend(),
           _buildActionButtons(),
 
+          // ── Zone detail panel ──────────────────────────────────────────
           Obx(() {
             final zone = controller.selectedZone.value;
             if (zone == null) return const SizedBox.shrink();
@@ -237,6 +187,8 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
       ),
     );
   }
+
+  // ── UI widgets ────────────────────────────────────────────────────────────
 
   Widget _buildHeader() {
     return Positioned(
@@ -262,33 +214,38 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
     );
   }
 
-  Widget _buildCompass() {
-    return Positioned(
-      top: 140.h,
-      left: 20.w,
-      child: CircleAvatar(
-        radius: 25.r,
-        backgroundColor: AppColors.blue1B2134Color.withValues(alpha: 0.85),
-        child: Icon(Icons.explore, color: AppColors.orangeColor, size: 28.sp),
-      ),
-    );
-  }
-
   Widget _buildLegend() {
     return Positioned(
       bottom: 85.h,
       left: 20.w,
       child: Container(
-        padding: EdgeInsets.all(12.w),
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
         decoration: BoxDecoration(
-          color: AppColors.blue0D2B43Color.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(12.r),
+          color: AppColors.blue0D2B43Color.withValues(alpha: 0.92),
+          borderRadius: BorderRadius.circular(14.r),
           border: Border.all(color: AppColors.blue153A56Color),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            _legendRow(AppColors.orangeColor, 'High Activity'),
+            Text(
+              'ACTIVITY',
+              style: getTextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: AppColors.blue00F0FFColor,
+              ),
+            ),
+            SizedBox(height: 8.h),
+            _legendRow(AppColors.orangeColor, 'High'),
             _legendRow(AppColors.blue00F0FFColor, 'Medium'),
             _legendRow(AppColors.grey516173Color, 'Low'),
           ],
@@ -297,7 +254,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
     );
   }
 
-  Widget _legendRow(Color color, String text) {
+  Widget _legendRow(Color color, String label) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 4.h),
       child: Row(
@@ -307,11 +264,11 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
             height: 12.h,
             decoration: BoxDecoration(
               color: color,
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: BorderRadius.circular(3.r),
             ),
           ),
           SizedBox(width: 8.w),
-          Text(text, style: getTextStyle(fontSize: 12, color: Colors.white)),
+          Text(label, style: getTextStyle(fontSize: 12, color: Colors.white)),
         ],
       ),
     );
@@ -328,21 +285,19 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
               const FilterDialog(),
               barrierColor: Colors.black.withValues(alpha: 0.5),
             ),
-            child: _badgeButton(Icons.tune),
+            child: _filterButton(),
           ),
           SizedBox(height: 16.h),
           GestureDetector(
-            onTap: () {
-              Get.to(ReportCatchStep1Screen());
-            },
-            child: _gradientAddButton(),
+            onTap: () => Get.to(ReportCatchStep1Screen()),
+            child: _addButton(),
           ),
         ],
       ),
     );
   }
 
-  Widget _badgeButton(IconData icon) {
+  Widget _filterButton() {
     return Stack(
       alignment: Alignment.topRight,
       children: [
@@ -369,7 +324,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
     );
   }
 
-  Widget _gradientAddButton() {
+  Widget _addButton() {
     return Container(
       width: 56.r,
       height: 56.r,
@@ -384,66 +339,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
   }
 }
 
-class _MarkerBox extends StatelessWidget {
-  final MapZoneModel zone;
-  final bool isSelected;
-  const _MarkerBox({required this.zone, required this.isSelected});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: zone.color.withValues(alpha: isSelected ? 1.0 : 0.85),
-        borderRadius: BorderRadius.circular(6.r),
-        border: isSelected
-            ? Border.all(color: const Color(0xFFFF8C42), width: 2.5)
-            : Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1),
-        boxShadow: [
-          if (isSelected)
-            BoxShadow(
-              color: const Color(0xFFFF8C42).withValues(alpha: 0.8),
-              blurRadius: 18,
-              spreadRadius: 4,
-            )
-          else if (zone.level == ActivityLevel.high)
-            BoxShadow(
-              color: zone.color.withValues(alpha: 0.5),
-              blurRadius: 10,
-              spreadRadius: 1,
-            ),
-        ],
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        zone.count.toString(),
-        style: getTextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
-      ),
-    );
-  }
-}
-
-class _GridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF00F0FF).withValues(alpha: 0.12)
-      ..strokeWidth = 0.6;
-    const step = 40.0;
-    for (double x = 0; x < size.width; x += step) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-    for (double y = 0; y < size.height; y += step) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter old) => false;
-}
+// ── Zone Detail Panel ─────────────────────────────────────────────────────────
 
 class _ZoneDetailPanel extends StatelessWidget {
   final MapZoneModel zone;
@@ -472,9 +368,7 @@ class _ZoneDetailPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF0D1B2A),
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-        border: const Border(
-          top: BorderSide(color: Color(0xFF1E3A4C), width: 1),
-        ),
+        border: const Border(top: BorderSide(color: Color(0xFF1E3A4C))),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.5),
@@ -488,6 +382,7 @@ class _ZoneDetailPanel extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // drag handle
           Center(
             child: Container(
               width: 40.w,
@@ -500,6 +395,7 @@ class _ZoneDetailPanel extends StatelessWidget {
           ),
           SizedBox(height: 16.h),
 
+          // name + close
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -507,7 +403,18 @@ class _ZoneDetailPanel extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildDynamicZoneName(zone.name, fontSize: 26),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        zone.name,
+                        style: getTextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
                     SizedBox(height: 4.h),
                     Text(
                       '${zone.reports} reports  •  Last updated ${zone.lastUpdated}',
@@ -536,6 +443,7 @@ class _ZoneDetailPanel extends StatelessWidget {
           ),
           SizedBox(height: 20.h),
 
+          // activity score
           Container(
             padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
@@ -576,6 +484,7 @@ class _ZoneDetailPanel extends StatelessWidget {
           ),
           SizedBox(height: 18.h),
 
+          // metric cards
           Row(
             children: [
               Expanded(
@@ -597,6 +506,7 @@ class _ZoneDetailPanel extends StatelessWidget {
           ),
           SizedBox(height: 14.h),
 
+          // trend
           Container(
             width: double.infinity,
             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
@@ -625,20 +535,20 @@ class _ZoneDetailPanel extends StatelessWidget {
           ),
           SizedBox(height: 20.h),
 
+          // CTA
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF00D4FF),
+                backgroundColor: const Color(0xFF00D4FF),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14.r),
                 ),
                 padding: EdgeInsets.symmetric(vertical: 15.h),
               ),
-              onPressed: () {
-                Get.to(() => SummaryScreen(isReportMainScreen: false));
-              },
+              onPressed: () =>
+                  Get.to(() => SummaryScreen(isReportMainScreen: false)),
               child: Text(
                 'View Full Details',
                 style: getTextStyle(
@@ -690,22 +600,6 @@ class _ZoneDetailPanel extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildDynamicZoneName(String text, {double fontSize = 26}) {
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      alignment: Alignment.centerLeft,
-      child: Text(
-        text,
-        maxLines: 1,
-        style: getTextStyle(
-          fontSize: fontSize,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
       ),
     );
   }
