@@ -28,81 +28,159 @@ class FilterDialog extends StatelessWidget {
                 children: [
                   Container(
                     padding: EdgeInsets.all(8.r),
-                    decoration: BoxDecoration(color: AppColors.blue1B2134Color, borderRadius: BorderRadius.circular(10.r)),
-                    child: Icon(Icons.tune, color: AppColors.blue00F0FFColor, size: 24.sp),
+                    decoration: BoxDecoration(
+                      color: AppColors.blue1B2134Color,
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Icon(
+                      Icons.tune,
+                      color: AppColors.blue00F0FFColor,
+                      size: 24.sp,
+                    ),
                   ),
                   SizedBox(width: 15.w),
-                  Text("Filters", style: getTextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                  Text(
+                    "Filters",
+                    style: getTextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
                   const Spacer(),
                   IconButton(
                     onPressed: () => Get.back(),
                     icon: Icon(Icons.close, color: Colors.white, size: 28.sp),
-                    style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.1)),
-                  )
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.1),
+                    ),
+                  ),
                 ],
               ),
               SizedBox(height: 25.h),
 
               _sectionHeader(Icons.sailing, "Species"),
-              Obx(() => Wrap(
-                spacing: 10.w, runSpacing: 10.h,
-                children: controller.speciesList.map((s) => _choiceChip(s, controller.selectedSpecies.contains(s), () => controller.toggleSpecies(s))).toList(),
-              )),
+              Obx(
+                () => Wrap(
+                  spacing: 10.w,
+                  runSpacing: 10.h,
+                  children: controller.speciesList
+                      .map(
+                        (s) => _choiceChip(
+                          s,
+                          controller.selectedSpecies.contains(s),
+                          () => controller.toggleSpecies(s),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
               SizedBox(height: 25.h),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   _sectionHeader(Icons.waves, "Depth Range"),
-                  Text("0ft - 500ft", style: getTextStyle(fontSize: 14, color: AppColors.grey8B95A5Color)),
+                  Text(
+                    "0ft - 500ft",
+                    style: getTextStyle(
+                      fontSize: 14,
+                      color: AppColors.grey8B95A5Color,
+                    ),
+                  ),
                 ],
               ),
-              Obx(() => SliderTheme(
-                data: SliderThemeData(
-                  trackHeight: 6.h,
-                  activeTrackColor: AppColors.blue00F0FFColor,
-                  inactiveTrackColor: AppColors.blue1B2134Color,
-                  thumbColor: AppColors.orangeColor,
-                  overlayColor: AppColors.orangeColor.withValues(alpha:  0.2),
+              Obx(
+                () => SliderTheme(
+                  data: SliderThemeData(
+                    trackHeight: 6.h,
+                    activeTrackColor: AppColors.blue00F0FFColor,
+                    inactiveTrackColor: AppColors.blue1B2134Color,
+                    thumbColor: AppColors.orangeColor,
+                    overlayColor: AppColors.orangeColor.withValues(alpha: 0.2),
+                  ),
+                  child: Slider(
+                    value: controller.depthValue.value,
+                    max: 625,
+                    onChanged: (v) => controller.depthValue.value = v,
+                  ),
                 ),
-                child: Slider(
-                  value: controller.depthValue.value,
-                  max: 625,
-                  onChanged: (v) => controller.depthValue.value = v,
-                ),
-              )),
+              ),
               _depthLabels(),
               SizedBox(height: 25.h),
 
               _sectionHeader(Icons.lock, "Method"),
-              Obx(() => Wrap(
-                spacing: 10.w, runSpacing: 10.h,
-                children: controller.methods.map((m) => _choiceChip(m, controller.selectedMethods.contains(m), () => controller.toggleMethod(m))).toList(),
-              )),
+              Obx(
+                () => Wrap(
+                  spacing: 10.w,
+                  runSpacing: 10.h,
+                  children: controller.methods
+                      .map(
+                        (m) => _choiceChip(
+                          m,
+                          controller.selectedMethods.contains(m),
+                          () => controller.toggleMethod(m),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
               SizedBox(height: 25.h),
 
               _sectionHeader(Icons.assignment, "Report Visibility"),
-              Obx(() => Row(
-                children: [
-                  _visibilityOption("Public", controller.selectedVisibilities.contains("Public"), () => controller.toggleVisibility("Public")),
-                  SizedBox(width: 20.w),
-                  _visibilityOption("Group", controller.selectedVisibilities.contains("Group"), () => controller.toggleVisibility("Group")),
-                ],
-              )),
+              Obx(
+                () => Row(
+                  children: [
+                    _visibilityOption(
+                      "Public",
+                      controller.selectedVisibilities.contains("Public"),
+                      () => controller.toggleVisibility("Public"),
+                    ),
+                    SizedBox(width: 20.w),
+                    _visibilityOption(
+                      "Group",
+                      controller.selectedVisibilities.contains("Group"),
+                      () => controller.toggleVisibility("Group"),
+                    ),
+                  ],
+                ),
+              ),
               SizedBox(height: 25.h),
 
               _sectionHeader(Icons.alarm, "Time Range"),
-              Obx(() => Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: controller.timeRanges.map((t) => _timeButton(t, controller.selectedTime.value == t, () => controller.selectedTime.value = t)).toList(),
-              )),
+              Obx(
+                () => Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: controller.timeRanges
+                      .map(
+                        (t) => _timeButton(
+                          t,
+                          controller.selectedTime.value == t,
+                          () => controller.selectedTime.value = t,
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
               SizedBox(height: 35.h),
 
               Row(
                 children: [
-                  Expanded(child: _actionButton("Reset", AppColors.blue1B2134Color, () => controller.resetFilters())),
+                  Expanded(
+                    child: _actionButton(
+                      "Reset",
+                      AppColors.blue1B2134Color,
+                      () => controller.resetFilters(),
+                    ),
+                  ),
                   SizedBox(width: 15.w),
-                  Expanded(child: _actionButton("Apply Filters", AppColors.orangeColor, () => Get.back())),
+                  Expanded(
+                    child: _actionButton(
+                      "Apply Filters",
+                      AppColors.orangeColor,
+                      () => Get.back(),
+                    ),
+                  ),
                 ],
               ),
               SizedBox(height: 20.h),
@@ -110,19 +188,28 @@ class FilterDialog extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.info_outline, color: AppColors.blue00F0FFColor, size: 16.sp),
+                    Icon(
+                      Icons.info_outline,
+                      color: AppColors.blue00F0FFColor,
+                      size: 16.sp,
+                    ),
                     SizedBox(width: 5.w),
-                    Text("Filters update the map in real time", style: getTextStyle(fontSize: 12, color: AppColors.grey8B95A5Color)),
+                    Text(
+                      "Filters update the map in real time",
+                      style: getTextStyle(
+                        fontSize: 12,
+                        color: AppColors.grey8B95A5Color,
+                      ),
+                    ),
                   ],
                 ),
-              )
+              ),
             ],
           ),
         ),
       ),
     );
   }
-
 
   Widget _sectionHeader(IconData icon, String title) {
     return Padding(
@@ -131,7 +218,14 @@ class FilterDialog extends StatelessWidget {
         children: [
           Icon(icon, color: AppColors.blue00F0FFColor, size: 18.sp),
           SizedBox(width: 8.w),
-          Text(title, style: getTextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+          Text(
+            title,
+            style: getTextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
         ],
       ),
     );
@@ -143,11 +237,21 @@ class FilterDialog extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.blue134D67Color : AppColors.blue1B2134Color,
+          color: isSelected
+              ? AppColors.blue134D67Color
+              : AppColors.blue1B2134Color,
           borderRadius: BorderRadius.circular(20.r),
-          border: isSelected ? Border.all(color: AppColors.blue00F0FFColor) : null,
+          border: isSelected
+              ? Border.all(color: AppColors.blue00F0FFColor)
+              : null,
         ),
-        child: Text(label, style: getTextStyle(fontSize: 14, color: isSelected ? Colors.white : AppColors.grey8B95A5Color)),
+        child: Text(
+          label,
+          style: getTextStyle(
+            fontSize: 14,
+            color: isSelected ? Colors.white : AppColors.grey8B95A5Color,
+          ),
+        ),
       ),
     );
   }
@@ -157,7 +261,12 @@ class FilterDialog extends StatelessWidget {
       onTap: onTap,
       child: Row(
         children: [
-          Icon(isSelected ? Icons.check_box : Icons.check_box_outline_blank, color: isSelected ? AppColors.blue00F0FFColor : AppColors.grey8B95A5Color),
+          Icon(
+            isSelected ? Icons.check_box : Icons.check_box_outline_blank,
+            color: isSelected
+                ? AppColors.blue00F0FFColor
+                : AppColors.grey8B95A5Color,
+          ),
           SizedBox(width: 8.w),
           Text(label, style: getTextStyle(fontSize: 14, color: Colors.white)),
         ],
@@ -169,14 +278,31 @@ class FilterDialog extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 70.w, height: 45.h,
+        width: 70.w,
+        height: 45.h,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.teal163A42Color : AppColors.blue1B2134Color,
+          color: isSelected
+              ? AppColors.teal163A42Color
+              : AppColors.blue1B2134Color,
           borderRadius: BorderRadius.circular(12.r),
-          boxShadow: isSelected ? [BoxShadow(color: AppColors.blue00F0FFColor.withValues(alpha: 0.3), blurRadius: 10)] : [],
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.blue00F0FFColor.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                  ),
+                ]
+              : [],
         ),
-        child: Text(label, style: getTextStyle(fontSize: 14, color: Colors.white, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+        child: Text(
+          label,
+          style: getTextStyle(
+            fontSize: 14,
+            color: Colors.white,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
       ),
     );
   }
@@ -186,17 +312,36 @@ class FilterDialog extends StatelessWidget {
       onPressed: onTap,
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
-        minimumSize: Size(double.infinity, 55.h),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.r)),
+        minimumSize: Size(double.infinity, 45.h),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30.r),
+        ),
       ),
-      child: Text(label, style: getTextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+      child: Text(
+        label,
+        style: getTextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
     );
   }
 
   Widget _depthLabels() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: ["0ft", "125ft", "250ft", "375ft", "500ft", "625ft"].map((e) => Text(e, style: getTextStyle(fontSize: 9, color: AppColors.grey8B95A5Color))).toList(),
+      children: ["0ft", "125ft", "250ft", "375ft", "500ft", "625ft"]
+          .map(
+            (e) => Text(
+              e,
+              style: getTextStyle(
+                fontSize: 9,
+                color: AppColors.grey8B95A5Color,
+              ),
+            ),
+          )
+          .toList(),
     );
   }
 }
