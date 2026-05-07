@@ -392,13 +392,18 @@ class SummaryTabWidget extends StatelessWidget {
                 lineHeight: 14,
               ),
             ),
-            Text(
-              sub.isNotEmpty ? sub : " ",
-              style: getTextStyle(
-                fontSize: 12,
-                color: borderColor,
-                lineHeight: 9,
-                fontWeight: FontWeight.w500,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                sub.isNotEmpty ? sub : " ",
+                maxLines: 1,
+                softWrap: false,
+                style: getTextStyle(
+                  fontSize: 12,
+                  color: borderColor,
+                  lineHeight: 9,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ],

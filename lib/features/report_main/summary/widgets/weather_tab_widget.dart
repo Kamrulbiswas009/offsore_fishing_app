@@ -295,38 +295,47 @@ class WeatherTabWidget extends GetView<SummaryController> {
               Icon(icon, color: iconColor, size: 12.sp),
               SizedBox(width: 4.w),
               Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: getTextStyle(
-                    fontSize: 9,
-                    color: AppColors.grey8B95A5Color,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    style: getTextStyle(
+                      fontSize: 9,
+                      color: AppColors.grey8B95A5Color,
+                    ),
                   ),
                 ),
               ),
             ],
           ),
           SizedBox(height: 8.h),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: getTextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: getTextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
           SizedBox(height: 4.h),
-          Text(
-            subtitle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: getTextStyle(
-              fontSize: 10,
-              color: subtitleColor,
-              fontWeight: FontWeight.w500,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              subtitle,
+              maxLines: 1,
+              style: getTextStyle(
+                fontSize: 10,
+                color: subtitleColor,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
@@ -871,128 +880,149 @@ class WeatherTabWidget extends GetView<SummaryController> {
       return Stack(
         clipBehavior: Clip.none,
         children: [
-          Column(
-            children: [
-              // Main card
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(16.w),
-                decoration: BoxDecoration(
-                  color: AppColors.blue0D2B43Color,
-                  borderRadius: BorderRadius.circular(14.r),
-                  border: Border.all(
-                    color: AppColors.blue153A56Color.withValues(alpha: 0.5),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(20.w),
+            decoration: BoxDecoration(
+              color: AppColors.blue0D2B43Color,
+              borderRadius: BorderRadius.circular(20.r),
+              border: Border.all(
+                color: AppColors.blue153A56Color.withValues(alpha: 0.8),
+                width: 1.w,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top Row: Icon, Title, Subtitle, and Badge
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          width: 44.w,
-                          height: 44.w,
+                          width: 48.w,
+                          height: 48.w,
                           decoration: BoxDecoration(
-                            color: AppColors.blue153A56Color.withOpacity(0.5),
+                            color: AppColors.blue153A56Color.withValues(
+                              alpha: 0.4,
+                            ),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             data['icon'] as IconData,
                             color: data['iconColor'] as Color,
-                            size: 22.sp,
+                            size: 24.sp,
                           ),
                         ),
+                        SizedBox(width: 16.w),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               period,
                               style: getTextStyle(
-                                fontSize: 18,
+                                fontSize: 22,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                               ),
                             ),
+                            SizedBox(height: 4.h),
                             Text(
                               data['time'] as String,
                               style: getTextStyle(
-                                fontSize: 12,
+                                fontSize: 13,
                                 color: AppColors.grey8B95A5Color,
                               ),
                             ),
                           ],
                         ),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 12.w,
-                            vertical: 5.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.green10B981Color,
-                            borderRadius: BorderRadius.circular(20.r),
-                          ),
-                          child: Text(
-                            data['badge'] as String,
-                            style: getTextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
                       ],
                     ),
-                    SizedBox(height: 20.h),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _forecastStat(
-                          Icons.air,
-                          data['wind'] as String,
-                          'Wind',
-                          'mph',
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 8.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00C875), // Vibrant emerald green
+                        borderRadius: BorderRadius.circular(20.r),
+                      ),
+                      child: Text(
+                        data['badge'] as String,
+                        style: getTextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
-                        _forecastStat(
-                          Icons.waves,
-                          data['seas'] as String,
-                          'Seas',
-                          'ft',
-                        ),
-                        _forecastStat(
-                          Icons.cloud_outlined,
-                          data['sky'] as String,
-                          'Sky',
-                          '% cloudy',
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-              SizedBox(height: 12.h),
-              // Description card
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-                decoration: BoxDecoration(
-                  color: AppColors.blue0D2B43Color,
-                  borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(
-                    color: AppColors.blue153A56Color.withOpacity(0.5),
-                  ),
+                SizedBox(height: 24.h),
+                // Middle Row: Wind, Seas, Sky
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 8,
+                      child: _forecastStat(
+                        icon: Icons.air,
+                        value: data['wind'] as String,
+                        label: 'Wind',
+                        unit: 'mph',
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      flex: 5,
+                      child: _forecastStat(
+                        icon: Icons.waves,
+                        value: data['seas'] as String,
+                        label: 'Seas',
+                        unit: 'ft',
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      flex: 4,
+                      child: _forecastStat(
+                        icon: Icons.cloud_outlined,
+                        value: data['sky'] as String,
+                        label: 'Sky',
+                        unit: '% cloudy',
+                      ),
+                    ),
+                  ],
                 ),
-                child: Text(
-                  data['description'] as String,
-                  style: getTextStyle(
-                    fontSize: 13,
-                    color: AppColors.greyC8D0DBColor,
-                  ),
+                SizedBox(height: 24.h),
+                // Bottom Row: Swell Direction, Swell Period, Empty spacer for alignment
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 8,
+                      child: _forecastStat(
+                        icon: Icons.explore_outlined,
+                        value: data['swellDirection'] as String,
+                        label: 'Swell Direction',
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      flex: 5,
+                      child: _forecastStat(
+                        icon: Icons.waves,
+                        value: data['swellPeriod'] as String,
+                        label: 'Swell Period',
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    const Expanded(flex: 4, child: SizedBox.shrink()),
+                  ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          // Floating "+" button
+          // Floating "+" button (retained from original stack)
           // Positioned(
           //   right: 0,
           //   bottom: 62.h,
@@ -1018,19 +1048,30 @@ class WeatherTabWidget extends GetView<SummaryController> {
     });
   }
 
-  Widget _forecastStat(IconData icon, String value, String label, String unit) {
+  Widget _forecastStat({
+    required IconData icon,
+    required String value,
+    required String label,
+    String? unit,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(icon, color: AppColors.grey8B95A5Color, size: 13.sp),
-            SizedBox(width: 4.w),
-            Text(
-              label,
-              style: getTextStyle(
-                fontSize: 10,
-                color: AppColors.grey8B95A5Color,
+            Icon(icon, color: AppColors.grey8B95A5Color, size: 14.sp),
+            SizedBox(width: 6.w),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: getTextStyle(
+                  fontSize: 13,
+                  color: AppColors.grey8B95A5Color,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
             ),
           ],
@@ -1038,16 +1079,22 @@ class WeatherTabWidget extends GetView<SummaryController> {
         SizedBox(height: 4.h),
         Text(
           value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: getTextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
             color: Colors.white,
           ),
         ),
-        Text(
-          unit,
-          style: getTextStyle(fontSize: 10, color: AppColors.grey8B95A5Color),
-        ),
+        if (unit != null && unit.isNotEmpty) ...[
+          SizedBox(height: 4.h),
+          Text(
+            unit,
+            maxLines: 1,
+            style: getTextStyle(fontSize: 13, color: AppColors.grey8B95A5Color),
+          ),
+        ],
       ],
     );
   }
@@ -1063,6 +1110,8 @@ class WeatherTabWidget extends GetView<SummaryController> {
           'wind': '14',
           'seas': '2.5',
           'sky': '35',
+          'swellDirection': 'East-Southeast',
+          'swellPeriod': '7 sec',
           'description':
               'Moderate winds picking up in the afternoon. Seas building slightly but still fishable.',
         };
@@ -1075,18 +1124,22 @@ class WeatherTabWidget extends GetView<SummaryController> {
           'wind': '8',
           'seas': '1.5',
           'sky': '15',
+          'swellDirection': 'East',
+          'swellPeriod': '9 sec',
           'description':
               'Calm evening conditions. Light winds and minimal swell — great for inshore fishing.',
         };
       default: // Morning
         return {
           'icon': Icons.wb_sunny_outlined,
-          'iconColor': const Color(0xFFFFAA00),
+          'iconColor': const Color(0xFFFF5A36), // Sun orange color
           'time': '6:00 AM - 12:00 PM',
           'badge': 'Good',
           'wind': '10',
           'seas': '2.0',
           'sky': '20',
+          'swellDirection': 'East',
+          'swellPeriod': '8 sec',
           'description':
               'Calm winds and smaller seas. Great window to get offshore.',
         };
