@@ -68,12 +68,14 @@ class SummaryController extends GetxController {
   var selectedDepth = "".obs;
   var selectedTechnique = "".obs;
   var selectedTime = "".obs;
+  var selectedReportType = "".obs;
 
   void resetFilters() {
     selectedSpecies.value = "";
     selectedDepth.value = "";
     selectedTechnique.value = "";
     selectedTime.value = "";
+    selectedReportType.value = "";
   }
 
   final List<String> speciesList = [
@@ -99,6 +101,11 @@ class SummaryController extends GetxController {
     "Drifting",
   ];
   final List<String> timeList = ["6h", "12h", "24h", "48h", "Week"];
+  final List<String> reportTypeList = [
+    "public",
+    "Group",
+    "My reports",
+  ];
 
   final List<FishingReport> reports = [
     FishingReport(
@@ -110,6 +117,7 @@ class SummaryController extends GetxController {
       bait: "Live Ballyhoo",
       note: "Strong bite around the weedline",
       confirms: 3,
+      type: "public",
     ),
     FishingReport(
       title: "Tuna",
@@ -119,6 +127,7 @@ class SummaryController extends GetxController {
       technique: "Bottom Fishing",
       bait: "Cut bait",
       confirms: 2,
+      type: "Group",
     ),
     FishingReport(
       title: "Tuna (Blackfin)",
@@ -129,8 +138,69 @@ class SummaryController extends GetxController {
       technique: "Trolling",
       bait: "Live Ballyhoo",
       confirms: 4,
+      type: "My reports",
     ),
   ];
+
+  List<FishingReport> get filteredReports {
+    if (selectedSpecies.isEmpty &&
+        selectedDepth.isEmpty &&
+        selectedTechnique.isEmpty &&
+        selectedTime.isEmpty &&
+        selectedReportType.isEmpty) {
+      return reports;
+    }
+
+    return reports.where((report) {
+      // 1. Species Filter
+      if (selectedSpecies.isNotEmpty) {
+        if (!report.title.toLowerCase().contains(selectedSpecies.value.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // 2. Depth Filter
+      if (selectedDepth.isNotEmpty) {
+        final cleanReportDepth = int.tryParse(report.depth.replaceAll(RegExp(r'[^0-9]'), ''));
+        if (cleanReportDepth != null) {
+          final range = selectedDepth.value;
+          if (range == "0-50 ft" && (cleanReportDepth < 0 || cleanReportDepth > 50)) return false;
+          if (range == "50-100 ft" && (cleanReportDepth < 50 || cleanReportDepth > 100)) return false;
+          if (range == "100-200 ft" && (cleanReportDepth < 100 || cleanReportDepth > 200)) return false;
+          if (range == "200-500 ft" && (cleanReportDepth < 200 || cleanReportDepth > 500)) return false;
+          if (range == "500+ ft" && cleanReportDepth < 500) return false;
+        }
+      }
+
+      // 3. Technique Filter
+      if (selectedTechnique.isNotEmpty) {
+        if (report.technique.toLowerCase() != selectedTechnique.value.toLowerCase()) {
+          return false;
+        }
+      }
+
+      // 4. Time Filter
+      if (selectedTime.isNotEmpty) {
+        final cleanReportHour = int.tryParse(report.timeAgo.replaceAll(RegExp(r'[^0-9]'), ''));
+        if (cleanReportHour != null) {
+          final limit = selectedTime.value;
+          if (limit == "6h" && cleanReportHour > 6) return false;
+          if (limit == "12h" && cleanReportHour > 12) return false;
+          if (limit == "24h" && cleanReportHour > 24) return false;
+          if (limit == "48h" && cleanReportHour > 48) return false;
+        }
+      }
+
+      // 5. Report Type Filter
+      if (selectedReportType.isNotEmpty) {
+        if (report.type.toLowerCase() != selectedReportType.value.toLowerCase()) {
+          return false;
+        }
+      }
+
+      return true;
+    }).toList();
+  }
 
   void confirmBite(int index) {
     Get.snackbar(

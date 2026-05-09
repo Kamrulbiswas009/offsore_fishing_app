@@ -764,6 +764,49 @@ class WeatherTabWidget extends GetView<SummaryController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+          decoration: BoxDecoration(
+            color: AppColors.blue0D2B43Color.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(10.r),
+            border: Border.all(
+              color: AppColors.blue00F0FFColor.withOpacity(0.3),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.access_time,
+                    size: 14.sp,
+                    color: AppColors.blue00F0FFColor,
+                  ),
+                  SizedBox(width: 8.w),
+                  Text(
+                    'LAST UPDATED',
+                    style: getTextStyle(
+                      fontSize: 10,
+                      color: AppColors.grey8B95A5Color,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                'about 2 hours ago',
+                style: getTextStyle(
+                  fontSize: 12,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  lineHeight: 20,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 10.h),
         Text(
           'Select Day',
           style: getTextStyle(
