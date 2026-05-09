@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/utils/constants/image_path.dart';
+import 'package:paytonpieper/features/groups/model/group_details_model.dart';
 
 enum GroupDetailsTab { reports, chat, members }
 
@@ -15,6 +16,10 @@ class GroupDetailsScreenController extends GetxController {
       GroupInviteMethod.friends.obs;
   final RxList<String> selectedFriendIds = <String>[].obs;
   final RxBool hasInviteEmails = false.obs;
+  final RxnString selectedReportSpecies = RxnString();
+  final RxnString selectedReportDepth = RxnString();
+  final RxnString selectedReportMethod = RxnString();
+  final RxnString selectedReportTime = RxnString();
 
   String groupName = 'Miami Offshore Crew';
   String groupMembers = '24 members';
@@ -22,6 +27,23 @@ class GroupDetailsScreenController extends GetxController {
   String groupDescription = 'South Florida offshore fishing community';
   String groupImage = ImagePath.miamiOffShoreCrewImage;
   final String inviteCode = 'G13K7O';
+
+  final GroupReportFilterOption speciesFilter = const GroupReportFilterOption(
+    label: 'Species',
+    options: ['Tuna', 'Snapper', 'Grouper', 'Mahi', 'Wahoo', 'Marlin'],
+  );
+  final GroupReportFilterOption depthFilter = const GroupReportFilterOption(
+    label: 'Depth',
+    options: ['0-125ft', '0-250ft', '0-375ft', '0-500ft', '0-625ft'],
+  );
+  final GroupReportFilterOption methodFilter = const GroupReportFilterOption(
+    label: 'Method',
+    options: ['Trolling', 'Bottom', 'Jigging', 'Live Bait'],
+  );
+  final GroupReportFilterOption timeFilter = const GroupReportFilterOption(
+    label: 'Time',
+    options: ['6h', '24h', '3d', '7d'],
+  );
 
   final RxList<GroupReportItem> reports = <GroupReportItem>[
     const GroupReportItem(
@@ -146,6 +168,8 @@ class GroupDetailsScreenController extends GetxController {
   }
 
   void setGroupDetails(dynamic arguments) {
+    resetReportFilters();
+
     final args = Map<String, dynamic>.from(arguments ?? <String, dynamic>{});
     groupName = args['groupName'] as String? ?? 'Miami Offshore Crew';
     groupMembers = args['groupMembers'] as String? ?? '24 members';
@@ -166,6 +190,29 @@ class GroupDetailsScreenController extends GetxController {
 
   void changeTab(GroupDetailsTab tab) {
     selectedTab.value = tab;
+  }
+
+  void selectReportSpecies(String species) {
+    selectedReportSpecies.value = species;
+  }
+
+  void selectReportDepth(String depth) {
+    selectedReportDepth.value = depth;
+  }
+
+  void selectReportMethod(String method) {
+    selectedReportMethod.value = method;
+  }
+
+  void selectReportTime(String time) {
+    selectedReportTime.value = time;
+  }
+
+  void resetReportFilters() {
+    selectedReportSpecies.value = null;
+    selectedReportDepth.value = null;
+    selectedReportMethod.value = null;
+    selectedReportTime.value = null;
   }
 
   void selectInviteMethod(GroupInviteMethod method) {
@@ -295,84 +342,4 @@ class GroupDetailsScreenController extends GetxController {
     messageController.dispose();
     super.onClose();
   }
-}
-
-class GroupReportItem {
-  final String title;
-  final String author;
-  final String timeAgo;
-  final String depth;
-  final String technique;
-  final String note;
-  final int confirmations;
-  final String zone;
-
-  const GroupReportItem({
-    required this.title,
-    required this.author,
-    required this.timeAgo,
-    required this.depth,
-    required this.technique,
-    required this.note,
-    required this.confirmations,
-    required this.zone,
-  });
-}
-
-class GroupChatMessage {
-  final String sender;
-  final String text;
-  final String time;
-  final bool isMine;
-  final String? avatarPath;
-
-  const GroupChatMessage({
-    required this.sender,
-    required this.text,
-    required this.time,
-    required this.isMine,
-    this.avatarPath,
-  });
-}
-
-class GroupMemberRequest {
-  final String name;
-  final String email;
-  final String timeAgo;
-
-  const GroupMemberRequest({
-    required this.name,
-    required this.email,
-    required this.timeAgo,
-  });
-}
-
-class GroupMemberItem {
-  final String name;
-  final String subtitle;
-  final String role;
-  final String avatarPath;
-  final bool isLeader;
-
-  const GroupMemberItem({
-    required this.name,
-    required this.subtitle,
-    required this.role,
-    required this.avatarPath,
-    this.isLeader = false,
-  });
-}
-
-class InvitableFriendItem {
-  final String id;
-  final String name;
-  final String subtitle;
-  final String avatarPath;
-
-  const InvitableFriendItem({
-    required this.id,
-    required this.name,
-    required this.subtitle,
-    required this.avatarPath,
-  });
 }

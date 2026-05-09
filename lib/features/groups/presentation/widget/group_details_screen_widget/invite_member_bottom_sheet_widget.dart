@@ -7,6 +7,7 @@ import 'package:paytonpieper/core/common/widgets/custom_button.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/groups/controller/group_details_screen_controller.dart';
+import 'package:paytonpieper/features/groups/model/group_details_model.dart';
 
 class InviteMemberBottomSheetWidget
     extends GetView<GroupDetailsScreenController> {
@@ -395,10 +396,12 @@ class _CodeInviteContent extends GetView<GroupDetailsScreenController> {
         Container(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
           decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [
-              AppColors.blue00D4FFColor.withValues(alpha: 0.1),
-              AppColors.orangeFF6B35Color.withValues(alpha: 0.1),
-            ]),
+            gradient: LinearGradient(
+              colors: [
+                AppColors.blue00D4FFColor.withValues(alpha: 0.1),
+                AppColors.orangeFF6B35Color.withValues(alpha: 0.1),
+              ],
+            ),
             //color: AppColors.blue153A56Color.withValues(alpha: 0.88),
             borderRadius: BorderRadius.circular(12.r),
             border: Border.all(

@@ -6,6 +6,7 @@ import 'package:paytonpieper/core/common/widgets/custom_button.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/groups/controller/group_details_screen_controller.dart';
+import 'package:paytonpieper/features/groups/model/group_details_model.dart';
 import 'package:paytonpieper/features/groups/presentation/widget/group_details_screen_widget/invite_member_bottom_sheet_widget.dart';
 
 class GroupDetailsMembersTab extends GetView<GroupDetailsScreenController> {
