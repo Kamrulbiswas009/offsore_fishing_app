@@ -12,11 +12,7 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
   final double? selectedLat;
   final double? selectedLng;
 
-  const ReportCatch2Screen({
-    super.key,
-    this.selectedLat,
-    this.selectedLng,
-  });
+  const ReportCatch2Screen({super.key, this.selectedLat, this.selectedLng});
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +122,11 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.location_on, color: AppColors.blue00F0FFColor, size: 16.sp),
+          Icon(
+            Icons.location_on,
+            color: AppColors.blue00F0FFColor,
+            size: 16.sp,
+          ),
           SizedBox(width: 8.w),
           Text(
             "Selected: ${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}",
@@ -239,7 +239,9 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
                       ? "Yes=One pattern for all species on this report"
                       : "No=Different pattern for some species on this report",
                   style: getTextStyle(
-                      fontSize: 12, color: AppColors.greyC8D0DBColor),
+                    fontSize: 12,
+                    color: AppColors.greyC8D0DBColor,
+                  ),
                 ),
               ],
             ),
@@ -279,7 +281,9 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
       decoration: BoxDecoration(
         color: Color(0xFF0B1C25),
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.blue00F0FFColor.withValues(alpha:  0.5)),
+        border: Border.all(
+          color: AppColors.blue00F0FFColor.withValues(alpha: 0.5),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -306,24 +310,31 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
               },
             ),
           ),
-          SizedBox(height: 12.h),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              return Obx(
-                () => Wrap(
-                  spacing: 10.w,
-                  runSpacing: 5.h,
-                  children: controller.selectedSpeciesList
-                      .map(
-                        (s) => SizedBox(
-                          width: (constraints.maxWidth - 10.w) / 2,
-                          child: _speciesChip(s),
-                        ),
-                      )
-                      .toList(),
-                ),
-              );
-            },
+          Obx(
+            () => controller.selectedSpeciesList.isNotEmpty
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: 12.h),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          return Wrap(
+                            spacing: 10.w,
+                            runSpacing: 5.h,
+                            children: controller.selectedSpeciesList
+                                .map(
+                                  (s) => SizedBox(
+                                    width: (constraints.maxWidth - 10.w) / 2,
+                                    child: _speciesChip(s),
+                                  ),
+                                )
+                                .toList(),
+                          );
+                        },
+                      ),
+                    ],
+                  )
+                : const SizedBox.shrink(),
           ),
           SizedBox(height: 20.h),
           _buildFishingDetailsCard(),
@@ -465,9 +476,19 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
                           value: s,
                           child: Row(
                             children: [
-                              Image.asset(IconPath.fishRealIcon, height: 18.h, width: 18.w),
+                              Image.asset(
+                                IconPath.fishRealIcon,
+                                height: 18.h,
+                                width: 18.w,
+                              ),
                               SizedBox(width: 8.w),
-                              Text(s, style: getTextStyle(color: Colors.white, fontSize: 14)),
+                              Text(
+                                s,
+                                style: getTextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
+                              ),
                             ],
                           ),
                         );
@@ -487,26 +508,42 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(qty, style: getTextStyle(color: Colors.white, fontSize: 14)),
+                    Text(
+                      qty,
+                      style: getTextStyle(color: Colors.white, fontSize: 14),
+                    ),
                     SizedBox(width: 8.w),
                     Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         GestureDetector(
                           onTap: () {
-                            final currentQty = controller.quantities[species] ?? 1;
+                            final currentQty =
+                                controller.quantities[species] ?? 1;
                             controller.updateQuantity(species, currentQty + 1);
                           },
-                          child: Icon(Icons.keyboard_arrow_up, color: Colors.white, size: 20.sp),
+                          child: Icon(
+                            Icons.keyboard_arrow_up,
+                            color: Colors.white,
+                            size: 20.sp,
+                          ),
                         ),
                         GestureDetector(
                           onTap: () {
-                            final currentQty = controller.quantities[species] ?? 1;
+                            final currentQty =
+                                controller.quantities[species] ?? 1;
                             if (currentQty > 0) {
-                              controller.updateQuantity(species, currentQty - 1);
+                              controller.updateQuantity(
+                                species,
+                                currentQty - 1,
+                              );
                             }
                           },
-                          child: Icon(Icons.keyboard_arrow_down, color: Colors.white, size: 20.sp),
+                          child: Icon(
+                            Icons.keyboard_arrow_down,
+                            color: Colors.white,
+                            size: 20.sp,
+                          ),
                         ),
                       ],
                     ),
