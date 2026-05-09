@@ -49,15 +49,32 @@ class ReportTabWidget extends GetView<SummaryController> {
         SizedBox(height: 20.h),
 
         // 3. Reports List
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: controller.reports.length,
-          separatorBuilder: (context, index) => SizedBox(height: 15.h),
-          itemBuilder: (context, index) {
-            return _buildReportCard(controller.reports[index], index);
-          },
-        ),
+        Obx(() {
+          final list = controller.filteredReports;
+          if (list.isEmpty) {
+            return Padding(
+              padding: EdgeInsets.symmetric(vertical: 40.h),
+              child: Center(
+                child: Text(
+                  "No reports found matching filters.",
+                  style: getTextStyle(
+                    fontSize: 14,
+                    color: AppColors.grey8B95A5Color,
+                  ),
+                ),
+              ),
+            );
+          }
+          return ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: list.length,
+            separatorBuilder: (context, index) => SizedBox(height: 15.h),
+            itemBuilder: (context, index) {
+              return _buildReportCard(list[index], index);
+            },
+          );
+        }),
         SizedBox(height: 40.h),
       ],
     );
@@ -71,6 +88,11 @@ class ReportTabWidget extends GetView<SummaryController> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
+                _filterDropdown(
+                  controller.selectedReportType,
+                  controller.reportTypeList,
+                  "Reports",
+                ),
                 _filterDropdown(
                   controller.selectedSpecies,
                   controller.speciesList,

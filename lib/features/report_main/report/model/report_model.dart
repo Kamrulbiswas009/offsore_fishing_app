@@ -8,6 +8,7 @@ class FishingReport {
   final String? note;
   final int confirms;
   final String? author;
+  final String type;
 
   FishingReport({
     required this.title,
@@ -19,5 +20,6 @@ class FishingReport {
     this.note,
     required this.confirms,
     this.author,
+    this.type = 'public',
   });
 }

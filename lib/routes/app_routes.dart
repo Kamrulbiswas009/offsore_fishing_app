@@ -16,6 +16,8 @@ import 'package:paytonpieper/features/profile_and_setting/presentation/screen/se
 import 'package:paytonpieper/features/splash_screen/presentation/screen/splash_screen1.dart';
 import 'package:paytonpieper/features/report_main/summary/screen/summary_details.dart';
 import 'package:paytonpieper/features/report_main/summary/controller/summary_details_controller.dart';
+import 'package:paytonpieper/features/success_submit_report/screen/report_details_screen.dart';
+
 
 class AppRoute {
   static String splashScreen1 = "/splashScreen1";
@@ -34,6 +36,8 @@ class AppRoute {
   static String notificationScreen = "/notificationScreen";
   static String zoneMapScreen = "/zone_map_screen";
   static String summaryScreen = "/summary-details";
+  static String reportDetailsScreen = "/report-details";
+
 
   static String getSplashScreen1() => splashScreen1;
   static String getOnboardingScreen1() => onboardingScreen1;
@@ -51,6 +55,8 @@ class AppRoute {
   static String getNotificationScreen() => notificationScreen;
   static String getZoneMapScreen() => zoneMapScreen;
   static String getSummaryScreen() => summaryScreen;
+  static String getReportDetailsScreen() => reportDetailsScreen;
+
 
   static List<GetPage> routes = [
     GetPage(name: splashScreen1, page: () => SplashScreen1()),
@@ -96,6 +102,11 @@ class AppRoute {
       binding: BindingsBuilder(() {
         Get.put(SummaryController());
       }),
+      transition: Transition.leftToRight,
+    ),
+    GetPage(
+      name: reportDetailsScreen,
+      page: () => const ReportDetailsScreen(),
       transition: Transition.leftToRight,
     ),
   ];
