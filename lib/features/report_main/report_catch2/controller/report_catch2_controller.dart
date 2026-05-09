@@ -14,6 +14,15 @@ class ReportCatch2Controller extends GetxController {
     selectedTime.value = DateFormat('hh:mm a').format(DateTime.now());
   }
 
+  // ── Selected location from map picker ─────────────────────────────────────
+  var selectedLat = Rxn<double>();
+  var selectedLng = Rxn<double>();
+
+  void setSelectedLocation(double lat, double lng) {
+    selectedLat.value = lat;
+    selectedLng.value = lng;
+  }
+
   // Pattern Toggle
   var isSamePattern = true.obs;
 
