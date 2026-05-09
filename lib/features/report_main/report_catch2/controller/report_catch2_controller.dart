@@ -25,6 +25,8 @@ class ReportCatch2Controller extends GetxController {
 
   // Pattern Toggle
   var isSamePattern = true.obs;
+  var isNothingCaught = false.obs;
+
 
   // Species Selection options
   var speciesOptions = [
@@ -156,6 +158,36 @@ class ReportCatch2Controller extends GetxController {
   }
 
   Future<void> submitReport() async {
+    // Package and simulate sending report payload to backend
+    final Map<String, dynamic> reportPayload;
+    if (isNothingCaught.value) {
+      reportPayload = {
+        "latitude": selectedLat.value,
+        "longitude": selectedLng.value,
+        "zero_catch": true,
+      };
+    } else {
+      reportPayload = {
+        "latitude": selectedLat.value,
+        "longitude": selectedLng.value,
+        "zero_catch": false,
+        "isSamePattern": isSamePattern.value,
+        "selectedSpeciesList": selectedSpeciesList.toList(),
+        "quantities": quantities,
+        "waterPosition": waterPosition.value,
+        "waterDepth": depthController.text,
+        "strikeZone": strikeZoneController.text,
+        "selectedMethod": selectedMethod.value,
+        "selectedBait": selectedBait.value,
+        "selectedDate": selectedDate.value,
+        "selectedTime": selectedTime.value,
+        "notes": notesController.text,
+      };
+    }
+
+    debugPrint("SUBMITTING REPORT TO BACKEND PAYLOAD:");
+    debugPrint(reportPayload.toString());
+
     bool hasInternet = await AppDeviceUtility.hasInternetConnection();
     if (!hasInternet) {
       Get.to(() => const OfflineReportsScreen());
@@ -163,4 +195,5 @@ class ReportCatch2Controller extends GetxController {
       Get.dialog(const VisibilitySharingDialog(), barrierDismissible: true);
     }
   }
+
 }

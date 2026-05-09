@@ -38,19 +38,34 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
               SizedBox(height: 20.h),
               _buildStepper(),
               SizedBox(height: 25.h),
-              _buildPatternToggle(),
+              _buildNothingCaughtToggle(),
               SizedBox(height: 20.h),
-              Text(
-                "Species Caught",
-                style: getTextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
-                  lineHeight: 27,
+              Obx(
+                () => IgnorePointer(
+                  ignoring: controller.isNothingCaught.value,
+                  child: Opacity(
+                    opacity: controller.isNothingCaught.value ? 0.4 : 1.0,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildPatternToggle(),
+                        SizedBox(height: 20.h),
+                        Text(
+                          "Species Caught",
+                          style: getTextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                            lineHeight: 27,
+                          ),
+                        ),
+                        SizedBox(height: 15.h),
+                        _buildSpeciesSection(),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-              SizedBox(height: 15.h),
-              _buildSpeciesSection(),
               SizedBox(height: 30.h),
               _buildSubmitButton(),
               SizedBox(height: 100.h), // Padding for Bottom Nav
@@ -184,6 +199,57 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
           fontSize: 12,
           fontWeight: FontWeight.bold,
           color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNothingCaughtToggle() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: AppColors.blue1B2134Color,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: AppColors.blue153A56Color),
+      ),
+      child: Obx(
+        () => Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Nothing Caught at this spot",
+                    style: getTextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    "Toggle on if you didn't catch anything here",
+                    style: getTextStyle(
+                      fontSize: 12,
+                      color: AppColors.greyC8D0DBColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Switch(
+              value: controller.isNothingCaught.value,
+              onChanged: (val) {
+                controller.isNothingCaught.value = val;
+              },
+              activeThumbColor: AppColors.blue00F0FFColor,
+              activeTrackColor: AppColors.teal163A42Color,
+              inactiveThumbColor: AppColors.grey8B95A5Color,
+              inactiveTrackColor: AppColors.blue0D2B43Color,
+            ),
+          ],
         ),
       ),
     );
