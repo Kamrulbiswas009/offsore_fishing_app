@@ -8,10 +8,22 @@ import 'package:paytonpieper/core/common/widgets/custom_button.dart';
 import '../../../../core/utils/constants/colors.dart';
 
 class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
-  const ReportCatch2Screen({super.key});
+  /// Optional coordinates passed from manual map location picker.
+  final double? selectedLat;
+  final double? selectedLng;
+
+  const ReportCatch2Screen({
+    super.key,
+    this.selectedLat,
+    this.selectedLng,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // Pass coordinates to controller when available
+    if (selectedLat != null && selectedLng != null) {
+      controller.setSelectedLocation(selectedLat!, selectedLng!);
+    }
     return Scaffold(
       backgroundColor: AppColors.backgroundDarkColor,
       appBar: _buildAppBar(),
@@ -22,6 +34,11 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildSyncStatus(),
+              // Show selected location chip if coordinates were passed
+              if (selectedLat != null && selectedLng != null) ...[
+                SizedBox(height: 10.h),
+                _buildLocationChip(selectedLat!, selectedLng!),
+              ],
               SizedBox(height: 20.h),
               _buildStepper(),
               SizedBox(height: 25.h),
@@ -89,6 +106,34 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
             style: getTextStyle(
               fontSize: 13,
               color: AppColors.green10B981Color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Displays the manually selected lat/lng coordinates as a styled info chip.
+  Widget _buildLocationChip(double lat, double lng) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: AppColors.teal163A42Color,
+        borderRadius: BorderRadius.circular(30.r),
+        border: Border.all(color: AppColors.tealColor117A88, width: 1.2),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.location_on, color: AppColors.blue00F0FFColor, size: 16.sp),
+          SizedBox(width: 8.w),
+          Text(
+            "Selected: ${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}",
+            style: getTextStyle(
+              fontSize: 13,
+              color: AppColors.blue00F0FFColor,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],

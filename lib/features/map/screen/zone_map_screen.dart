@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
+import 'package:paytonpieper/core/services/permissions/location_permission_service.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/main_screen/widgets/filter_dialog.dart';
@@ -16,7 +17,17 @@ import '../controller/map_screen_controller.dart';
 import '../model/map_zone_model.dart';
 
 class ZoneMapScreen extends StatefulWidget {
-  const ZoneMapScreen({super.key});
+  /// When [isLocationPickerMode] is true the map acts as a location picker.
+  /// Tapping any point on the map calls [onLocationPicked] with the lat/lng
+  /// and the caller is responsible for navigating away.
+  final bool isLocationPickerMode;
+  final void Function(double lat, double lng)? onLocationPicked;
+
+  const ZoneMapScreen({
+    super.key,
+    this.isLocationPickerMode = false,
+    this.onLocationPicked,
+  });
 
   @override
   State<ZoneMapScreen> createState() => _ZoneMapScreenState();
@@ -25,12 +36,15 @@ class ZoneMapScreen extends StatefulWidget {
 class _ZoneMapScreenState extends State<ZoneMapScreen>
     with SingleTickerProviderStateMixin {
   final controller = Get.find<MapScreenController>();
+  final _locationService = LocationPermissionService();
 
   late final AnimationController _panelAnim;
   late final Animation<Offset> _slideAnim;
 
   mapbox.MapboxMap? _mapboxMap;
+  mapbox.ViewportState? _viewportState;
   bool _layersReady = false;
+  bool _isLocating = false;       // prevents double-tap on location button
   Timer? _gridDebounce;
 
   @override
@@ -63,8 +77,139 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
     if (_layersReady) return;
     _layersReady = true;
     await controller.setupMapLayers(_mapboxMap!);
+    // Enable native Mapbox location puck (blue pulsing dot)
+    await _enableLocationComponent();
     // Populate grid for the initial camera position
     await _updateGridForViewport();
+  }
+
+  // ── Location component (native Mapbox puck) ──────────────────────────────
+
+  Future<void> _enableLocationComponent() async {
+    final map = _mapboxMap;
+    if (map == null) return;
+    try {
+      await map.location.updateSettings(
+        mapbox.LocationComponentSettings(
+          enabled: true,
+          pulsingEnabled: true,
+          pulsingColor: const Color(0xFF00F0FF).value, // cyan pulsing ring
+          pulsingMaxRadius: 60.0,
+          showAccuracyRing: true,
+          accuracyRingColor: const Color(0x2200F0FF).value,
+          accuracyRingBorderColor: const Color(0x8800F0FF).value,
+        ),
+      );
+    } catch (_) {
+      // Location component unavailable (e.g. simulator without location)
+    }
+  }
+
+  /// Requests permission then flies camera to the device position.
+  Future<void> _goToMyLocation() async {
+    if (_isLocating) return;
+    setState(() => _isLocating = true);
+
+    try {
+      final result = await _locationService.requestLocationWhenInUse();
+
+      if (result != LocationPermissionResult.granted) {
+        Get.snackbar(
+          'Location Access',
+          result == LocationPermissionResult.permanentlyDenied
+              ? 'Location permission denied. Enable it in Settings.'
+              : 'Location permission is required to find your position.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColors.blue0D2B43Color,
+          colorText: Colors.white,
+          margin: EdgeInsets.all(16.w),
+          borderRadius: 14.r,
+          duration: const Duration(seconds: 3),
+          icon: Icon(Icons.location_off, color: AppColors.blue00F0FFColor),
+        );
+        return;
+      }
+
+      final map = _mapboxMap;
+      if (map == null) return;
+
+      // Get current position via Mapbox's location provider
+      final style = await map.style.isStyleLoaded();
+      if (!style) return;
+
+      // Enable location component (ensure it's on)
+      await _enableLocationComponent();
+      // Fly to current position using Mapbox location manager
+      // We use setCamera because LocationComponent keeps the puck position internally
+      await map.location.updateSettings(
+        mapbox.LocationComponentSettings(
+          enabled: true,
+          pulsingEnabled: true,
+          pulsingColor: const Color(0xFF00F0FF).value,
+          pulsingMaxRadius: 60.0,
+          showAccuracyRing: true,
+          accuracyRingColor: const Color(0x2200F0FF).value,
+          accuracyRingBorderColor: const Color(0x8800F0FF).value,
+        ),
+      );
+
+      // Use permission_handler to get coordinates, then fly camera
+      await _flyToDeviceLocation(map);
+    } finally {
+      if (mounted) setState(() => _isLocating = false);
+    }
+  }
+
+  /// Uses the platform location API (via permission_handler ecosystem) to
+  /// retrieve current coordinates and animate the camera there.
+  Future<void> _flyToDeviceLocation(mapbox.MapboxMap map) async {
+    try {
+      // Mapbox LocationComponent stores position internally;
+      // we animate camera by enabling tracking mode via StyleManager.
+      // As a cross-platform alternative we request through Mapbox viewport.
+      await map.easeTo(
+        mapbox.CameraOptions(
+          zoom: 12.0,
+        ),
+        mapbox.MapAnimationOptions(duration: 800),
+      );
+
+      // Access the device location through the system
+      // Mapbox LocationComponent can provide the last known position via
+      // setting the camera to follow the puck.
+      // We set followPuckViewportState to center on user.
+      // Since direct coordinate access needs geolocator, we use
+      // a workaround: Mapbox handles internally via its own location engine.
+      await map.location.updateSettings(
+        mapbox.LocationComponentSettings(
+          enabled: true,
+          puckBearingEnabled: true,
+          pulsingEnabled: true,
+          pulsingColor: const Color(0xFF00F0FF).value,
+          pulsingMaxRadius: 60.0,
+          showAccuracyRing: true,
+          accuracyRingColor: const Color(0x2200F0FF).value,
+          accuracyRingBorderColor: const Color(0x8800F0FF).value,
+        ),
+      );
+
+      // Use Mapbox's viewport to follow the puck
+      // This is the idiomatic way without an extra geolocator package
+      setStateWithViewportAnimation(
+        () {
+          _viewportState = mapbox.FollowPuckViewportState(
+            zoom: 12.0,
+            bearing: mapbox.FollowPuckViewportStateBearingConstant(0.0),
+            pitch: 0.0,
+          );
+        },
+        transition: mapbox.DefaultViewportTransition(
+          maxDuration: const Duration(milliseconds: 1500),
+        ),
+      );
+    } catch (_) {
+      // Viewport transition or location unavailable — silently ignore
+    }
   }
 
   // ── Camera change → grid refresh ────────────────────────────────────────
@@ -114,10 +259,17 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
 
   Future<void> _onMapTap(mapbox.MapContentGestureContext ctx) async {
     final coord = ctx.point.coordinates;
-    final zone = controller.zoneForCoordinate(
-      coord.lat.toDouble(),
-      coord.lng.toDouble(),
-    );
+    final lat = coord.lat.toDouble();
+    final lng = coord.lng.toDouble();
+
+    // ── Location-picker mode ─────────────────────────────────────────────
+    if (widget.isLocationPickerMode) {
+      widget.onLocationPicked?.call(lat, lng);
+      return;
+    }
+
+    // ── Normal zone-detail mode ──────────────────────────────────────────
+    final zone = controller.zoneForCoordinate(lat, lng);
     if (zone != null) {
       controller.selectZone(zone);
       _panelAnim.forward(from: 0);
@@ -134,6 +286,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isPickerMode = widget.isLocationPickerMode;
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -142,6 +295,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
           mapbox.MapWidget(
             key: const ValueKey('zone-mapbox-widget'),
             styleUri: mapbox.MapboxStyles.SATELLITE_STREETS,
+            viewport: _viewportState,
             cameraOptions: mapbox.CameraOptions(
               center: mapbox.Point(
                 coordinates: mapbox.Position(
@@ -165,24 +319,31 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
           ),
 
           // ── Fixed UI chrome ────────────────────────────────────────────
-          _buildHeader(),
+          _buildHeader(isPickerMode: isPickerMode),
           _buildLegend(),
-          _buildActionButtons(),
+          if (!isPickerMode) _buildActionButtons(),
 
-          // ── Zone detail panel ──────────────────────────────────────────
-          Obx(() {
-            final zone = controller.selectedZone.value;
-            if (zone == null) return const SizedBox.shrink();
-            return Positioned(
-              bottom: 60.h,
-              left: 0,
-              right: 0,
-              child: SlideTransition(
-                position: _slideAnim,
-                child: _ZoneDetailPanel(zone: zone, onClose: _dismissPanel),
-              ),
-            );
-          }),
+          // ── Back button for picker mode ────────────────────────────────
+          if (isPickerMode) _buildPickerBackButton(),
+
+          // ── My Location FAB (picker mode only) ─────────────────────────
+          if (isPickerMode) _buildMyLocationButton(),
+
+          // ── Zone detail panel (normal mode only) ──────────────────────
+          if (!isPickerMode)
+            Obx(() {
+              final zone = controller.selectedZone.value;
+              if (zone == null) return const SizedBox.shrink();
+              return Positioned(
+                bottom: 60.h,
+                left: 0,
+                right: 0,
+                child: SlideTransition(
+                  position: _slideAnim,
+                  child: _ZoneDetailPanel(zone: zone, onClose: _dismissPanel),
+                ),
+              );
+            }),
         ],
       ),
     );
@@ -190,15 +351,16 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
 
   // ── UI widgets ────────────────────────────────────────────────────────────
 
-  Widget _buildHeader() {
+  Widget _buildHeader({bool isPickerMode = false}) {
     return Positioned(
       top: 60.h,
-      left: 20.w,
+      left: isPickerMode ? 70.w : 20.w,
+      right: 20.w,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'ZONE ACTIVITY MAP',
+            isPickerMode ? 'SELECT LOCATION' : 'ZONE ACTIVITY MAP',
             style: getTextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -206,11 +368,80 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
             ),
           ),
           Text(
-            'Tap any zone to view offshore intel',
-            style: getTextStyle(fontSize: 14, color: AppColors.blue00F0FFColor),
+            isPickerMode
+                ? 'Tap anywhere on the map to select your grid location'
+                : 'Tap any zone to view offshore intel',
+            style: getTextStyle(fontSize: 13, color: AppColors.blue00F0FFColor),
           ),
         ],
       ),
+    );
+  }
+
+  /// Back button shown only in picker mode
+  Widget _buildPickerBackButton() {
+    return Positioned(
+      top: 60.h,
+      left: 16.w,
+      child: CircleAvatar(
+        backgroundColor: AppColors.blue1B2134Color,
+        child: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white, size: 20.sp),
+          onPressed: () => Get.back(),
+        ),
+      ),
+    );
+  }
+
+  /// Raw location button widget
+  Widget _myLocationButtonWidget() {
+    return GestureDetector(
+      onTap: _goToMyLocation,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 56.r,
+        height: 56.r,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: _isLocating
+              ? AppColors.teal163A42Color
+              : AppColors.blue0D2B43Color,
+          border: Border.all(
+            color: AppColors.blue00F0FFColor,
+            width: 1.5.w,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.blue00F0FFColor.withValues(alpha: 0.35),
+              blurRadius: 12,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        child: _isLocating
+            ? Padding(
+                padding: EdgeInsets.all(16.r),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.blue00F0FFColor,
+                ),
+              )
+            : Icon(
+                Icons.my_location,
+                color: AppColors.blue00F0FFColor,
+                size: 24.sp,
+              ),
+      ),
+    );
+  }
+
+  /// Floating "My Location" button — visible in picker mode.
+  Widget _buildMyLocationButton() {
+    return Positioned(
+      // In picker mode sit just below the header on the right
+      top: 120.h,
+      right: 20.w,
+      child: _myLocationButtonWidget(),
     );
   }
 
@@ -280,6 +511,8 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
       right: 20.w,
       child: Column(
         children: [
+          _myLocationButtonWidget(),
+          SizedBox(height: 16.h),
           GestureDetector(
             onTap: () => Get.dialog(
               const FilterDialog(),
