@@ -423,9 +423,20 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "Quantity",
-            style: getTextStyle(fontSize: 12, color: AppColors.whiteColor),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Quantity",
+                style: getTextStyle(fontSize: 12, color: AppColors.whiteColor),
+              ),
+              GestureDetector(
+                onTap: () {
+                  controller.quantities.remove(species);
+                },
+                child: Icon(Icons.close, color: Colors.redAccent, size: 18.sp),
+              ),
+            ],
           ),
           SizedBox(height: 7.h),
           Container(
@@ -491,7 +502,7 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
                         GestureDetector(
                           onTap: () {
                             final currentQty = controller.quantities[species] ?? 1;
-                            if (currentQty > 1) {
+                            if (currentQty > 0) {
                               controller.updateQuantity(species, currentQty - 1);
                             }
                           },
