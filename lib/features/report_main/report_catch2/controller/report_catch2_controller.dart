@@ -35,10 +35,10 @@ class ReportCatch2Controller extends GetxController {
     "Wahoo",
     "Mahi",
   ].obs;
-  var selectedSpeciesList = <String>["Tuna", "Snapper", "Dolphin"].obs;
+  var selectedSpeciesList = <String>[].obs;
 
   // Fishing Details (Dynamic Quantities)
-  var quantities = <String, int>{"Snapper": 0, "Tuna": 0}.obs;
+  var quantities = <String, int>{}.obs;
 
   // Water Position
   var waterPosition = "Suspended".obs; // Topwater, Suspended, Bottom
