@@ -5,6 +5,7 @@ import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/common/widgets/custom_button.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/features/groups/controller/group_details_screen_controller.dart';
+import 'package:paytonpieper/features/groups/model/group_details_model.dart';
 
 class GroupDetailsReportsTab extends GetView<GroupDetailsScreenController> {
   const GroupDetailsReportsTab({super.key});
@@ -41,10 +42,116 @@ class GroupDetailsReportsTab extends GetView<GroupDetailsScreenController> {
             ),
           ],
         ),
+        SizedBox(height: 12.h),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _ReportFilterDropdown(
+                selectedValue: controller.selectedReportSpecies,
+                filter: controller.speciesFilter,
+                onSelected: controller.selectReportSpecies,
+              ),
+              SizedBox(width: 6.w),
+              _ReportFilterDropdown(
+                selectedValue: controller.selectedReportDepth,
+                filter: controller.depthFilter,
+                onSelected: controller.selectReportDepth,
+              ),
+              SizedBox(width: 6.w),
+              _ReportFilterDropdown(
+                selectedValue: controller.selectedReportMethod,
+                filter: controller.methodFilter,
+                onSelected: controller.selectReportMethod,
+              ),
+              SizedBox(width: 6.w),
+              _ReportFilterDropdown(
+                selectedValue: controller.selectedReportTime,
+                filter: controller.timeFilter,
+                onSelected: controller.selectReportTime,
+              ),
+            ],
+          ),
+        ),
         SizedBox(height: 18.h),
         ...controller.reports.map((report) => _ReportCard(report: report)),
       ],
     );
+  }
+}
+
+class _ReportFilterDropdown extends StatelessWidget {
+  final RxnString selectedValue;
+  final GroupReportFilterOption filter;
+  final ValueChanged<String> onSelected;
+
+  const _ReportFilterDropdown({
+    required this.selectedValue,
+    required this.filter,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final String text = selectedValue.value ?? filter.label;
+
+      return PopupMenuButton<String>(
+        onSelected: onSelected,
+        offset: Offset(0, 38.h),
+        color: AppColors.blue1B2134Color,
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8.r),
+          side: const BorderSide(color: AppColors.grey516173Color),
+        ),
+        itemBuilder: (BuildContext context) {
+          return filter.options.map((String option) {
+            return PopupMenuItem<String>(
+              value: option,
+              child: Text(
+                option,
+                style: getTextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.whiteColor,
+                  lineHeight: 10,
+                ),
+              ),
+            );
+          }).toList();
+        },
+        child: Container(
+          height: 38.h,
+          padding: EdgeInsets.symmetric(horizontal: 8.w),
+          decoration: BoxDecoration(
+            color: AppColors.blue1B2134Color,
+            borderRadius: BorderRadius.circular(8.r),
+            border: Border.all(color: AppColors.grey8B95A5Color),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                text,
+                style: getTextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.whiteColor,
+                  lineHeight: 10,
+                ),
+              ),
+              SizedBox(width: 5.w),
+              Icon(
+                Icons.keyboard_arrow_down,
+                color: AppColors.whiteColor,
+                size: 17.r,
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 }
 
@@ -136,8 +243,12 @@ class _ReportCard extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.done_sharp, color: AppColors.blue00D4FFColor, size: 12.r),
-                    
+                    Icon(
+                      Icons.done_sharp,
+                      color: AppColors.blue00D4FFColor,
+                      size: 12.r,
+                    ),
+
                     SizedBox(width: 4.w),
                     Text(
                       'Success',

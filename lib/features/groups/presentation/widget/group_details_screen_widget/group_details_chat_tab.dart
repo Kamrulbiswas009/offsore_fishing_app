@@ -5,6 +5,7 @@ import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/groups/controller/group_details_screen_controller.dart';
+import 'package:paytonpieper/features/groups/model/group_details_model.dart';
 
 class GroupDetailsChatTab extends GetView<GroupDetailsScreenController> {
   const GroupDetailsChatTab({super.key});
