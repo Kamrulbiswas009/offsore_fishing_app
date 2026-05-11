@@ -286,11 +286,12 @@ class VisibilitySharingDialog extends StatelessWidget {
               ),
             ),
             if (isSelected)
-              Icon(
-                Icons.check_circle,
-                color: AppColors.blue00F0FFColor,
-                size: 20.sp,
-              ),
+              // Icon(
+              //   Icons.check_circle,
+              //   color: AppColors.blue00F0FFColor,
+              //   size: 20.sp,
+              // ),
+              Image.asset(IconPath.checkMark, height: 20.h, width: 20.w),
           ],
         ),
       ),

@@ -459,18 +459,18 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'ACTIVITY',
-              style: getTextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: AppColors.blue00F0FFColor,
-              ),
-            ),
-            SizedBox(height: 8.h),
-            _legendRow(AppColors.orangeColor, 'High'),
-            _legendRow(AppColors.blue00F0FFColor, 'Medium'),
-            _legendRow(AppColors.grey516173Color, 'Low'),
+            // Text(
+            //   'ACTIVITY',
+            //   style: getTextStyle(
+            //     fontSize: 10,
+            //     fontWeight: FontWeight.bold,
+            //     color: AppColors.blue00F0FFColor,
+            //   ),
+            // ),
+            // SizedBox(height: 8.h),
+            _legendRow(AppColors.orangeColor, 'High Activity'),
+            _legendRow(AppColors.blue00F0FFColor, 'Medium Activity'),
+            _legendRow(AppColors.grey516173Color, 'Low Activity'),
           ],
         ),
       ),
