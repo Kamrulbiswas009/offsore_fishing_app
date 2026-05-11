@@ -60,4 +60,6 @@ class IconPath {
   static const String fishRealIcon = "assets/icons/fish_real_icon.png";
   static const String hookIcon = "assets/icons/hook.png";
   static const String world = "assets/icons/world.png";
+  static const String clock = "assets/icons/alarm-clock.png";
+  static const String checkMark = "assets/icons/checkmark-badge-04.png";
 }

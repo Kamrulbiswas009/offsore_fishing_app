@@ -86,6 +86,7 @@ class ReportTabWidget extends GetView<SummaryController> {
         Expanded(
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.only(left: 4.w),
             child: Row(
               children: [
                 _filterDropdown(

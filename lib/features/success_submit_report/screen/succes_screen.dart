@@ -20,17 +20,18 @@ class ReportSuccessScreen extends StatelessWidget {
       backgroundColor: AppColors.backgroundDarkColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
+        automaticallyImplyLeading: false,
         elevation: 0,
-        leading: Padding(
-          padding: EdgeInsets.all(8.r),
-          child: CircleAvatar(
-            backgroundColor: AppColors.blue1B2134Color,
-            child: IconButton(
-              icon: Icon(Icons.arrow_back, color: Colors.white, size: 18.sp),
-              onPressed: () => Get.back(),
-            ),
-          ),
-        ),
+        // leading: Padding(
+        //   padding: EdgeInsets.all(8.r),
+        //   child: CircleAvatar(
+        //     backgroundColor: AppColors.blue1B2134Color,
+        //     // child: IconButton(
+        //     //   icon: Icon(Icons.arrow_back, color: Colors.white, size: 18.sp),
+        //     //   onPressed: () => Get.back(),
+        //     // ),
+        //   ),
+        // ),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -139,7 +140,7 @@ class ReportSuccessScreen extends StatelessWidget {
               ),
               SizedBox(height: 5.h),
               Text(
-                "Zone ${controller.zone}",
+                controller.zone,
                 style: getTextStyle(
                   fontSize: 14,
                   color: Colors.white.withOpacity(0.8),
@@ -168,7 +169,7 @@ class ReportSuccessScreen extends StatelessWidget {
         border: Border.all(color: AppColors.blue1B2134Color, width: 1.5),
       ),
       child: Text(
-        "Your report helps the community identify active fishing patterns. Keep sharing your catches!",
+        "Your report helps other anglers see what’s happening offshore.",
         textAlign: TextAlign.center,
         style: getTextStyle(fontSize: 13, color: AppColors.grey516173Color),
       ),
@@ -192,7 +193,11 @@ class ReportSuccessScreen extends StatelessWidget {
             borderColor: Colors.transparent,
             prefixIcon: Padding(
               padding: EdgeInsets.only(right: 10.w),
-              child: Icon(Icons.assignment_outlined, size: 20.sp, color: Colors.white),
+              child: Icon(
+                Icons.assignment_outlined,
+                size: 20.sp,
+                color: Colors.white,
+              ),
             ),
           ),
         ),
@@ -212,7 +217,11 @@ class ReportSuccessScreen extends StatelessWidget {
             borderColor: AppColors.blue00F0FFColor,
             prefixIcon: Padding(
               padding: EdgeInsets.only(right: 10.w),
-              child: Icon(Icons.add, color: AppColors.blue00F0FFColor, size: 20.sp),
+              child: Icon(
+                Icons.add,
+                color: AppColors.blue00F0FFColor,
+                size: 20.sp,
+              ),
             ),
           ),
         ),

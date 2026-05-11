@@ -101,11 +101,7 @@ class SummaryController extends GetxController {
     "Drifting",
   ];
   final List<String> timeList = ["6h", "12h", "24h", "48h", "Week"];
-  final List<String> reportTypeList = [
-    "public",
-    "Group",
-    "My reports",
-  ];
+  final List<String> reportTypeList = ["Public", "Group", "My reports"];
 
   final List<FishingReport> reports = [
     FishingReport(
@@ -154,34 +150,49 @@ class SummaryController extends GetxController {
     return reports.where((report) {
       // 1. Species Filter
       if (selectedSpecies.isNotEmpty) {
-        if (!report.title.toLowerCase().contains(selectedSpecies.value.toLowerCase())) {
+        if (!report.title.toLowerCase().contains(
+          selectedSpecies.value.toLowerCase(),
+        )) {
           return false;
         }
       }
 
       // 2. Depth Filter
       if (selectedDepth.isNotEmpty) {
-        final cleanReportDepth = int.tryParse(report.depth.replaceAll(RegExp(r'[^0-9]'), ''));
+        final cleanReportDepth = int.tryParse(
+          report.depth.replaceAll(RegExp(r'[^0-9]'), ''),
+        );
         if (cleanReportDepth != null) {
           final range = selectedDepth.value;
-          if (range == "0-50 ft" && (cleanReportDepth < 0 || cleanReportDepth > 50)) return false;
-          if (range == "50-100 ft" && (cleanReportDepth < 50 || cleanReportDepth > 100)) return false;
-          if (range == "100-200 ft" && (cleanReportDepth < 100 || cleanReportDepth > 200)) return false;
-          if (range == "200-500 ft" && (cleanReportDepth < 200 || cleanReportDepth > 500)) return false;
+          if (range == "0-50 ft" &&
+              (cleanReportDepth < 0 || cleanReportDepth > 50))
+            return false;
+          if (range == "50-100 ft" &&
+              (cleanReportDepth < 50 || cleanReportDepth > 100))
+            return false;
+          if (range == "100-200 ft" &&
+              (cleanReportDepth < 100 || cleanReportDepth > 200))
+            return false;
+          if (range == "200-500 ft" &&
+              (cleanReportDepth < 200 || cleanReportDepth > 500))
+            return false;
           if (range == "500+ ft" && cleanReportDepth < 500) return false;
         }
       }
 
       // 3. Technique Filter
       if (selectedTechnique.isNotEmpty) {
-        if (report.technique.toLowerCase() != selectedTechnique.value.toLowerCase()) {
+        if (report.technique.toLowerCase() !=
+            selectedTechnique.value.toLowerCase()) {
           return false;
         }
       }
 
       // 4. Time Filter
       if (selectedTime.isNotEmpty) {
-        final cleanReportHour = int.tryParse(report.timeAgo.replaceAll(RegExp(r'[^0-9]'), ''));
+        final cleanReportHour = int.tryParse(
+          report.timeAgo.replaceAll(RegExp(r'[^0-9]'), ''),
+        );
         if (cleanReportHour != null) {
           final limit = selectedTime.value;
           if (limit == "6h" && cleanReportHour > 6) return false;
@@ -193,7 +204,8 @@ class SummaryController extends GetxController {
 
       // 5. Report Type Filter
       if (selectedReportType.isNotEmpty) {
-        if (report.type.toLowerCase() != selectedReportType.value.toLowerCase()) {
+        if (report.type.toLowerCase() !=
+            selectedReportType.value.toLowerCase()) {
           return false;
         }
       }

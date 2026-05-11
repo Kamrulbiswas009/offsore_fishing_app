@@ -27,7 +27,6 @@ class ReportCatch2Controller extends GetxController {
   var isSamePattern = true.obs;
   var isNothingCaught = false.obs;
 
-
   // Species Selection options
   var speciesOptions = [
     "Tuna",
@@ -57,7 +56,7 @@ class ReportCatch2Controller extends GetxController {
 
   // Selected values
   var selectedMethod = "Select Method".obs;
-  var selectedBait = "Select bait".obs;
+  var selectedBait = "Select Bait".obs;
 
   // Form Controllers
   final depthController = TextEditingController(text: "120");
@@ -195,5 +194,4 @@ class ReportCatch2Controller extends GetxController {
       Get.dialog(const VisibilitySharingDialog(), barrierDismissible: true);
     }
   }
-
 }

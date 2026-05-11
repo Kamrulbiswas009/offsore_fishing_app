@@ -80,7 +80,7 @@ class ReportCatchStep1Screen extends GetView<ReportCatchController> {
               Obx(
                 () => _buildSelectionCard(
                   title: "Select Manually",
-                  subtitle: "Choose grid from map",
+                  subtitle: "Choose zone from map",
                   icon: Icons.map,
                   isSelected: !controller.isGpsSelected.value,
                   onTap: controller.selectManual,
@@ -119,14 +119,14 @@ class ReportCatchStep1Screen extends GetView<ReportCatchController> {
                 style: getTextStyle(
                   fontSize: 13,
                   color: AppColors.green10B981Color,
-                  fontWeight: FontWeight.w600,
+                  // fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
           SizedBox(height: 6.h),
           Text(
-            "offline / queued state Reports should save and sync automatically when connection returns",
+            "Offline — report will sync when you’re back in service",
             textAlign: TextAlign.center,
             style: getTextStyle(
               fontSize: 11,
@@ -269,7 +269,7 @@ class ReportCatchStep1Screen extends GetView<ReportCatchController> {
             if (footer != null) ...[
               SizedBox(height: 5.h),
               Divider(
-                color: AppColors.grey3A4B62Color.withValues(alpha:  0.3),
+                color: AppColors.grey3A4B62Color.withValues(alpha: 0.3),
                 thickness: 1,
               ),
               // SizedBox(height: 5.h),
