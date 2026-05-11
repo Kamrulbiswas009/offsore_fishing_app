@@ -44,7 +44,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
   mapbox.MapboxMap? _mapboxMap;
   mapbox.ViewportState? _viewportState;
   bool _layersReady = false;
-  bool _isLocating = false;       // prevents double-tap on location button
+  bool _isLocating = false; // prevents double-tap on location button
   Timer? _gridDebounce;
 
   @override
@@ -168,9 +168,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
       // we animate camera by enabling tracking mode via StyleManager.
       // As a cross-platform alternative we request through Mapbox viewport.
       await map.easeTo(
-        mapbox.CameraOptions(
-          zoom: 12.0,
-        ),
+        mapbox.CameraOptions(zoom: 12.0),
         mapbox.MapAnimationOptions(duration: 800),
       );
 
@@ -311,25 +309,23 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
             onTapListener: _onMapTap,
           ),
 
-          // ── Marine dark overlay ────────────────────────────────────────
+          // ── Marine dark overlay
           IgnorePointer(
             child: Container(
               color: AppColors.backgroundDarkColor.withValues(alpha: 0.25),
             ),
           ),
 
-          // ── Fixed UI chrome ────────────────────────────────────────────
+          // ── Fixed UI chrome
           _buildHeader(isPickerMode: isPickerMode),
           _buildLegend(),
           if (!isPickerMode) _buildActionButtons(),
 
-          // ── Back button for picker mode ────────────────────────────────
+          // ── Back button for picker mode
           if (isPickerMode) _buildPickerBackButton(),
-
-          // ── My Location FAB (picker mode only) ─────────────────────────
+          // ── My Location FAB (picker mode only)
           if (isPickerMode) _buildMyLocationButton(),
-
-          // ── Zone detail panel (normal mode only) ──────────────────────
+          // ── Zone detail panel (normal mode only)
           if (!isPickerMode)
             Obx(() {
               final zone = controller.selectedZone.value;
@@ -349,7 +345,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
     );
   }
 
-  // ── UI widgets ────────────────────────────────────────────────────────────
+  // ── UI widgets
 
   Widget _buildHeader({bool isPickerMode = false}) {
     return Positioned(
@@ -406,10 +402,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
           color: _isLocating
               ? AppColors.teal163A42Color
               : AppColors.blue0D2B43Color,
-          border: Border.all(
-            color: AppColors.blue00F0FFColor,
-            width: 1.5.w,
-          ),
+          border: Border.all(color: AppColors.blue00F0FFColor, width: 1.5.w),
           boxShadow: [
             BoxShadow(
               color: AppColors.blue00F0FFColor.withValues(alpha: 0.35),
@@ -438,7 +431,6 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
   /// Floating "My Location" button — visible in picker mode.
   Widget _buildMyLocationButton() {
     return Positioned(
-      // In picker mode sit just below the header on the right
       top: 120.h,
       right: 20.w,
       child: _myLocationButtonWidget(),
@@ -572,7 +564,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
   }
 }
 
-// ── Zone Detail Panel ─────────────────────────────────────────────────────────
+// ── Zone Detail Panel
 
 class _ZoneDetailPanel extends StatelessWidget {
   final MapZoneModel zone;

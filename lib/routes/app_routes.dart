@@ -17,6 +17,14 @@ import 'package:paytonpieper/features/splash_screen/presentation/screen/splash_s
 import 'package:paytonpieper/features/report_main/summary/screen/summary_details.dart';
 import 'package:paytonpieper/features/report_main/summary/controller/summary_details_controller.dart';
 import 'package:paytonpieper/features/success_submit_report/screen/report_details_screen.dart';
+import 'package:paytonpieper/features/main_screen/screen/home_main_screen.dart';
+import 'package:paytonpieper/features/profile_and_setting/presentation/screen/profile_main_screen.dart';
+import 'package:paytonpieper/features/groups/presentation/screen/group_main_screen.dart';
+import 'package:paytonpieper/features/report_main/report_catch/screen/report_catch_screen.dart';
+import 'package:paytonpieper/features/report_main/report_catch2/screen/report_catch2_screen.dart';
+import 'package:paytonpieper/features/submit_report/screen/submit_report_screen.dart';
+import 'package:paytonpieper/features/report_main/offline_report/screen/offline_report_screen.dart';
+import 'package:paytonpieper/features/success_submit_report/screen/succes_screen.dart';
 
 
 class AppRoute {
@@ -37,6 +45,14 @@ class AppRoute {
   static String zoneMapScreen = "/zone_map_screen";
   static String summaryScreen = "/summary-details";
   static String reportDetailsScreen = "/report-details";
+  static String homeMainScreen = "/homeMainScreen";
+  static String profileMainScreen = "/profileMainScreen";
+  static String groupMainScreen = "/groupMainScreen";
+  static String reportCatchScreen = "/reportCatchScreen";
+  static String reportCatch2Screen = "/reportCatch2Screen";
+  static String submitReportScreen = "/submitReportScreen";
+  static String offlineReportScreen = "/offlineReportScreen";
+  static String succesScreen = "/succesScreen";
 
 
   static String getSplashScreen1() => splashScreen1;
@@ -56,6 +72,14 @@ class AppRoute {
   static String getZoneMapScreen() => zoneMapScreen;
   static String getSummaryScreen() => summaryScreen;
   static String getReportDetailsScreen() => reportDetailsScreen;
+  static String getHomeMainScreen() => homeMainScreen;
+  static String getProfileMainScreen() => profileMainScreen;
+  static String getGroupMainScreen() => groupMainScreen;
+  static String getReportCatchScreen() => reportCatchScreen;
+  static String getReportCatch2Screen() => reportCatch2Screen;
+  static String getSubmitReportScreen() => submitReportScreen;
+  static String getOfflineReportScreen() => offlineReportScreen;
+  static String getSuccesScreen() => succesScreen;
 
 
   static List<GetPage> routes = [
@@ -107,6 +131,46 @@ class AppRoute {
     GetPage(
       name: reportDetailsScreen,
       page: () => const ReportDetailsScreen(),
+      transition: Transition.leftToRight,
+    ),
+    GetPage(
+      name: homeMainScreen,
+      page: () => const MainScreen(),
+      transition: Transition.leftToRight,
+    ),
+    GetPage(
+      name: profileMainScreen,
+      page: () => ProfileMainScreen(),
+      transition: Transition.leftToRight,
+    ),
+    GetPage(
+      name: groupMainScreen,
+      page: () => GroupMainScreen(),
+      transition: Transition.leftToRight,
+    ),
+    GetPage(
+      name: reportCatchScreen,
+      page: () => ReportCatchStep1Screen(),
+      transition: Transition.leftToRight,
+    ),
+    GetPage(
+      name: reportCatch2Screen,
+      page: () => ReportCatch2Screen(),
+      transition: Transition.leftToRight,
+    ),
+    GetPage(
+      name: submitReportScreen,
+      page: () => const VisibilitySharingDialog(),
+      transition: Transition.leftToRight,
+    ),
+    GetPage(
+      name: offlineReportScreen,
+      page: () => const OfflineReportsScreen(),
+      transition: Transition.leftToRight,
+    ),
+    GetPage(
+      name: succesScreen,
+      page: () => const ReportSuccessScreen(),
       transition: Transition.leftToRight,
     ),
   ];
