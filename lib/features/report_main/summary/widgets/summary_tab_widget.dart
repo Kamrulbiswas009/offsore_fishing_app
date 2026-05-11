@@ -203,7 +203,7 @@ class SummaryTabWidget extends StatelessWidget {
                 icon: IconPath.redFish,
               ),
               _statCard(
-                label: "Hot zone",
+                label: "Hot ZONE",
                 val: "2",
                 sub: "Active",
                 borderColor: AppColors.blue00F0FFColor,
@@ -227,26 +227,32 @@ class SummaryTabWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle(IconPath.airIcon, "Marine Conditions - Zone A-7"),
+        _sectionTitle(
+          IconPath.airIcon,
+          "Marine Conditions - Zone A-7",
+          iconColor: AppColors.blue00F0FFColor,
+        ),
         Container(
-          padding: EdgeInsets.all(16.w),
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 18.h),
           decoration: BoxDecoration(
             gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
               colors: [
-                AppColors.blue0D2B43Color.withValues(alpha: 0.1),
-                AppColors.orangeFF6B35Color.withValues(alpha: 0.1),
+                const Color(0xFF0C1D2D).withValues(alpha: 0.6),
+                const Color(0xFF081420).withValues(alpha: 0.6),
               ],
             ),
             borderRadius: BorderRadius.circular(16.r),
             border: Border.all(
-              color: AppColors.blue153A56Color.withValues(alpha: 0.5),
+              color: const Color(0xFF0F314A).withValues(alpha: 0.8),
+              width: 1.2,
             ),
           ),
           child: Column(
             children: [
               IntrinsicHeight(
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _marineItem(IconPath.airIcon, "12", "mph SE"),
                     _vDivider(),
@@ -254,18 +260,13 @@ class SummaryTabWidget extends StatelessWidget {
                     _vDivider(),
                     _marineItem(IconPath.thermometerIcon, "78°", "F"),
                     _vDivider(),
-                    _marineItem(IconPath.dropIcon, "1.2", "Rising"),
+                    _marineItem(IconPath.waveIcon, "Swell", "wave\ndirection"),
                     _vDivider(),
-                    _marineItem(
-                      IconPath.cloudIcon,
-                      "Partly",
-                      "Cloudy",
-                      isWeather: true,
-                    ),
+                    _marineItem(IconPath.waveIcon, "9–12s", "wave\ninterval"),
                   ],
                 ),
               ),
-              SizedBox(height: 25.h),
+              SizedBox(height: 20.h),
               GestureDetector(
                 onTap: () =>
                     Get.snackbar("Forecast", "Loading full marine forecast..."),
@@ -282,8 +283,8 @@ class SummaryTabWidget extends StatelessWidget {
                     style: getTextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF0A1628),
-                      lineHeight: 10,
+                      color: const Color(0xFF0A1628),
+                      lineHeight: 14,
                     ),
                   ),
                 ),
@@ -295,47 +296,54 @@ class SummaryTabWidget extends StatelessWidget {
     );
   }
 
-  Widget _marineItem(
-    String icon,
-    String val,
-    String unit, {
-    bool isWeather = false,
-  }) {
-    return Column(
-      children: [
-        Image.asset(
-          icon,
-          color: AppColors.blue00F0FFColor,
-          height: 20.h,
-          width: 20.w,
-        ),
-        SizedBox(height: 4.h),
-        Text(
-          val,
-          style: getTextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-            lineHeight: 14,
+  Widget _marineItem(String icon, String val, String unit) {
+    return Expanded(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset(
+            icon,
+            color: AppColors.blue00F0FFColor,
+            height: 20.h,
+            width: 20.w,
           ),
-        ),
-        Text(
-          unit,
-          style: getTextStyle(
-            fontSize: 12,
-            color: AppColors.grey8B95A5Color,
-            lineHeight: 9,
-            fontWeight: FontWeight.w600,
+          SizedBox(height: 8.h),
+          Text(
+            val,
+            textAlign: TextAlign.center,
+            style: getTextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              lineHeight: 16,
+            ),
           ),
-        ),
-      ],
+          SizedBox(height: 8.h),
+          Text(
+            unit,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            softWrap: true,
+            overflow: TextOverflow.ellipsis,
+            style: getTextStyle(
+              fontSize: 11,
+              color: AppColors.grey8B95A5Color,
+              lineHeight: 10,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _vDivider() {
-    return Container(
-      width: 1,
-      color: AppColors.grey8B95A5Color.withValues(alpha: 0.3),
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.h),
+      child: Container(
+        width: 1,
+        color: AppColors.grey8B95A5Color.withValues(alpha: 0.15),
+      ),
     );
   }
 
@@ -566,7 +574,7 @@ class SummaryTabWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "peak window",
+                      "Peak Window",
                       style: getTextStyle(
                         fontSize: 12,
                         color: AppColors.whiteColor,
@@ -863,12 +871,12 @@ class SummaryTabWidget extends StatelessWidget {
     );
   }
 
-  Widget _sectionTitle(String icon, String title) {
+  Widget _sectionTitle(String icon, String title, {Color? iconColor}) {
     return Padding(
       padding: EdgeInsets.only(bottom: 15.h),
       child: Row(
         children: [
-          Image.asset(icon, height: 20.h, width: 20.w),
+          Image.asset(icon, height: 20.h, width: 20.w, color: iconColor),
           SizedBox(width: 10.w),
           Text(
             title,

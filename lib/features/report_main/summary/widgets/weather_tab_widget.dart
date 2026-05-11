@@ -389,7 +389,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
             ],
           ),
           Text(
-            'about 2 hours ago',
+            'About 2 Hours Ago',
             style: getTextStyle(
               fontSize: 12,
               color: Colors.white,
@@ -573,8 +573,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
                 style: getTextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
-                  lineHeight: 16,
-                  color: AppColors.grey8B95A5Color,
+                  color: AppColors.whiteColor,
                 ),
               ),
             ],
@@ -795,7 +794,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
                 ],
               ),
               Text(
-                'about 2 hours ago',
+                'About 2 Hours Ago',
                 style: getTextStyle(
                   fontSize: 12,
                   color: Colors.white,
@@ -1038,11 +1037,10 @@ class WeatherTabWidget extends GetView<SummaryController> {
                   ],
                 ),
                 SizedBox(height: 24.h),
-                // Bottom Row: Swell Direction, Swell Period, Empty spacer for alignment
+                // Bottom Row: Swell Direction, Swell Period, and optimized spacing
                 Row(
                   children: [
                     Expanded(
-                      flex: 8,
                       child: _forecastStat(
                         icon: Icons.explore_outlined,
                         value: data['swellDirection'] as String,
@@ -1051,15 +1049,12 @@ class WeatherTabWidget extends GetView<SummaryController> {
                     ),
                     SizedBox(width: 12.w),
                     Expanded(
-                      flex: 5,
                       child: _forecastStat(
                         icon: Icons.waves,
                         value: data['swellPeriod'] as String,
                         label: 'Swell Period',
                       ),
                     ),
-                    SizedBox(width: 12.w),
-                    const Expanded(flex: 4, child: SizedBox.shrink()),
                   ],
                 ),
               ],
@@ -1122,7 +1117,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
         SizedBox(height: 4.h),
         Text(
           value,
-          maxLines: 1,
+          maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: getTextStyle(
             fontSize: 18,

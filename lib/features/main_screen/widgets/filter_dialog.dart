@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
+import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import '../controller/filter_controller.dart';
 
 class FilterDialog extends StatelessWidget {
@@ -59,7 +60,7 @@ class FilterDialog extends StatelessWidget {
               ),
               SizedBox(height: 25.h),
 
-              _sectionHeader(Icons.sailing, "Species"),
+              _sectionHeader(IconPath.fishIcon, "Species"),
               Obx(
                 () => Wrap(
                   spacing: 10.w,
@@ -80,7 +81,7 @@ class FilterDialog extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _sectionHeader(Icons.waves, "Depth Range"),
+                  _sectionHeader(IconPath.waveIcon, "Depth Range"),
                   Text(
                     "0ft - 500ft",
                     style: getTextStyle(
@@ -109,7 +110,7 @@ class FilterDialog extends StatelessWidget {
               _depthLabels(),
               SizedBox(height: 25.h),
 
-              _sectionHeader(Icons.lock, "Method"),
+              _sectionHeader(IconPath.hookIcon, "Method", Color(0xFF00D4FF)),
               Obx(
                 () => Wrap(
                   spacing: 10.w,
@@ -127,7 +128,11 @@ class FilterDialog extends StatelessWidget {
               ),
               SizedBox(height: 25.h),
 
-              _sectionHeader(Icons.assignment, "Report Visibility"),
+              _sectionHeader(
+                IconPath.world,
+                "Report Visibility",
+                Color(0xFF00D4FF),
+              ),
               Obx(
                 () => Row(
                   children: [
@@ -147,7 +152,7 @@ class FilterDialog extends StatelessWidget {
               ),
               SizedBox(height: 25.h),
 
-              _sectionHeader(Icons.alarm, "Time Range"),
+              _sectionHeader(IconPath.clock, "Time Range"),
               Obx(
                 () => Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -211,12 +216,12 @@ class FilterDialog extends StatelessWidget {
     );
   }
 
-  Widget _sectionHeader(IconData icon, String title) {
+  Widget _sectionHeader(String icon, String title, [Color? color]) {
     return Padding(
       padding: EdgeInsets.only(bottom: 12.h),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.blue00F0FFColor, size: 18.sp),
+          Image.asset(icon, height: 18.h, width: 18.w, color: color),
           SizedBox(width: 8.w),
           Text(
             title,
