@@ -53,7 +53,7 @@ class GroupMainScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  "A network built around the love of fishing",
+                  "Share offshore reports with the crew you trust",
                   style: getTextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w400,

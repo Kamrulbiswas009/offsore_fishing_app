@@ -62,4 +62,6 @@ class IconPath {
   static const String world = "assets/icons/world.png";
   static const String clock = "assets/icons/alarm-clock.png";
   static const String checkMark = "assets/icons/checkmark-badge-04.png";
+  static const String infoIcon = "assets/icons/info_icon.png";
+
 }

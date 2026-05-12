@@ -93,7 +93,7 @@ class ForgotPasswordScreen extends StatelessWidget {
               const Spacer(),
               CustomButton(
                 ontap: controller.sendOtp,
-                title: 'Send  OTP',
+                title: 'Send Reset Code',
                 borderRadius: 7.r,
                 //padding: EdgeInsets.zero,
                 fontSize: 16,

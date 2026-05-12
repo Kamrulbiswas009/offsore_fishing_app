@@ -42,7 +42,7 @@ class OnboardingScreen4 extends StatelessWidget {
                       controller.goToStep(3, () => LoginScreen());
                     },
                     child: Text(
-                      "skip",
+                      "Skip",
                       style: getTextStyle(
                         color: AppColors.whiteColor,
                         fontSize: 14,
@@ -60,7 +60,7 @@ class OnboardingScreen4 extends StatelessWidget {
                 ),
                 SizedBox(height: 30.h),
                 Text(
-                  "Add your Reports",
+                  "Drop a Report",
                   style: getTextStyle(
                     color: AppColors.whiteColor,
                     fontSize: 25,
@@ -116,7 +116,7 @@ class OnboardingScreen4 extends StatelessWidget {
                               Text(
                                 "Next",
                                 style: getTextStyle(
-                                  color: AppColors.blackColor,
+                                  color: AppColors.whiteColor,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
                                   lineHeight: 10,

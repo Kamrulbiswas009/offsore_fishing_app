@@ -41,7 +41,7 @@ class LoginScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 3.h),
                 Text(
-                  'Sign in to access real-time fishing intelligence',
+                  'Log in to see the latest offshore intel',
                   textAlign: TextAlign.center,
                   style: getTextStyle(
                     color: AppColors.grey8B95A5Color,

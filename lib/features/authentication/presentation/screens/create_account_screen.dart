@@ -41,7 +41,7 @@ class CreateAccountScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'Join the offshore fishing community',
+                  'Get offshore intel that actually helps',
                   textAlign: TextAlign.center,
                   style: getTextStyle(
                     color: Color(0xFFDFE3E8),

@@ -43,7 +43,7 @@ class OnboardingScreen2 extends StatelessWidget {
                       controller.goToStep(1, () => LoginScreen());
                     },
                     child: Text(
-                      "skip",
+                      "Skip",
                       style: getTextStyle(
                         color: AppColors.whiteColor,
                         fontSize: 14,

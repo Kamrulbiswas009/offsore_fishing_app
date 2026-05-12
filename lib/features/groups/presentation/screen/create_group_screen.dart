@@ -7,6 +7,7 @@ import 'package:paytonpieper/core/common/widgets/custom_back_button.dart';
 import 'package:paytonpieper/core/common/widgets/custom_button.dart';
 import 'package:paytonpieper/core/common/widgets/custom_text_field.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
+import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/authentication/presentation/widgets/auth_common_widgets.dart';
 import 'package:paytonpieper/features/groups/controller/create_group_screen_controller.dart';
 
@@ -46,7 +47,7 @@ class CreateGroupScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  "Start a private fishing community",
+                  "Create a private group for your trusted crew",
                   style: getTextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
@@ -99,6 +100,37 @@ class CreateGroupScreen extends StatelessWidget {
                     lineHeight: 12,
                   ),
                 ),
+                Spacer(flex: 1,),
+                Container(
+                  padding: EdgeInsets.all(17.r),
+                  decoration: BoxDecoration(
+                    color: Color(0xFF00D4FF).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(
+                      color: Color(0xFF00D4FF).withValues(alpha: 0.3),
+                      width: 1.2,
+                    )
+                  ),
+                  child: Row(
+                    children: [
+                      Image.asset(IconPath.infoIcon, width: 24.r, height: 24.r,),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text(
+                          "Only invited members can see group reports, chat, and crew activity.",
+                          style: getTextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xFFF5F6FD),
+                            lineHeight: 9,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 40.h)
               ],
             ),
           ),

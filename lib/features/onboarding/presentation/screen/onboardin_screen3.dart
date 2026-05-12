@@ -43,7 +43,7 @@ class OnboardingScreen3 extends StatelessWidget {
                       controller.goToStep(2, () => LoginScreen());
                     },
                     child: Text(
-                      "skip",
+                      "Skip",
                       style: getTextStyle(
                         color: AppColors.whiteColor,
                         fontSize: 14,
@@ -117,7 +117,7 @@ class OnboardingScreen3 extends StatelessWidget {
                               Text(
                                 "Next",
                                 style: getTextStyle(
-                                  color: AppColors.blackColor,
+                                  color: AppColors.whiteColor,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
                                   lineHeight: 10,
