@@ -44,7 +44,7 @@ class OnboardingScreen1 extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  "Find the Bite. Share the Catch.",
+                  "Find the Bite. Share the Intel.",
                   style: getTextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w500,

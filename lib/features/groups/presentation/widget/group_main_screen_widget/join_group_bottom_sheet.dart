@@ -246,10 +246,10 @@ class _JoinGroupFormContent extends GetView<GroupMainScreenController> {
               title: 'Join Group',
               bgColor: isEnabled
                   ? AppColors.orangeColor
-                  : AppColors.brown9D543DColor,
+                  : Color(0xFF8B95A5),
               titleColor: isEnabled
                   ? AppColors.whiteColor
-                  : AppColors.grey8B95A5Color,
+                  : AppColors.whiteColor,
               borderRadius: 12.r,
               padding: EdgeInsets.symmetric(vertical: 8.h),
               prefixIcon: Padding(
@@ -258,7 +258,7 @@ class _JoinGroupFormContent extends GetView<GroupMainScreenController> {
                   Icons.group_add_outlined,
                   color: isEnabled
                       ? AppColors.whiteColor
-                      : AppColors.grey8B95A5Color,
+                      : AppColors.whiteColor,
                   size: 18.r,
                 ),
               ),
@@ -291,7 +291,7 @@ class _JoinGroupFormContent extends GetView<GroupMainScreenController> {
               ),
               SizedBox(height: 8.h),
               Text(
-                'Ask the group admin or a member for their invite code',
+                'Ask a crew admin for their invite code.',
                 style: getTextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
@@ -299,16 +299,16 @@ class _JoinGroupFormContent extends GetView<GroupMainScreenController> {
                   lineHeight: 10,
                 ),
               ),
-              SizedBox(height: 10.h),
-              Text(
-                'They can find it in their group settings under "Invite Members"',
-                style: getTextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.grey8B95A5Color,
-                  lineHeight: 10,
-                ),
-              ),
+              // SizedBox(height: 10.h),
+              // Text(
+              //   'They can find it in their group settings under "Invite Members"',
+              //   style: getTextStyle(
+              //     fontSize: 14,
+              //     fontWeight: FontWeight.w400,
+              //     color: AppColors.grey8B95A5Color,
+              //     lineHeight: 10,
+              //   ),
+              // ),
               SizedBox(height: 10.h),
               Text(
                 'Enter the code above to request access',

@@ -59,7 +59,7 @@ class VeriryOtpScreen extends StatelessWidget {
               Image.asset(IconPath.paytonFishLogo, width: 61.w, height: 53.h),
               SizedBox(height: 25.h),
               Text(
-                "Verify OTP",
+                "Verify Reset Code",
                 style: getTextStyle(
                   color: AppColors.whiteColor,
                   fontSize: 24,
@@ -69,7 +69,7 @@ class VeriryOtpScreen extends StatelessWidget {
               ),
               SizedBox(height: 12.h),
               Text(
-                "Give here the otp you received on your email",
+                "Enter the reset code sent to your email below",
                 style: getTextStyle(
                   color: AppColors.grey8B95A5Color,
                   fontSize: 16,
@@ -135,7 +135,7 @@ class VeriryOtpScreen extends StatelessWidget {
                 width: double.infinity,
                 child: CustomButton(
                   ontap: controller.verifyOtp,
-                  title: 'Verify OTP',
+                  title: 'Verify Reset Code',
                   borderRadius: 12.r,
                   fontSize: 16,
                   lineHeight: 12,
