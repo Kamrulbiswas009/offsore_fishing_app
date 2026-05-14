@@ -33,7 +33,7 @@ class GroupDetailsReportsTab extends GetView<GroupDetailsScreenController> {
               title: ' Add Report',
               fontSize: 14,
               lineHeight: 10,
-              bgColor: Color(0xFF055467),
+              bgColor: AppColors.orangeFF6B35Color,
               prefixIcon: Icon(
                 Icons.add,
                 color: AppColors.whiteColor,
@@ -187,10 +187,11 @@ class _ReportCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 5.h),
                 decoration: BoxDecoration(
-                  color: AppColors.orangeColor.withValues(alpha: 0.20),
+                  color: Color(0xFF0C192B),
                   borderRadius: BorderRadius.circular(6.r),
+                  border: Border.all(color: AppColors.orangeFF6B35Color),
                 ),
                 child: Text(
                   report.zone,
@@ -251,7 +252,7 @@ class _ReportCard extends StatelessWidget {
 
                     SizedBox(width: 4.w),
                     Text(
-                      'Success',
+                      'Landed Fish',
                       style: getTextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w400,

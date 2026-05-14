@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -193,6 +195,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
 
       // Use Mapbox's viewport to follow the puck
       // This is the idiomatic way without an extra geolocator package
+      // ignore: experimental_member_use
       setStateWithViewportAnimation(
         () {
           _viewportState = mapbox.FollowPuckViewportState(

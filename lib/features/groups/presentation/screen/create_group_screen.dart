@@ -100,7 +100,8 @@ class CreateGroupScreen extends StatelessWidget {
                     lineHeight: 12,
                   ),
                 ),
-                Spacer(flex: 1,),
+                SizedBox(height: 50.h,),
+                //Spacer(flex: 1,),
                 Container(
                   padding: EdgeInsets.all(17.r),
                   decoration: BoxDecoration(

@@ -4,6 +4,7 @@ import 'package:paytonpieper/core/common/widgets/common_message.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/core/utils/constants/image_path.dart';
+import 'package:paytonpieper/features/authentication/presentation/screens/login_screen.dart';
 import 'package:paytonpieper/features/notification/presentation/screen/notification_screen.dart';
 import 'package:paytonpieper/features/profile_and_setting/presentation/screen/settings_screen.dart';
 
@@ -22,7 +23,7 @@ class ProfileMainScreenController extends GetxController {
     ),
     ProfileStatModel(
       value: '18',
-      label: 'Zones Active',
+      label: 'confirmed reports',
       iconPath: IconPath.locationIcon,
       borderColor: AppColors.orangeFF6B35Color.withValues(alpha: 0.30),
       iconBackgroundColor: AppColors.orange3F2B27Color,
@@ -59,7 +60,9 @@ class ProfileMainScreenController extends GetxController {
     CommonMessage.showMessage(title: "Alert", message: "This is under developement",);
   }
 
-  void onLogout() {}
+  void onLogout() {
+    Get.offAll(() => LoginScreen());
+  }
 
   void openSettings() {
     Get.to(() => SettingsScreen());

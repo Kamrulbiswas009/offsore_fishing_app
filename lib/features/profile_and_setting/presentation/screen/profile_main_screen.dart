@@ -103,11 +103,14 @@ class ProfileMainScreen extends StatelessWidget {
               ),
               SizedBox(height: 28.h),
               CustomButton(
+                padding: EdgeInsets.symmetric(vertical: 12.h),
+                fontSize: 16,
+                lineHeight: 12,
                 ontap: controller.onLogout,
-                title: 'Logout',
+                title: 'Log Out',
                 bgColor: Color(0xFFFB2C36).withValues(alpha: 0.1),
                 borderColor: AppColors.redDA605CColor.withValues(alpha: 0.1),
-                titleColor: AppColors.redDA605CColor,
+                titleColor: Color(0xFFFF6467),
                 borderRadius: 16.r,
                 //padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
                 prefixIcon: Padding(

@@ -29,7 +29,7 @@ class NotificationScreen extends GetView<NotificationScreenController> {
                   CustomBackButton(ontap: Get.back),
                   Expanded(
                     child: Text(
-                      'Notification',
+                      'Notifications',
                       style: getTextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w600,

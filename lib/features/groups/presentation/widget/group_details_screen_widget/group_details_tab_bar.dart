@@ -47,7 +47,7 @@ class _TabItem extends GetView<GroupDetailsScreenController> {
           borderRadius: 10,
           padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 7.h),
           bgColor: isSelected
-              ? AppColors.orangeFF6B35Color
+              ? AppColors.tealColor117A88
               : AppColors.transparentColor,
           titleColor: isSelected
               ? AppColors.whiteColor

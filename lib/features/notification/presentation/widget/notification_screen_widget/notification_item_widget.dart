@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
+import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/notification/controller/notification_screen_controller.dart';
 
 class NotificationItemWidget extends StatelessWidget {
@@ -35,10 +36,10 @@ class NotificationItemWidget extends StatelessWidget {
             height: 34.r,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: item.iconBackgroundColor,
+              //color: item.iconBackgroundColor,
             ),
             alignment: Alignment.center,
-            child: Icon(item.icon, size: 18.r, color: item.iconColor),
+            child: Image.asset(IconPath.notificaton2Icon, height: 32.r, width: 32.r)// Icon(item.icon, size: 18.r, color: item.iconColor),
           ),
           SizedBox(width: 12.w),
           Expanded(
@@ -59,32 +60,32 @@ class NotificationItemWidget extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (item.isUnread) ...[
-                      SizedBox(width: 8.w),
-                      Container(
-                        width: 7.r,
-                        height: 7.r,
-                        margin: EdgeInsets.only(top: 6.h),
-                        decoration: const BoxDecoration(
-                          color: AppColors.tealColor117A88,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      SizedBox(width: 10.w),
-                      Container(
-                        padding: EdgeInsets.all(4.r),
-                        decoration: const BoxDecoration(
-                          color: AppColors.black2A2F3AColor,
-                          shape: BoxShape.circle,
-                        ),
-                        alignment: Alignment.center,
-                        child: Icon(
-                          Icons.check_rounded,
-                          size: 12.r,
-                          color: AppColors.whiteColor,
-                        ),
-                      ),
-                    ],
+                    // if (item.isUnread) ...[
+                    //   SizedBox(width: 8.w),
+                    //   Container(
+                    //     width: 7.r,
+                    //     height: 7.r,
+                    //     margin: EdgeInsets.only(top: 6.h),
+                    //     decoration: const BoxDecoration(
+                    //       color: AppColors.tealColor117A88,
+                    //       shape: BoxShape.circle,
+                    //     ),
+                    //   ),
+                    //   SizedBox(width: 10.w),
+                    //   Container(
+                    //     padding: EdgeInsets.all(4.r),
+                    //     decoration: const BoxDecoration(
+                    //       color: AppColors.black2A2F3AColor,
+                    //       shape: BoxShape.circle,
+                    //     ),
+                    //     alignment: Alignment.center,
+                    //     child: Icon(
+                    //       Icons.check_rounded,
+                    //       size: 12.r,
+                    //       color: AppColors.whiteColor,
+                    //     ),
+                    //   ),
+                    // ],
                   ],
                 ),
                 SizedBox(height: 3.h),

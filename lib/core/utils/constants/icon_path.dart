@@ -63,5 +63,7 @@ class IconPath {
   static const String clock = "assets/icons/alarm-clock.png";
   static const String checkMark = "assets/icons/checkmark-badge-04.png";
   static const String infoIcon = "assets/icons/info_icon.png";
+  static const String deleteIcon = "assets/icons/delete_icon.png";
+  static const String notificaton2Icon = "assets/icons/notification2_icon.png";
 
 }
