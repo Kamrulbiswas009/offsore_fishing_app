@@ -113,19 +113,19 @@ class SettingsScreen extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       child: CustomButton(
+                        fontSize: 14,
+                        lineHeight: 10,
+                        borderColor: Color(0xFF522F26),
                         ontap: controller.clearOfflineData,
                         title: 'Clear Offline Data',
-                        bgColor: AppColors.maroon271B2CColor,
-                        titleColor: AppColors.redDA605CColor,
+                        bgColor: Color(0xFFFB2C36).withValues(alpha: 0.10),
+                        titleColor: Color(0xFFFF6467),
                         borderRadius: 12.r,
                         padding: EdgeInsets.symmetric(vertical: 12.h),
                         prefixIcon: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Icon(
-                            Icons.delete_outline_rounded,
-                            color: AppColors.redDA605CColor,
-                            size: 18.r,
-                          ),
+                          child: Image.asset(IconPath.deleteIcon,
+                              width: 16.r, height: 16.r),
                         ),
                       ),
                     ),
@@ -150,24 +150,28 @@ class SettingsScreen extends StatelessWidget {
                     Obx(
                       () => SettingsSwitchTileWidget(
                         title: 'Enable Notifications',
-                        subtitle: 'Receive alerts and updates',
+                        subtitle: 'Get bite, weather, and group alerts',
                         value: controller.isNotificationsEnabled.value,
                         onChanged: controller.toggleNotifications,
                       ),
                     ),
                     Divider(
-                      color: AppColors.grey516173Color.withValues(alpha: 0.45),
+                      color: Color(0xFF055467),
                       height: 26.h,
                     ),
                     Obx(
                       () => SettingsSwitchTileWidget(
                         title: 'Hot Zone Alerts',
-                        subtitle: 'Activity spikes in zones',
+                        subtitle: 'Alerts when the bite is on',
                         value: controller.isHotZoneAlertsEnabled.value,
                         onChanged: controller.toggleHotZoneAlerts,
                       ),
                     ),
-                    SizedBox(height: 14.h),
+                    Divider(
+                      color: Color(0xFF055467),
+                      height: 26.h,
+                    ),
+                    //SizedBox(height: 14.h),
                     Obx(
                       () => SettingsSwitchTileWidget(
                         title: 'Group Activity',
@@ -209,6 +213,7 @@ class SettingsScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              SizedBox(height: 25.h,),
             ],
           ),
         ),

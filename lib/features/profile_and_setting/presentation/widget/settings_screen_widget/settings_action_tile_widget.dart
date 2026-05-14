@@ -22,7 +22,7 @@ class SettingsActionTileWidget extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
         decoration: BoxDecoration(
-          color: AppColors.blue1B2134Color,
+          color: AppColors.black2A2F3AColor,
           borderRadius: BorderRadius.circular(12.r),
         ),
         child: Row(

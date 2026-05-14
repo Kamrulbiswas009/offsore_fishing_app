@@ -24,7 +24,7 @@ class NotificationProBannerWidget extends StatelessWidget {
           SizedBox(width: 10.w),
           Expanded(
             child: Text(
-              'Pro users get priority notifications',
+              'Pro members get first shot at hot bite alerts!',
               style: getTextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w400,

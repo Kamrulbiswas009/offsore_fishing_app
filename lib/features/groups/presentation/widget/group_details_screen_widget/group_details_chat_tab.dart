@@ -88,7 +88,7 @@ class GroupDetailsChatTab extends GetView<GroupDetailsScreenController> {
                     lineHeight: 11,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'Type your comment...',
+                    hintText: 'Message your crew...',
                     hintStyle: getTextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w400,

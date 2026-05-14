@@ -110,7 +110,7 @@ class SubscriptionPlanCardWidget extends StatelessWidget {
             width: double.infinity,
             child: CustomButton(
               ontap: onUpgradeTap,
-              title: 'Upgrade to Pro',
+              title: 'Unlock Pro Intel',
               bgColor: AppColors.orangeFF6B35Color,
               borderRadius: 16.r,
               //padding: EdgeInsets.symmetric(vertical: 16.h),
