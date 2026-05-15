@@ -673,14 +673,14 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
                 controller: controller.depthController,
               ),
             ),
-            SizedBox(width: 15.w),
-            Expanded(
-              child: _miniInput(
-                "Strike Zone (ft)",
-                "80",
-                controller: controller.strikeZoneController,
-              ),
-            ),
+            // SizedBox(width: 15.w),
+            // Expanded(
+            //   child: _miniInput(
+            //     "Strike Zone (ft)",
+            //     "80",
+            //     controller: controller.strikeZoneController,
+            //   ),
+            // ),
           ],
         ),
         SizedBox(height: 15.h),

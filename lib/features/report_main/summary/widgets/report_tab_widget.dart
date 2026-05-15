@@ -21,7 +21,7 @@ class ReportTabWidget extends GetView<SummaryController> {
         _buildAddReportButton(),
         SizedBox(height: 20.h),
         Text(
-          "All Zone Reports",
+          "Zone Reports",
           style: getTextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w700,
@@ -31,7 +31,7 @@ class ReportTabWidget extends GetView<SummaryController> {
         ),
         SizedBox(height: 7.h),
         Text(
-          "Track your fishing activity",
+          "Reports from this zone",
           style: getTextStyle(
             fontSize: 14,
             color: AppColors.grey8B95A5Color,
@@ -191,7 +191,7 @@ class ReportTabWidget extends GetView<SummaryController> {
         Expanded(
           child: Divider(
             color: AppColors.green10B981Color.withOpacity(0.3),
-            thickness: 1,
+            thickness: 2,
           ),
         ),
         Padding(
@@ -209,7 +209,7 @@ class ReportTabWidget extends GetView<SummaryController> {
         Expanded(
           child: Divider(
             color: AppColors.green10B981Color.withOpacity(0.3),
-            thickness: 1,
+            thickness: 2,
           ),
         ),
       ],
