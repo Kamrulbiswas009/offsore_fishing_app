@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:paytonpieper/routes/app_routes.dart';
 import 'core/bindings/controller_binder.dart';
 import 'core/utils/theme/theme.dart';
@@ -25,6 +26,7 @@ class Paytonpieper extends StatelessWidget {
           themeMode: ThemeMode.system,
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
+          builder: EasyLoading.init(),
         );
       },
     );

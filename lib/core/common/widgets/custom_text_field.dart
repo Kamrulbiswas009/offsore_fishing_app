@@ -14,6 +14,7 @@ class CustomTextField extends StatelessWidget {
   final TextCapitalization textCapitalization;
   final EdgeInsetsGeometry? contentPadding;
   final Color? fillColor;
+  final String? Function(String?)? validator;
 
   const CustomTextField({
     super.key,
@@ -27,6 +28,7 @@ class CustomTextField extends StatelessWidget {
     this.textCapitalization = TextCapitalization.none,
     this.contentPadding,
     this.fillColor,
+    this.validator,
   });
 
   @override
@@ -42,6 +44,7 @@ class CustomTextField extends StatelessWidget {
         textAlignVertical: maxLines > 1
             ? TextAlignVertical.top
             : TextAlignVertical.center,
+        validator: validator,
         style: getTextStyle(
           color: AppColors.whiteColor,
           fontSize: 15,
@@ -53,7 +56,7 @@ class CustomTextField extends StatelessWidget {
           hintText: hintText,
           prefixIcon: prefixIcon,
           contentPadding: contentPadding,
-          fillColor: fillColor
+          fillColor: fillColor,
         ),
       ),
     );
@@ -66,6 +69,7 @@ class CustomPasswordTextField extends StatelessWidget {
   final bool obscureText;
   final VoidCallback? onVisibilityTap;
   final TextInputAction textInputAction;
+  final String? Function(String?)? validator;
 
   const CustomPasswordTextField({
     super.key,
@@ -74,6 +78,7 @@ class CustomPasswordTextField extends StatelessWidget {
     this.obscureText = true,
     this.onVisibilityTap,
     this.textInputAction = TextInputAction.next,
+    this.validator,
   });
 
   @override
@@ -84,6 +89,7 @@ class CustomPasswordTextField extends StatelessWidget {
         obscureText: obscureText,
         obscuringCharacter: '•',
         textInputAction: textInputAction,
+        validator: validator,
         style: getTextStyle(
           color: AppColors.whiteColor,
           fontSize: 15,
@@ -132,7 +138,7 @@ InputDecoration _inputDecoration({
 }) {
   return InputDecoration(
     filled: true,
-    fillColor:fillColor ?? const Color(0xFF29303C),
+    fillColor: fillColor ?? const Color(0xFF29303C),
     hintText: hintText,
     hintStyle: getTextStyle(
       color: AppColors.grey8B95A5Color,

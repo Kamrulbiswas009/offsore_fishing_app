@@ -1,17 +1,161 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
+import 'package:paytonpieper/core/models/response_data.dart';
+import 'package:paytonpieper/core/services/network_caller.dart';
+import 'package:paytonpieper/core/services/storage_service.dart';
+import 'package:paytonpieper/core/utils/constants/api_constants.dart';
+import 'package:paytonpieper/core/utils/logging/logger.dart';
+import 'package:paytonpieper/features/profile_and_setting/model/auth_me_model.dart';
+import 'package:paytonpieper/routes/app_routes.dart';
 import 'package:paytonpieper/core/common/widgets/common_message.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/core/utils/constants/image_path.dart';
-import 'package:paytonpieper/features/authentication/presentation/screens/login_screen.dart';
 import 'package:paytonpieper/features/notification/presentation/screen/notification_screen.dart';
 import 'package:paytonpieper/features/profile_and_setting/presentation/screen/settings_screen.dart';
 
 class ProfileMainScreenController extends GetxController {
-  final String profileName = 'Captain Mike';
-  final String email = 'captain.mike@example.com';
-  final String profileImagePath = ImagePath.messageProfileImage;
+  final NetworkCaller _networkCaller = NetworkCaller();
+  final Rxn<AuthMeModel> authMe = Rxn<AuthMeModel>();
+
+  String get profileName => authMe.value?.name ?? 'Captain Mike';
+  String get email => authMe.value?.email ?? 'captain.mike@example.com';
+  String get profileImagePath =>
+      authMe.value?.profileImage ?? ImagePath.messageProfileImage;
+
+  @override
+  void onInit() {
+    super.onInit();
+    getAuthMe();
+  }
+
+  Future<void> getAuthMe() async {
+    await EasyLoading.show(status: 'Loading profile...');
+    AppLoggerHelper.info('Fetching user profile.');
+
+    try {
+      var response = await _requestAuthMe();
+
+      if (!response.isSuccess) {
+        AppLoggerHelper.warning(
+          'Profile request failed (${response.statusCode}). '
+          'Attempting to refresh the access token.',
+        );
+
+        final didRefresh = await _refreshAccessToken();
+        if (!didRefresh) {
+          AppLoggerHelper.error(
+            'Profile fetch failed because the access token could not be refreshed.',
+          );
+          return;
+        }
+
+        AppLoggerHelper.info(
+          'Access token refreshed. Retrying profile request.',
+        );
+        response = await _requestAuthMe();
+      }
+
+      if (!response.isSuccess) {
+        AppLoggerHelper.error(
+          'Profile fetch failed after retry: ${response.errorMessage}',
+        );
+        return;
+      }
+
+      final responseBody = response.responseData;
+      final data = responseBody is Map ? responseBody['data'] : null;
+      if (data is! Map) {
+        AppLoggerHelper.error(
+          'Profile response did not contain valid user data.',
+        );
+        return;
+      }
+
+      final profile = AuthMeModel.fromJson(Map<String, dynamic>.from(data));
+      authMe.value = profile;
+      if (profile.userId.isNotEmpty) {
+        await StorageService.saveUserId(profile.userId);
+      }
+      AppLoggerHelper.info('User profile fetched successfully.');
+    } catch (error) {
+      AppLoggerHelper.error('Profile fetch failed unexpectedly.', error);
+    } finally {
+      await EasyLoading.dismiss();
+    }
+  }
+
+  Future<ResponseData> _requestAuthMe() {
+    final accessToken = StorageService.token;
+    return _networkCaller.getRequest(
+      ApiConstants.authMeApi,
+      token: accessToken == null || accessToken.isEmpty
+          ? null
+          : 'Bearer $accessToken',
+    );
+  }
+
+  Future<bool> _refreshAccessToken() async {
+    final refreshToken = StorageService.refreshToken;
+    final userId = StorageService.userId ?? _userIdFromToken(refreshToken);
+
+    if (refreshToken == null || refreshToken.isEmpty || userId == null) {
+      AppLoggerHelper.error(
+        'Token refresh skipped because userId or refreshToken is missing.',
+      );
+      return false;
+    }
+
+    final response = await _networkCaller.postRequest(
+      ApiConstants.getAccessTokenApi,
+      body: {'userId': userId, 'refreshToken': refreshToken},
+    );
+
+    if (!response.isSuccess) {
+      AppLoggerHelper.error('Token refresh failed: ${response.errorMessage}');
+      return false;
+    }
+
+    final responseBody = response.responseData;
+    final data = responseBody is Map ? responseBody['data'] : null;
+    final newAccessToken = data is Map ? data['accessToken'] : null;
+    final newRefreshToken = data is Map ? data['refreshToken'] : null;
+
+    if (newAccessToken is! String ||
+        newAccessToken.isEmpty ||
+        newRefreshToken is! String ||
+        newRefreshToken.isEmpty) {
+      AppLoggerHelper.error('Token refresh response contained invalid tokens.');
+      return false;
+    }
+
+    await StorageService.saveAuthTokens(
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    );
+    await StorageService.saveUserId(userId);
+    return true;
+  }
+
+  String? _userIdFromToken(String? token) {
+    if (token == null || token.isEmpty) return null;
+
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+      final payload = jsonDecode(
+        utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
+      );
+      final subject = payload is Map ? payload['sub'] : null;
+      return subject is String && subject.isNotEmpty ? subject : null;
+    } catch (error) {
+      AppLoggerHelper.error('Could not read userId from refresh token.', error);
+      return null;
+    }
+  }
 
   late final List<ProfileStatModel> stats = <ProfileStatModel>[
     ProfileStatModel(
@@ -51,17 +195,70 @@ class ProfileMainScreenController extends GetxController {
       );
 
   void onNotificationsTap() {
-    Get.to(()=>NotificationScreen());
+    Get.to(() => NotificationScreen());
   }
 
   void onEditProfile() {}
 
   void onUpgradeToPro() {
-    CommonMessage.showMessage(title: "Alert", message: "This is under developement",);
+    CommonMessage.showMessage(
+      title: "Alert",
+      message: "This is under developement",
+    );
   }
 
-  void onLogout() {
-    Get.offAll(() => LoginScreen());
+  Future<void> onLogout() async {
+    final shouldLogout = await Get.dialog<bool>(
+      AlertDialog(
+        backgroundColor: AppColors.containerBackgroundColor,
+        title: const Text(
+          'Confirm logout',
+          style: TextStyle(color: AppColors.whiteColor),
+        ),
+        content: const Text(
+          'Are you sure you want to log out?',
+          style: TextStyle(color: AppColors.greyC8D0DBColor),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.greyC8D0DBColor),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Get.back(result: true),
+            child: const Text(
+              'Confirm',
+              style: TextStyle(color: AppColors.redDA605CColor),
+            ),
+          ),
+        ],
+      ),
+      barrierDismissible: false,
+    );
+
+    if (shouldLogout != true) return;
+
+    await EasyLoading.show(status: 'Logging out...');
+
+    try {
+      await StorageService.logoutUser();
+      authMe.value = null;
+      AppLoggerHelper.info('Logout successful. Local data cleared.');
+    } catch (error) {
+      AppLoggerHelper.error('Logout failed while clearing local data.', error);
+      CommonMessage.showMessage(
+        title: 'Logout failed',
+        message: 'Could not clear your local data. Please try again.',
+      );
+      return;
+    } finally {
+      await EasyLoading.dismiss();
+    }
+
+    Get.offAllNamed(AppRoute.getLoginScreen());
   }
 
   void openSettings() {

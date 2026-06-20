@@ -23,7 +23,8 @@ class ProfileInfoCardWidget extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(12.r),
       decoration: BoxDecoration(
-        color: AppColors.containerBackgroundColor,// AppColors.black2A2F3AColor.withValues(alpha: 0.30),
+        color: AppColors
+            .containerBackgroundColor, // AppColors.black2A2F3AColor.withValues(alpha: 0.30),
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: Color(0xFF117E97)),
       ),
@@ -38,7 +39,16 @@ class ProfileInfoCardWidget extends StatelessWidget {
                 color: AppColors.whiteColor.withValues(alpha: 0.10),
               ),
             ),
-            child: ClipOval(child: Image.asset(imagePath, fit: BoxFit.cover)),
+            child: ClipOval(
+              child: imagePath.startsWith('http')
+                  ? Image.network(
+                      imagePath,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) =>
+                          const Icon(Icons.person, color: AppColors.whiteColor),
+                    )
+                  : Image.asset(imagePath, fit: BoxFit.cover),
+            ),
           ),
           SizedBox(width: 14.w),
           Expanded(

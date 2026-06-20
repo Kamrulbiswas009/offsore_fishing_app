@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:paytonpieper/routes/app_routes.dart';
 
 class OnboardingScreenController extends GetxController {
   final RxInt currentIndex = 0.obs;
@@ -15,5 +16,9 @@ class OnboardingScreenController extends GetxController {
   void goBackToStep(int index) {
     updateIndex(index);
     Get.back();
+  }
+
+  void goToLogin() {
+    Get.offAllNamed(AppRoute.getLoginScreen());
   }
 }

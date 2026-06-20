@@ -6,7 +6,6 @@ import 'package:paytonpieper/core/common/widgets/custom_button.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/core/utils/constants/image_path.dart';
-import 'package:paytonpieper/features/authentication/presentation/screens/login_screen.dart';
 import 'package:paytonpieper/features/onboarding/controller/onboarding_screen_controller.dart';
 
 class OnboardingScreen4 extends StatelessWidget {
@@ -39,7 +38,7 @@ class OnboardingScreen4 extends StatelessWidget {
                   alignment: Alignment.topRight,
                   child: GestureDetector(
                     onTap: () {
-                      controller.goToStep(3, () => LoginScreen());
+                      controller.goToLogin();
                     },
                     child: Text(
                       "Skip",
@@ -102,7 +101,7 @@ class OnboardingScreen4 extends StatelessWidget {
                     Expanded(
                       child: GestureDetector(
                         onTap: () {
-                          Get.to(()=>LoginScreen());
+                          controller.goToLogin();
                         },
                         child: Container(
                           height: 36.h,
