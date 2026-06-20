@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:otp_text_field/otp_text_field.dart';
 import 'package:paytonpieper/core/common/widgets/common_message.dart';
 import 'package:paytonpieper/features/authentication/presentation/screens/set_new_password_screen.dart';
-import 'package:paytonpieper/features/authentication/presentation/screens/veriry_otp_screen.dart';
+import 'package:paytonpieper/features/authentication/presentation/screens/verify_otp_screen.dart';
 import 'package:paytonpieper/routes/app_routes.dart';
 
 class ForgotPasswordScreenController extends GetxController {
@@ -28,7 +28,7 @@ class ForgotPasswordScreenController extends GetxController {
   void sendOtp() {
     otpCode.value = '';
     hasOtpError.value = false;
-    Get.to(() => VeriryOtpScreen());
+    Get.to(() => VerifyOtpScreen());
   }
 
   void updateOtp(String value) {

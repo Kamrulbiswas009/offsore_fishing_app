@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:paytonpieper/app.dart';
+import 'package:paytonpieper/core/services/storage_service.dart';
 import 'package:paytonpieper/core/utils/mapbox_config.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await StorageService.init();
   initializeMapbox();
   runApp(const Paytonpieper());
 }

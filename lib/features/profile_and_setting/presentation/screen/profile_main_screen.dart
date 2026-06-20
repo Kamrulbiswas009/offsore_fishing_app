@@ -62,11 +62,13 @@ class ProfileMainScreen extends StatelessWidget {
                 ],
               ),
               SizedBox(height: 26.h),
-              ProfileInfoCardWidget(
-                name: controller.profileName,
-                email: controller.email,
-                imagePath: controller.profileImagePath,
-                onEditTap: controller.onEditProfile,
+              Obx(
+                () => ProfileInfoCardWidget(
+                  name: controller.profileName,
+                  email: controller.email,
+                  imagePath: controller.profileImagePath,
+                  onEditTap: controller.onEditProfile,
+                ),
               ),
               SizedBox(height: 22.h),
               Row(

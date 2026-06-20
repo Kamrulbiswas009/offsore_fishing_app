@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:get/get.dart';
+import 'package:paytonpieper/core/services/storage_service.dart';
 import 'package:paytonpieper/routes/app_routes.dart';
 
 class SplashScreenController extends GetxController {
@@ -33,7 +34,11 @@ class SplashScreenController extends GetxController {
       if (loadingProgress.value >= 1 && !_hasNavigated) {
         _hasNavigated = true;
         _progressTimer?.cancel();
-        Get.offAllNamed(AppRoute.getOnboardingScreen1());
+        Get.offAllNamed(
+          StorageService.hasToken()
+              ? AppRoute.getHomeMainScreen()
+              : AppRoute.getOnboardingScreen1(),
+        );
       }
     });
   }

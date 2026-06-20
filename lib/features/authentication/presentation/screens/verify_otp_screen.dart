@@ -10,8 +10,8 @@ import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/authentication/controllers/forgot_password_screen_controller.dart';
 
-class VeriryOtpScreen extends StatelessWidget {
-  const VeriryOtpScreen({super.key});
+class VerifyOtpScreen extends StatelessWidget {
+  const VerifyOtpScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

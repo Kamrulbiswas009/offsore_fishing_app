@@ -1,8 +1,5 @@
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/services/permissions/location_permission_service.dart';
-import 'package:paytonpieper/features/authentication/controllers/create_account_screen_controller.dart';
-import 'package:paytonpieper/features/authentication/controllers/forgot_password_screen_controller.dart';
-import 'package:paytonpieper/features/authentication/controllers/login_controller.dart';
 import 'package:paytonpieper/features/main_screen/controller/filter_controller.dart';
 import 'package:paytonpieper/features/main_screen/controller/main_screen_controller.dart';
 import 'package:paytonpieper/features/groups/controller/create_group_screen_controller.dart';
@@ -34,15 +31,6 @@ class ControllerBinder extends Bindings {
       () => OnboardingScreenController(),
       fenix: true,
     );
-    Get.lazyPut<LoginController>(() => LoginController(), fenix: true);
-    Get.lazyPut<CreateAccountScreenController>(
-      () => CreateAccountScreenController(),
-      fenix: true,
-    );
-    Get.lazyPut<ForgotPasswordScreenController>(
-      () => ForgotPasswordScreenController(),
-      fenix: true,
-    );
     Get.lazyPut<GroupMainScreenController>(
       () => GroupMainScreenController(),
       fenix: true,
@@ -68,7 +56,7 @@ class ControllerBinder extends Bindings {
       fenix: true,
     );
     Get.lazyPut<MapScreenController>(() => MapScreenController(), fenix: true);
-    Get.put( MainScreenController(), permanent: true);
+    Get.put(MainScreenController(), permanent: true);
     Get.lazyPut<FilterController>(() => FilterController(), fenix: true);
     Get.lazyPut<SummaryController>(() => SummaryController(), fenix: true);
     Get.lazyPut<ReportCatchController>(

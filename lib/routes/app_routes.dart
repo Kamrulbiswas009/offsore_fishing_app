@@ -1,9 +1,13 @@
 import 'package:get/get.dart';
+import 'package:paytonpieper/features/authentication/controllers/create_account_screen_controller.dart';
+import 'package:paytonpieper/features/authentication/controllers/forgot_password_screen_controller.dart';
+import 'package:paytonpieper/features/authentication/controllers/login_controller.dart';
 import 'package:paytonpieper/features/authentication/presentation/screens/create_account_screen.dart';
 import 'package:paytonpieper/features/authentication/presentation/screens/forgot_password_screen.dart';
 import 'package:paytonpieper/features/authentication/presentation/screens/login_screen.dart';
 import 'package:paytonpieper/features/authentication/presentation/screens/set_new_password_screen.dart';
-import 'package:paytonpieper/features/authentication/presentation/screens/veriry_otp_screen.dart';
+import 'package:paytonpieper/features/authentication/presentation/screens/verify_email_otp_screen.dart';
+import 'package:paytonpieper/features/authentication/presentation/screens/verify_otp_screen.dart';
 import 'package:paytonpieper/features/groups/presentation/screen/create_group_screen.dart';
 import 'package:paytonpieper/features/groups/presentation/screen/group_details_screen.dart';
 import 'package:paytonpieper/features/map/screen/zone_map_screen.dart';
@@ -25,7 +29,6 @@ import 'package:paytonpieper/features/report_main/report_catch2/screen/report_ca
 import 'package:paytonpieper/features/submit_report/screen/submit_report_screen.dart';
 import 'package:paytonpieper/features/report_main/offline_report/screen/offline_report_screen.dart';
 import 'package:paytonpieper/features/success_submit_report/screen/succes_screen.dart';
-
 
 class AppRoute {
   static String splashScreen1 = "/splashScreen1";
@@ -53,7 +56,7 @@ class AppRoute {
   static String submitReportScreen = "/submitReportScreen";
   static String offlineReportScreen = "/offlineReportScreen";
   static String succesScreen = "/succesScreen";
-
+  static String verifyEmailOtpScreen = "/VerifyEmailOtpScreen";
 
   static String getSplashScreen1() => splashScreen1;
   static String getOnboardingScreen1() => onboardingScreen1;
@@ -80,7 +83,7 @@ class AppRoute {
   static String getSubmitReportScreen() => submitReportScreen;
   static String getOfflineReportScreen() => offlineReportScreen;
   static String getSuccesScreen() => succesScreen;
-
+  static String getVerifyEmailOtpScreen()=> verifyEmailOtpScreen;
 
   static List<GetPage> routes = [
     GetPage(name: splashScreen1, page: () => SplashScreen1()),
@@ -88,10 +91,28 @@ class AppRoute {
     GetPage(name: onboardingScreen2, page: () => OnboardingScreen2()),
     GetPage(name: onboardingScreen3, page: () => OnboardingScreen3()),
     GetPage(name: onboardingScreen4, page: () => OnboardingScreen4()),
-    GetPage(name: loginScreen, page: () => LoginScreen()),
-    GetPage(name: createAccountScreen, page: () => CreateAccountScreen()),
-    GetPage(name: forgotPasswordScreen, page: () => ForgotPasswordScreen()),
-    GetPage(name: veriryOtpScreen, page: () => VeriryOtpScreen()),
+    GetPage(
+      name: loginScreen,
+      page: () => LoginScreen(),
+      binding: BindingsBuilder(() {
+        Get.put(LoginController());
+      }),
+    ),
+    GetPage(
+      name: createAccountScreen,
+      page: () => CreateAccountScreen(),
+      binding: BindingsBuilder(() {
+        Get.put(CreateAccountScreenController());
+      }),
+    ),
+    GetPage(
+      name: forgotPasswordScreen,
+      page: () => ForgotPasswordScreen(),
+      binding: BindingsBuilder(() {
+        Get.put(ForgotPasswordScreenController());
+      }),
+    ),
+    GetPage(name: veriryOtpScreen, page: () => VerifyOtpScreen()),
     GetPage(name: setNewPasswordScreen, page: () => SetNewPasswordScreen()),
     GetPage(
       name: createGroupScreen,
@@ -122,7 +143,7 @@ class AppRoute {
     ),
     GetPage(
       name: summaryScreen,
-      page: () =>  SummaryScreen(isReportMainScreen: Get.arguments as bool,),
+      page: () => SummaryScreen(isReportMainScreen: Get.arguments as bool),
       binding: BindingsBuilder(() {
         Get.put(SummaryController());
       }),
@@ -173,5 +194,9 @@ class AppRoute {
       page: () => const ReportSuccessScreen(),
       transition: Transition.leftToRight,
     ),
+
+    GetPage(
+      name: verifyEmailOtpScreen, 
+      page: ()=> VerifyEmailOtpScreen()),
   ];
 }
