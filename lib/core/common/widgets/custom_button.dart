@@ -4,7 +4,7 @@ import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 
 class CustomButton extends StatelessWidget {
-  final VoidCallback ontap;
+  final VoidCallback? ontap;
   final String title;
   final double? lineHeight;
   final double? fontSize;
@@ -21,7 +21,7 @@ class CustomButton extends StatelessWidget {
 
   const CustomButton({
     super.key,
-    required this.ontap,
+    this.ontap,
     required this.title,
     this.lineHeight,
     this.fontSize,

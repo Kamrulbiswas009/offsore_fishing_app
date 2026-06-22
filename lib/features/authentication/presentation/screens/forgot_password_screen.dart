@@ -91,13 +91,14 @@ class ForgotPasswordScreen extends StatelessWidget {
                 textInputAction: TextInputAction.done,
               ),
               const Spacer(),
-              CustomButton(
-                ontap: controller.sendOtp,
-                title: 'Send Reset Code',
-                borderRadius: 7.r,
-                //padding: EdgeInsets.zero,
-                fontSize: 16,
-                lineHeight: 13,
+              Obx(
+                () => CustomButton(
+                  ontap: controller.isLoading.value ? null : controller.sendOtp,
+                  title: controller.isLoading.value ? 'Sending...' : 'Send Reset Code',
+                  borderRadius: 7.r,
+                  fontSize: 16,
+                  lineHeight: 13,
+                ),
               ),
               SizedBox(height: 51.h),
             ],

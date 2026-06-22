@@ -7,6 +7,7 @@ import 'package:paytonpieper/core/common/widgets/custom_text_field.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/authentication/controllers/forgot_password_screen_controller.dart';
+import 'package:paytonpieper/features/authentication/presentation/screens/forgot_password_screen.dart';
 import 'package:paytonpieper/features/authentication/presentation/widgets/auth_common_widgets.dart';
 
 class SetNewPasswordScreen extends StatelessWidget {
@@ -82,8 +83,30 @@ class SetNewPasswordScreen extends StatelessWidget {
                   controller.togglePasswordVisibility();
                 },
               ),),
+              SizedBox(height: 16.h,),
+              TextButton(
+                onPressed: () {
+                  Get.to(() => ForgotPasswordScreen());
+                },
+                child: Text(
+                  "Resend Code",
+                  style: getTextStyle(
+                    color: AppColors.redDA605CColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    lineHeight: 10,
+                  ),
+                ),
+              ),
               Spacer(flex: 2),
-              CustomButton(ontap: (){}, title: "Set New Password"),
+              Obx(
+                () => CustomButton(
+                  ontap: controller.isLoading.value
+                      ? null
+                      : () { controller.setNewPassword(); },
+                  title: controller.isLoading.value ? 'Setting...' : 'Set New Password',
+                ),
+              ),
               SizedBox(height: 51.h),
             ],
           ),
