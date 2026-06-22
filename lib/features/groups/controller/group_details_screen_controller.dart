@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
+import 'package:paytonpieper/core/services/network_caller.dart';
+import 'package:paytonpieper/core/services/storage_service.dart';
+import 'package:paytonpieper/core/utils/constants/api_constants.dart';
 import 'package:paytonpieper/core/utils/constants/image_path.dart';
+import 'package:paytonpieper/core/utils/logging/logger.dart';
 import 'package:paytonpieper/features/groups/model/group_details_model.dart';
+import 'package:paytonpieper/features/groups/model/group_model.dart';
 
 enum GroupDetailsTab { reports, chat, members }
 
@@ -21,6 +27,13 @@ class GroupDetailsScreenController extends GetxController {
   final RxnString selectedReportMethod = RxnString();
   final RxnString selectedReportTime = RxnString();
 
+  // ── API state ───────────────────────────────────────────────────────
+  final Rxn<GroupDetailModel> groupDetail = Rxn<GroupDetailModel>();
+  final RxBool isDetailLoading = false.obs;
+
+  final NetworkCaller _networkCaller = NetworkCaller();
+
+  // ── Legacy static fields (still used by existing widgets) ──────────
   String groupName = 'Miami Offshore Crew';
   String groupMembers = '24 members';
   String groupCreatedBy = 'Created by Captain Mike';
@@ -167,16 +180,75 @@ class GroupDetailsScreenController extends GetxController {
     inviteEmailController.addListener(_handleInviteEmailsChanged);
   }
 
+  // ── Fetch single group details ──────────────────────────────────────
+  Future<void> fetchGroupDetails(String groupId) async {
+    isDetailLoading.value = true;
+    await EasyLoading.show(status: 'Loading group details...');
+
+    try {
+      final accessToken = StorageService.token;
+      final token =
+          (accessToken != null && accessToken.isNotEmpty)
+              ? 'Bearer $accessToken'
+              : null;
+
+      final response = await _networkCaller.getRequest(
+        ApiConstants.featchSingleGroupDetailsApi(groupId),
+        token: token,
+      );
+
+      if (response.isSuccess) {
+        final body = response.responseData;
+        AppLoggerHelper.info(
+          '[GroupDetails] fetchGroupDetails success | '
+          'statusCode: ${response.statusCode} | '
+          'body: $body',
+        );
+
+        final rawData = body is Map ? body['data'] : null;
+        if (rawData is Map) {
+          final detail = GroupDetailModel.fromJson(
+            Map<String, dynamic>.from(rawData),
+          );
+          groupDetail.value = detail;
+        }
+      } else {
+        AppLoggerHelper.error(
+          '[GroupDetails] fetchGroupDetails failed | '
+          'statusCode: ${response.statusCode} | '
+          'error: ${response.errorMessage}',
+        );
+      }
+    } catch (e) {
+      AppLoggerHelper.error('[GroupDetails] fetchGroupDetails exception', e);
+    } finally {
+      isDetailLoading.value = false;
+      await EasyLoading.dismiss();
+    }
+  }
+
+  // ── setGroupDetails (used by GroupDetailsScreen constructor) ────────
   void setGroupDetails(dynamic arguments) {
     resetReportFilters();
 
     final args = Map<String, dynamic>.from(arguments ?? <String, dynamic>{});
-    groupName = args['groupName'] as String? ?? 'Miami Offshore Crew';
-    groupMembers = args['groupMembers'] as String? ?? '24 members';
+
+    // If we already have fetched details, keep them; otherwise fall back
+    // to argument values (legacy path or fallback).
+    groupName = args['groupName'] as String? ?? groupDetail.value?.name ?? 'Miami Offshore Crew';
+    groupMembers =
+        args['groupMembers'] as String? ??
+        (groupDetail.value != null
+            ? '${groupDetail.value!.members.length} member${groupDetail.value!.members.length == 1 ? '' : 's'}'
+            : '24 members');
     groupCreatedBy =
-        args['groupCreatedBy'] as String? ?? 'Created by Captain Mike';
+        args['groupCreatedBy'] as String? ??
+        (groupDetail.value?.ownerName != null && groupDetail.value!.ownerName.isNotEmpty
+            ? 'Created by ${groupDetail.value!.ownerName}'
+            : 'Created by Captain Mike');
     groupDescription =
         args['groupDescription'] as String? ??
+        groupDetail.value?.description ??
         'South Florida offshore fishing community';
     groupImage =
         args['groupImage'] as String? ?? ImagePath.miamiOffShoreCrewImage;
@@ -224,7 +296,6 @@ class GroupDetailsScreenController extends GetxController {
       selectedFriendIds.remove(friendId);
       return;
     }
-
     selectedFriendIds.add(friendId);
   }
 
@@ -233,9 +304,7 @@ class GroupDetailsScreenController extends GetxController {
   }
 
   void inviteSelectedFriends() {
-    if (selectedFriendIds.isEmpty) {
-      return;
-    }
+    if (selectedFriendIds.isEmpty) return;
 
     final int invitedCount = selectedFriendIds.length;
     closeInviteMembersSheet();
@@ -251,9 +320,7 @@ class GroupDetailsScreenController extends GetxController {
 
   void sendEmailInvites() {
     final int emailCount = parsedInviteEmails.length;
-    if (emailCount == 0) {
-      return;
-    }
+    if (emailCount == 0) return;
 
     closeInviteMembersSheet();
     _showInviteFeedback(
@@ -269,7 +336,6 @@ class GroupDetailsScreenController extends GetxController {
       Navigator.of(context).pop();
       return;
     }
-
     if (Get.isOverlaysOpen) {
       Get.back();
     }

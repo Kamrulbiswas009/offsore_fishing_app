@@ -14,6 +14,8 @@ class GroupDetailsScreen extends StatelessWidget {
       Get.find<GroupDetailsScreenController>();
 
   GroupDetailsScreen({super.key}) {
+    // setGroupDetails reads from controller.groupDetail if already fetched,
+    // then falls back to any arguments passed.
     controller.setGroupDetails(Get.arguments);
   }
 

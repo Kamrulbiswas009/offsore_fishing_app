@@ -27,7 +27,7 @@ class MainScreen extends GetView<MainScreenController> {
                 children: [
                   const ZoneMapScreen(), // The Map Content (Code below)
                   const SummaryScreen(isReportMainScreen: true,),
-                  GroupMainScreen(),
+                  const GroupMainScreen(),
                   ProfileMainScreen(),
                 ],
               ),
