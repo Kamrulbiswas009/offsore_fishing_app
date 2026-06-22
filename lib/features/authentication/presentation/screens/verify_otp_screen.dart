@@ -9,14 +9,15 @@ import 'package:paytonpieper/core/common/widgets/custom_button.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/authentication/controllers/forgot_password_screen_controller.dart';
+import 'package:paytonpieper/features/authentication/presentation/screens/forgot_password_screen.dart';
 
 class VerifyOtpScreen extends StatelessWidget {
-  const VerifyOtpScreen({super.key});
+  final ForgotPasswordScreenController controller =
+      Get.find<ForgotPasswordScreenController>();
+  VerifyOtpScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<ForgotPasswordScreenController>();
-
     return Scaffold(
       backgroundColor: AppColors.backgroundDarkColor,
       body: SafeArea(
@@ -84,7 +85,7 @@ class VerifyOtpScreen extends StatelessWidget {
                   controller: controller.otpFieldController,
                   length: ForgotPasswordScreenController.otpLength,
                   width: double.infinity,
-                  fieldWidth: 50.w,
+                  fieldWidth: 43.w,
                   spaceBetween: 12.w,
                   fieldStyle: FieldStyle.box,
                   outlineBorderRadius: 8.r,
@@ -104,9 +105,9 @@ class VerifyOtpScreen extends StatelessWidget {
                   ),
                   style: getTextStyle(
                     color: AppColors.whiteColor,
-                    fontSize: 24,
+                    fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    lineHeight: 18,
+                    lineHeight: 10,
                   ),
                   contentPadding: EdgeInsets.symmetric(vertical: 12.h),
                   onChanged: controller.updateOtp,
@@ -129,6 +130,21 @@ class VerifyOtpScreen extends StatelessWidget {
                         ),
                       )
                     : SizedBox(height: 22.h),
+              ),
+              //SizedBox(height: 16.h),
+              TextButton(
+                onPressed: () {
+                  Get.to(() => ForgotPasswordScreen());
+                },
+                child: Text(
+                  "Resend Code",
+                  style: getTextStyle(
+                    color: AppColors.redDA605CColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    lineHeight: 10,
+                  ),
+                ),
               ),
               const Spacer(),
               SizedBox(
