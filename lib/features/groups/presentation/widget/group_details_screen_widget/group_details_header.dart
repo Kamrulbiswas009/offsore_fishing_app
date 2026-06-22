@@ -11,63 +11,90 @@ class GroupDetailsHeader extends GetView<GroupDetailsScreenController> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        CustomBackButton(ontap: Get.back),
-        SizedBox(height: 16.h),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(24.r),
-              child: Image.asset(
-                controller.groupImage,
+    return Obx(() {
+      final detail = controller.groupDetail.value;
+
+      // Resolved display values: prefer API data, fall back to legacy fields.
+      final name = detail?.name ?? controller.groupName;
+      final memberCount = detail?.members.length ?? 0;
+      final membersLabel =
+          detail != null
+              ? '$memberCount member${memberCount == 1 ? '' : 's'}'
+              : controller.groupMembers;
+      final ownerName =
+          (detail != null && detail.ownerName.isNotEmpty)
+              ? 'Created by ${detail.ownerName}'
+              : controller.groupCreatedBy;
+      final description = detail?.description ?? controller.groupDescription;
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CustomBackButton(ontap: Get.back),
+          SizedBox(height: 16.h),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Group avatar — letter placeholder (no group image from API)
+              Container(
                 width: 56.r,
                 height: 56.r,
-                fit: BoxFit.cover,
+                decoration: BoxDecoration(
+                  color: AppColors.tealColor117A88.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(24.r),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  name.isNotEmpty ? name.characters.first.toUpperCase() : 'G',
+                  style: getTextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.tealColor117A88,
+                    lineHeight: 16,
+                  ),
+                ),
               ),
-            ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    controller.groupName,
-                    style: getTextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.whiteColor,
-                      lineHeight: 14,
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: getTextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.whiteColor,
+                        lineHeight: 14,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 3.h),
-                  Text(
-                    '${controller.groupMembers} · ${controller.groupCreatedBy}',
-                    style: getTextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.grey8B95A5Color,
-                      lineHeight: 10,
+                    SizedBox(height: 3.h),
+                    Text(
+                      '$membersLabel · $ownerName',
+                      style: getTextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.grey8B95A5Color,
+                        lineHeight: 10,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    controller.groupDescription,
-                    style: getTextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.whiteColor,
-                      lineHeight: 10,
+                    SizedBox(height: 4.h),
+                    Text(
+                      description,
+                      style: getTextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.whiteColor,
+                        lineHeight: 10,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-      ],
-    );
+            ],
+          ),
+        ],
+      );
+    });
   }
 }

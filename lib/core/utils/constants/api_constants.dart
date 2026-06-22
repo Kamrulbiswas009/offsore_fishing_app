@@ -10,8 +10,16 @@ class ApiConstants {
   static const String loginApi = "$baseUrl/auth/login";
 
   static const String authMeApi = "$baseUrl/user/me";
+  static const String updateProfileApi = "$baseUrl/user/profile-update";
   static const String getAccessTokenApi = "$baseUrl/auth/refresh-token";
 
   static const String forgotEmailSendApi = "$baseUrl/auth/forget-password";
   static const String verifyForgotPasswordWithOtpApi = "$baseUrl/auth/reset-password";
+
+
+
+  //Group Flow ->
+  static const String featchGroupListApi = "$baseUrl/groups";
+  static String featchSingleGroupDetailsApi(String groupId) => "$baseUrl/groups/$groupId";
+  static String createNewGroupApi = "$baseUrl/groups";
 }

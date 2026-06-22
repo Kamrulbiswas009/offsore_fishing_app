@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:paytonpieper/core/models/response_data.dart';
 import 'package:paytonpieper/core/services/network_caller.dart';
 import 'package:paytonpieper/core/services/storage_service.dart';
@@ -16,10 +18,15 @@ import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/core/utils/constants/image_path.dart';
 import 'package:paytonpieper/features/notification/presentation/screen/notification_screen.dart';
 import 'package:paytonpieper/features/profile_and_setting/presentation/screen/settings_screen.dart';
+import 'package:paytonpieper/features/profile_and_setting/presentation/widget/profile_main_screen_widget/edit_profile_dialog.dart';
 
 class ProfileMainScreenController extends GetxController {
   final NetworkCaller _networkCaller = NetworkCaller();
   final Rxn<AuthMeModel> authMe = Rxn<AuthMeModel>();
+
+  // --- Edit Profile State ---
+  final Rxn<File> selectedImageFile = Rxn<File>();
+  final TextEditingController editNameController = TextEditingController();
 
   String get profileName => authMe.value?.name ?? 'Captain Mike';
   String get email => authMe.value?.email ?? 'captain.mike@example.com';
@@ -30,6 +37,12 @@ class ProfileMainScreenController extends GetxController {
   void onInit() {
     super.onInit();
     getAuthMe();
+  }
+
+  @override
+  void onClose() {
+    editNameController.dispose();
+    super.onClose();
   }
 
   Future<void> getAuthMe() async {
@@ -198,7 +211,77 @@ class ProfileMainScreenController extends GetxController {
     Get.to(() => NotificationScreen());
   }
 
-  void onEditProfile() {}
+  void onEditProfile() {
+    // Pre-fill name with current profile name
+    editNameController.text = profileName;
+    // Reset any previously selected image
+    selectedImageFile.value = null;
+
+    Get.dialog(
+      EditProfileDialog(controller: this),
+      barrierDismissible: false,
+      barrierColor: Colors.black.withValues(alpha: 0.7),
+    );
+  }
+
+  Future<void> pickProfileImage() async {
+    try {
+      final picker = ImagePicker();
+      final XFile? pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      if (pickedFile != null) {
+        selectedImageFile.value = File(pickedFile.path);
+        AppLoggerHelper.info('Profile image selected: ${pickedFile.path}');
+      }
+    } catch (error) {
+      AppLoggerHelper.error('Failed to pick image from gallery.', error);
+    }
+  }
+
+  Future<void> updateProfile() async {
+    final name = editNameController.text.trim();
+    final imageFile = selectedImageFile.value;
+
+    if (name.isEmpty) {
+      AppLoggerHelper.warning('Profile update skipped: name is empty.');
+      return;
+    }
+
+    AppLoggerHelper.info('Updating profile with name: "$name"');
+    await EasyLoading.show(status: 'Updating profile...');
+
+    try {
+      final accessToken = StorageService.token;
+      final token =
+          (accessToken != null && accessToken.isNotEmpty)
+              ? 'Bearer $accessToken'
+              : null;
+
+      final response = await _networkCaller.patchMultipartRequest(
+        ApiConstants.updateProfileApi,
+        fields: {'userName': name},
+        file: imageFile,
+        fileFieldName: 'file',
+        token: token,
+      );
+
+      if (response.isSuccess) {
+        AppLoggerHelper.info('Profile updated successfully.');
+        Get.back(); // close dialog
+        await getAuthMe(); // re-fetch profile
+      } else {
+        AppLoggerHelper.error(
+          'Profile update failed: ${response.errorMessage}',
+        );
+      }
+    } catch (error) {
+      AppLoggerHelper.error('Profile update threw an unexpected error.', error);
+    } finally {
+      await EasyLoading.dismiss();
+    }
+  }
 
   void onUpgradeToPro() {
     CommonMessage.showMessage(
