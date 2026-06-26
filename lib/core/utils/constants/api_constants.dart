@@ -22,4 +22,7 @@ class ApiConstants {
   static const String featchGroupListApi = "$baseUrl/groups";
   static String featchSingleGroupDetailsApi(String groupId) => "$baseUrl/groups/$groupId";
   static String createNewGroupApi = "$baseUrl/groups";
+  static String updateGroupApi(String groupId) => "$baseUrl/groups/$groupId";
+  static String deleteGroupApi(String groupId) => "$baseUrl/groups/$groupId";
+
 }

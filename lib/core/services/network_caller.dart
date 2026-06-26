@@ -28,6 +28,25 @@ class NetworkCaller {
     }
   }
 
+  // DELETE method
+  Future<ResponseData> deleteRequest(String url, {String? token}) async {
+    log('DELETE Request: $url');
+    log('DELETE Token: ${token == null || token.isEmpty ? '[MISSING]' : '[PRESENT]'}');
+    try {
+      final Response response = await delete(
+        Uri.parse(url),
+        headers: {
+          'Content-type': 'application/json',
+          if (token != null && token.isNotEmpty) 'Authorization': token,
+        },
+      ).timeout(Duration(seconds: timeoutDuration));
+
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
   // POST method
   Future<ResponseData> postRequest(
     String url, {
@@ -51,6 +70,31 @@ class NetworkCaller {
       return _handleError(e);
     }
   }
+
+  // PATCH method
+  Future<ResponseData> patchRequest(
+    String url, {
+    Map<String, dynamic>? body,
+    String? token,
+  }) async {
+    log('PATCH Request: $url');
+    log('Request Body: ${jsonEncode(_redactSensitiveData(body))}');
+
+    try {
+      final Response response = await patch(
+        Uri.parse(url),
+        headers: {
+          'Content-type': 'application/json',
+          if (token != null && token.isNotEmpty) 'Authorization': token,
+        },
+        body: jsonEncode(body),
+      ).timeout(Duration(seconds: timeoutDuration));
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
 
   // PATCH multipart/form-data method (for file uploads)
   Future<ResponseData> patchMultipartRequest(

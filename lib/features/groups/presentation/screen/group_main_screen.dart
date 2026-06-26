@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/common/widgets/custom_button.dart';
+import 'package:paytonpieper/core/services/storage_service.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/groups/controller/group_details_screen_controller.dart';
@@ -15,7 +16,9 @@ import 'package:paytonpieper/features/groups/presentation/widget/group_main_scre
 import 'package:paytonpieper/routes/app_routes.dart';
 
 class GroupMainScreen extends StatelessWidget {
-  const GroupMainScreen({super.key});
+  final GroupMainScreenController controller = Get.find<GroupMainScreenController>();
+
+   GroupMainScreen({super.key});
 
   void _openJoinGroupSheet(BuildContext context) {
     final controller = Get.find<GroupMainScreenController>();
@@ -35,20 +38,17 @@ class GroupMainScreen extends StatelessWidget {
     groupDetailsController.fetchGroupDetails(group.groupId);
     Get.toNamed(
       AppRoute.getGroupDetailsScreen(),
-      arguments: {
-        'groupId': group.groupId,
-        'initialTab': 'members',
-      },
+      arguments: {'groupId': group.groupId, 'initialTab': 'members'},
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<GroupMainScreenController>();
+    
 
-    return ColoredBox(
-      color: AppColors.backgroundDarkColor,
-      child: Padding(
+    return Scaffold(
+      backgroundColor: AppColors.backgroundDarkColor,
+      body: Padding(
         padding: EdgeInsets.all(20.r),
         child: SingleChildScrollView(
           child: Column(
@@ -99,7 +99,7 @@ class GroupMainScreen extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 10.h),
-          
+
               // ── Group list ──────────────────────────────────────────────
               Obx(() {
                 // While loading → spinner with padding
@@ -146,13 +146,102 @@ class GroupMainScreen extends StatelessWidget {
                     final group = controller.groupList[index];
                     return Padding(
                       padding: EdgeInsets.only(bottom: 10.h),
-                      child: GroupCardWidget(
-                        onTap: () => _navigateToGroupDetails(group),
-                        groupName: group.name,
-                        groupMember:
-                            '${group.count.members} member${group.count.members == 1 ? '' : 's'}',
-                        description: group.description,
-                        isLocked: group.isPrivate,
+                      child: GestureDetector(
+                        onLongPress: () {
+                          //if user 
+                          if(group.createdBy == StorageService.userId){
+                            showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                backgroundColor: AppColors.backgroundDarkColor,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  side: BorderSide(
+                                    color: AppColors.grey8B95A5Color,
+                                    width: 1,
+                                  ),
+                                ),
+                                title: Text(
+                                  "Delete Group",
+                                  style: getTextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.whiteColor,
+                                    lineHeight: 12,
+                                  ),
+                                ),
+                                content: Text(
+                                  "Are you sure you want to delete this group?",
+                                  style: getTextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                    color: AppColors.grey8B95A5Color,
+                                    lineHeight: 10,
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Get.back();
+                                    },
+                                    child: Text("Cancel"),
+                                  ),
+                                  TextButton(
+                                    onPressed: ()  {
+                                       controller.deleteGroup(group.groupId);
+                                      Get.back();
+                                    },
+                                    child: Text("Delete"),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                          }else{
+                            showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                backgroundColor: AppColors.backgroundDarkColor,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  side: BorderSide(
+                                    color: AppColors.grey8B95A5Color,
+                                    width: 1,
+                                  ),
+                                ),
+                                title: Text(
+                                  "You are not owner of this group",
+                                  style: getTextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.whiteColor,
+                                    lineHeight: 12,
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Get.back();
+                                    },
+                                    child: Text("Cancel"),
+                                  ),
+                                  
+                                ],
+                              );
+                            },
+                          );
+                          }
+                        },
+                        child: GroupCardWidget(
+                          onTap: () => _navigateToGroupDetails(group),
+                          groupName: group.name,
+                          groupMember:
+                              '${group.count.members} member${group.count.members == 1 ? '' : 's'}',
+                          description: group.description,
+                          isLocked: group.isPrivate,
+                        ),
                       ),
                     );
                   },
