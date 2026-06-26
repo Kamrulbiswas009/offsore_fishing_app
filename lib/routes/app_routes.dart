@@ -122,7 +122,7 @@ class AppRoute {
     GetPage(
       name: groupDetailsScreen,
       page: () => GroupDetailsScreen(),
-      transition: Transition.leftToRight,
+      transition: Transition.rightToLeft,
     ),
     GetPage(
       name: settingsScreen,

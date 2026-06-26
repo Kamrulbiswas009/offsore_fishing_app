@@ -9,6 +9,9 @@ import 'package:paytonpieper/core/utils/constants/image_path.dart';
 import 'package:paytonpieper/core/utils/logging/logger.dart';
 import 'package:paytonpieper/features/groups/model/group_details_model.dart';
 import 'package:paytonpieper/features/groups/model/group_model.dart';
+import 'package:paytonpieper/core/common/widgets/common_message.dart';
+import 'package:paytonpieper/features/groups/controller/group_main_screen_controller.dart';
+
 
 enum GroupDetailsTab { reports, chat, members }
 
@@ -27,9 +30,13 @@ class GroupDetailsScreenController extends GetxController {
   final RxnString selectedReportMethod = RxnString();
   final RxnString selectedReportTime = RxnString();
 
+  final TextEditingController groupNameTEController = TextEditingController();
+  final TextEditingController groupDescriptionTEController = TextEditingController();
+
   // ── API state ───────────────────────────────────────────────────────
   final Rxn<GroupDetailModel> groupDetail = Rxn<GroupDetailModel>();
   final RxBool isDetailLoading = false.obs;
+  String? _groupId;
 
   final NetworkCaller _networkCaller = NetworkCaller();
 
@@ -182,6 +189,7 @@ class GroupDetailsScreenController extends GetxController {
 
   // ── Fetch single group details ──────────────────────────────────────
   Future<void> fetchGroupDetails(String groupId) async {
+    _groupId = groupId;
     isDetailLoading.value = true;
     await EasyLoading.show(status: 'Loading group details...');
 
@@ -227,11 +235,103 @@ class GroupDetailsScreenController extends GetxController {
     }
   }
 
+  // ── Update group details ────────────────────────────────────────────
+  Future<void> updateGroup() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    final id = _groupId ?? groupDetail.value?.groupId;
+    if (id == null || id.isEmpty) {
+      AppLoggerHelper.error('[GroupDetails] updateGroup failed: Group ID is missing');
+      CommonMessage.showMessage(
+        title: 'Error',
+        message: 'Group ID is missing. Please reload the group.',
+      );
+      return;
+    }
+
+    final nameText = groupNameTEController.text.trim();
+    final descriptionText = groupDescriptionTEController.text.trim();
+
+    if (nameText.isEmpty || descriptionText.isEmpty) {
+      CommonMessage.showMessage(
+        title: 'Required',
+        message: 'Please fill in the group name and description.',
+      );
+      return;
+    }
+
+    await EasyLoading.show(status: 'Updating group...');
+
+    try {
+      final accessToken = StorageService.token;
+      final token = (accessToken != null && accessToken.isNotEmpty)
+          ? 'Bearer $accessToken'
+          : null;
+
+      final response = await _networkCaller.patchRequest(
+        ApiConstants.updateGroupApi(id),
+        body: {
+          'name': nameText,
+          'description': descriptionText,
+          'isPrivate': true,
+        },
+        token: token,
+      );
+
+      if (response.isSuccess) {
+        final body = response.responseData;
+        AppLoggerHelper.info(
+          '[GroupDetails] updateGroup success | '
+          'statusCode: ${response.statusCode} | '
+          'body: $body',
+        );
+
+        // Fetch/update the group details again to refresh UI
+        await fetchGroupDetails(id);
+
+        // Refresh group list on GroupMainScreen if registered
+        if (Get.isRegistered<GroupMainScreenController>()) {
+          Get.find<GroupMainScreenController>().fetchGroupList();
+        }
+
+        // Close the dialog
+        if (Get.isOverlaysOpen) {
+          Get.back();
+        }
+
+        CommonMessage.showMessage(
+          title: 'Success',
+          message: 'Group updated successfully!',
+        );
+      } else {
+        AppLoggerHelper.error(
+          '[GroupDetails] updateGroup failed | '
+          'statusCode: ${response.statusCode} | '
+          'error: ${response.errorMessage}',
+        );
+
+        CommonMessage.showMessage(
+          title: 'Failed',
+          message: response.errorMessage,
+        );
+      }
+    } catch (e) {
+      AppLoggerHelper.error('[GroupDetails] updateGroup exception', e);
+      CommonMessage.showMessage(
+        title: 'Error',
+        message: 'Something went wrong. Please try again.',
+      );
+    } finally {
+      await EasyLoading.dismiss();
+    }
+  }
+
   // ── setGroupDetails (used by GroupDetailsScreen constructor) ────────
   void setGroupDetails(dynamic arguments) {
     resetReportFilters();
 
     final args = Map<String, dynamic>.from(arguments ?? <String, dynamic>{});
+    _groupId = args['groupId'] as String? ?? groupDetail.value?.groupId;
 
     // If we already have fetched details, keep them; otherwise fall back
     // to argument values (legacy path or fallback).
@@ -406,6 +506,8 @@ class GroupDetailsScreenController extends GetxController {
       ..removeListener(_handleInviteEmailsChanged)
       ..dispose();
     messageController.dispose();
+    groupNameTEController.dispose();
+    groupDescriptionTEController.dispose();
     super.onClose();
   }
 }
