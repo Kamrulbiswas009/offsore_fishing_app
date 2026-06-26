@@ -46,7 +46,7 @@ class GroupDetailsScreenController extends GetxController {
   String groupCreatedBy = 'Created by Captain Mike';
   String groupDescription = 'South Florida offshore fishing community';
   String groupImage = ImagePath.miamiOffShoreCrewImage;
-  final String inviteCode = 'G13K7O';
+  final RxString inviteCode = ''.obs;
 
   final GroupReportFilterOption speciesFilter = const GroupReportFilterOption(
     label: 'Species',
@@ -326,6 +326,78 @@ class GroupDetailsScreenController extends GetxController {
     }
   }
 
+  // ── Leave group ─────────────────────────────────────────────────────
+  Future<void> leaveGroup() async {
+    final id = _groupId ?? groupDetail.value?.groupId;
+    if (id == null || id.isEmpty) {
+      AppLoggerHelper.error('[GroupDetails] leaveGroup failed: Group ID is missing');
+      CommonMessage.showMessage(
+        title: 'Error',
+        message: 'Group ID is missing. Please reload the group.',
+      );
+      return;
+    }
+
+    await EasyLoading.show(status: 'Leaving group...');
+
+    try {
+      final accessToken = StorageService.token;
+      final token = (accessToken != null && accessToken.isNotEmpty)
+          ? 'Bearer $accessToken'
+          : null;
+
+      final response = await _networkCaller.postRequest(
+        ApiConstants.leaveGroupApi(id),
+        body: {},
+        token: token,
+      );
+
+      if (response.isSuccess) {
+        final body = response.responseData;
+        AppLoggerHelper.info(
+          '[GroupDetails] leaveGroup success | '
+          'statusCode: ${response.statusCode} | '
+          'body: $body',
+        );
+
+        // Refresh group list on GroupMainScreen if registered
+        if (Get.isRegistered<GroupMainScreenController>()) {
+          Get.find<GroupMainScreenController>().fetchGroupList();
+        }
+
+        // Close the dialog then navigate back to the previous screen
+        if (Get.isOverlaysOpen) {
+          Get.back(); // close dialog
+        }
+        Get.back(); // pop GroupDetailsScreen
+
+        CommonMessage.showMessage(
+          title: 'Success',
+          message: 'You have left the group.',
+        );
+      } else {
+        AppLoggerHelper.error(
+          '[GroupDetails] leaveGroup failed | '
+          'statusCode: ${response.statusCode} | '
+          'error: ${response.errorMessage}',
+        );
+
+        CommonMessage.showMessage(
+          title: 'Failed',
+          message: response.errorMessage,
+        );
+      }
+    } catch (e) {
+      AppLoggerHelper.error('[GroupDetails] leaveGroup exception', e);
+      CommonMessage.showMessage(
+        title: 'Error',
+        message: 'Something went wrong. Please try again.',
+      );
+    } finally {
+      await EasyLoading.dismiss();
+    }
+  }
+
   // ── setGroupDetails (used by GroupDetailsScreen constructor) ────────
   void setGroupDetails(dynamic arguments) {
     resetReportFilters();
@@ -414,8 +486,76 @@ class GroupDetailsScreenController extends GetxController {
   }
 
   Future<void> copyInviteCode() async {
-    await Clipboard.setData(ClipboardData(text: inviteCode));
-    _showInviteFeedback('Invite code copied');
+    if (inviteCode.value.isNotEmpty) {
+      await Clipboard.setData(ClipboardData(text: inviteCode.value));
+      _showInviteFeedback('Invite code copied');
+    }
+  }
+
+  Future<void> inviteWithCode() async {
+    final id = _groupId ?? groupDetail.value?.groupId;
+    if (id == null || id.isEmpty) {
+      AppLoggerHelper.error('[GroupDetails] inviteWithCode failed: Group ID is missing');
+      CommonMessage.showMessage(
+        title: 'Error',
+        message: 'Group ID is missing. Please reload the group.',
+      );
+      return;
+    }
+
+    await EasyLoading.show(status: 'Generating invite code...');
+
+    try {
+      final accessToken = StorageService.token;
+      final token = (accessToken != null && accessToken.isNotEmpty)
+          ? 'Bearer $accessToken'
+          : null;
+
+      final response = await _networkCaller.postRequest(
+        ApiConstants.generateGroupInvitationCodeApi(id),
+        body: {
+          'type': 'CODE',
+        },
+        token: token,
+      );
+
+      if (response.isSuccess) {
+        final body = response.responseData;
+        AppLoggerHelper.info(
+          '[GroupDetails] inviteWithCode success | '
+          'statusCode: ${response.statusCode} | '
+          'body: $body',
+        );
+
+        final rawData = body is Map ? body['data'] : null;
+        if (rawData is Map) {
+          final code = rawData['inviteCode'] as String?;
+          if (code != null && code.isNotEmpty) {
+            inviteCode.value = code;
+          } else {
+            AppLoggerHelper.error('[GroupDetails] inviteCode not found in response data');
+          }
+        }
+      } else {
+        AppLoggerHelper.error(
+          '[GroupDetails] inviteWithCode failed | '
+          'statusCode: ${response.statusCode} | '
+          'error: ${response.errorMessage}',
+        );
+        CommonMessage.showMessage(
+          title: 'Failed',
+          message: response.errorMessage,
+        );
+      }
+    } catch (e) {
+      AppLoggerHelper.error('[GroupDetails] inviteWithCode exception', e);
+      CommonMessage.showMessage(
+        title: 'Error',
+        message: 'Something went wrong. Please try again.',
+      );
+    } finally {
+      await EasyLoading.dismiss();
+    }
   }
 
   void sendEmailInvites() {
@@ -446,6 +586,7 @@ class GroupDetailsScreenController extends GetxController {
     selectedFriendIds.clear();
     inviteEmailController.clear();
     hasInviteEmails.value = false;
+    inviteCode.value = '';
   }
 
   void approveRequest(GroupMemberRequest request) {

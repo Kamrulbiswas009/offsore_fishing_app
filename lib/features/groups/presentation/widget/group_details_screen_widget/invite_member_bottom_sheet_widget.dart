@@ -380,89 +380,104 @@ class _CodeInviteContent extends GetView<GroupDetailsScreenController> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          'INVITE CODE',
-          style: getTextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: AppColors.grey8B95A5Color,
-            lineHeight: 10,
-          ),
-        ),
-        SizedBox(height: 12.h),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColors.blue00D4FFColor.withValues(alpha: 0.1),
-                AppColors.orangeFF6B35Color.withValues(alpha: 0.1),
-              ],
-            ),
-            //color: AppColors.blue153A56Color.withValues(alpha: 0.88),
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(
-              color: AppColors.blue00D4FFColor.withValues(alpha: 0.55),
+    return Obx(() {
+      final bool isCodeEmpty = controller.inviteCode.value.isEmpty;
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'INVITE CODE',
+            style: getTextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.grey8B95A5Color,
+              lineHeight: 10,
             ),
           ),
-          child: Column(
-            children: [
-              Text(
-                controller.inviteCode,
-                style: getTextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
+          SizedBox(height: 12.h),
+          if (isCodeEmpty) ...[
+            CustomButton(
+              title: 'Generate Code',
+              fontSize: 18,
+              lineHeight: 12,
+              bgColor: AppColors.orangeFF6B35Color,
+              borderRadius: 12,
+              padding: EdgeInsets.symmetric(vertical: 8.h),
+              ontap: () => controller.inviteWithCode(),
+            ),
+          ] else ...[
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.blue00D4FFColor.withValues(alpha: 0.1),
+                    AppColors.orangeFF6B35Color.withValues(alpha: 0.1),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(
+                  color: AppColors.blue00D4FFColor.withValues(alpha: 0.55),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    controller.inviteCode.value,
+                    style: getTextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.whiteColor,
+                      lineHeight: 18,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    'Share this code with crew members',
+                    textAlign: TextAlign.center,
+                    style: getTextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.grey8B95A5Color,
+                      lineHeight: 9,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 12.h),
+            Text(
+              'Members can join by entering this code in the Groups section under "Join with Code"',
+              style: getTextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                color: AppColors.grey8B95A5Color,
+                lineHeight: 10,
+              ),
+            ),
+            SizedBox(height: 16.h),
+            CustomButton(
+              ontap: controller.copyInviteCode,
+              title: ' Copy Code',
+              fontSize: 18,
+              lineHeight: 12,
+              bgColor: AppColors.orangeFF6B35Color,
+              borderRadius: 12,
+              padding: EdgeInsets.symmetric(vertical: 8.h),
+              prefixIcon: Padding(
+                padding: EdgeInsets.only(right: 8.w),
+                child: Icon(
+                  Icons.content_copy_rounded,
                   color: AppColors.whiteColor,
-                  lineHeight: 18,
+                  size: 18.r,
                 ),
               ),
-              SizedBox(height: 8.h),
-              Text(
-                'Share this code with crew members',
-                textAlign: TextAlign.center,
-                style: getTextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.grey8B95A5Color,
-                  lineHeight: 9,
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: 12.h),
-        Text(
-          'Members can join by entering this code in the Groups section under "Join with Code"',
-          style: getTextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w400,
-            color: AppColors.grey8B95A5Color,
-            lineHeight: 10,
-          ),
-        ),
-        SizedBox(height: 16.h),
-        CustomButton(
-          ontap: controller.copyInviteCode,
-          title: ' Copy Code',
-          fontSize: 18,
-          lineHeight: 12,
-          bgColor: AppColors.orangeFF6B35Color,
-          borderRadius: 12,
-          padding: EdgeInsets.symmetric(vertical: 8.h),
-          prefixIcon: Padding(
-            padding: EdgeInsets.only(right: 8.w),
-            child: Icon(
-              Icons.content_copy_rounded,
-              color: AppColors.whiteColor,
-              size: 18.r,
             ),
-          ),
-        ),
-      ],
-    );
+          ],
+        ],
+      );
+    });
   }
 }
 

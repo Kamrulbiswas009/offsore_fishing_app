@@ -1,9 +1,12 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/common/widgets/custom_back_button.dart';
 import 'package:paytonpieper/core/common/widgets/custom_button.dart';
+import 'package:paytonpieper/core/services/storage_service.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/groups/controller/group_details_screen_controller.dart';
@@ -91,164 +94,248 @@ class GroupDetailsHeader extends GetView<GroupDetailsScreenController> {
                   ],
                 ),
               ),
-              GestureDetector(
-                onTap: () {
-                  controller.groupNameTEController.text = name;
-                  controller.groupDescriptionTEController.text = description;
-                  showDialog(
-                    context: context,
-                    builder: (context) {
-                      return Dialog(
-                        backgroundColor: AppColors.backgroundDarkColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24.r),
-                          side: BorderSide(
-                            color: AppColors.whiteColor,
-                            width: 1.w,
+              if (detail?.createdBy == StorageService.userId)
+                GestureDetector(
+                  onTap: () {
+                    controller.groupNameTEController.text = name;
+                    controller.groupDescriptionTEController.text = description;
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return Dialog(
+                          backgroundColor: AppColors.backgroundDarkColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24.r),
+                            side: BorderSide(
+                              color: AppColors.whiteColor.withValues(
+                                alpha: 0.5,
+                              ),
+                              width: 1.w,
+                            ),
                           ),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(16.r),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    "Update Group",
-                                    style: getTextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.whiteColor,
-                                      lineHeight: 12,
+                          child: Padding(
+                            padding: EdgeInsets.all(16.r),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      "Update Group",
+                                      style: getTextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.whiteColor,
+                                        lineHeight: 12,
+                                      ),
                                     ),
-                                  ),
-                                  GestureDetector(
-                                    onTap: () {
-                                      Get.back();
-                                    },
-                                    child: Icon(
-                                      Icons.close,
-                                      color: AppColors.whiteColor,
+                                    GestureDetector(
+                                      onTap: () {
+                                        Get.back();
+                                      },
+                                      child: Icon(
+                                        Icons.close,
+                                        color: AppColors.whiteColor,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 16.h),
-                              Text(
-                                "Group Name",
-                                style: getTextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w400,
-                                  color: AppColors.whiteColor,
-                                  lineHeight: 10,
+                                  ],
                                 ),
-                              ),
-                              SizedBox(height: 5.h),
-                              TextField(
-                                controller: controller.groupNameTEController,
-                                style: getTextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w400,
-                                  color: AppColors.whiteColor,
-                                  lineHeight: 10,
-                                ),
-                                decoration: InputDecoration(
-                                  hintText: name,
-                                  hintStyle: getTextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w400,
-                                    color: AppColors.blue00D4FFColor,
-                                    lineHeight: 10,
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12.r),
-                                    borderSide: BorderSide(
-                                      color: AppColors.whiteColor,
-                                      width: 1.w,
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12.r),
-                                    borderSide: BorderSide(
-                                      color: AppColors.whiteColor,
-                                      width: 1.w,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: 10.h),
-                              Text(
-                                "Group Description",
-                                style: getTextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w400,
-                                  color: AppColors.whiteColor,
-                                  lineHeight: 10,
-                                ),
-                              ),
-                              SizedBox(height: 5.h),
-                              TextField(
-                                controller:
-                                    controller.groupDescriptionTEController,
-                                style: getTextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w400,
-                                  color: AppColors.whiteColor,
-                                ),
-                                decoration: InputDecoration(
-                                  hintText: description,
-                                  hintStyle: getTextStyle(
+                                SizedBox(height: 16.h),
+                                Text(
+                                  "Group Name",
+                                  style: getTextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w400,
                                     color: AppColors.whiteColor,
                                     lineHeight: 10,
                                   ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12.r),
-                                    borderSide: BorderSide(
-                                      color: AppColors.whiteColor,
-                                      width: 1.w,
-                                    ),
+                                ),
+                                SizedBox(height: 5.h),
+                                TextField(
+                                  controller: controller.groupNameTEController,
+                                  style: getTextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                    color: AppColors.whiteColor,
+                                    lineHeight: 10,
                                   ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12.r),
-                                    borderSide: BorderSide(
-                                      color: AppColors.whiteColor,
-                                      width: 1.w,
+                                  decoration: InputDecoration(
+                                    hintText: name,
+                                    hintStyle: getTextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w400,
+                                      color: AppColors.blue00D4FFColor,
+                                      lineHeight: 10,
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12.r),
+                                      borderSide: BorderSide(
+                                        color: AppColors.whiteColor,
+                                        width: 1.w,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12.r),
+                                      borderSide: BorderSide(
+                                        color: AppColors.whiteColor,
+                                        width: 1.w,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              SizedBox(height: 12.h),
-
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  CustomButton(
-                                    title: "Update Group",
-                                    fontSize: 12,
-                                    lineHeight: 9,
-                                    ontap: () {
-                                      controller.updateGroup();
-                                      Get.back();
-                                    },
+                                SizedBox(height: 10.h),
+                                Text(
+                                  "Group Description",
+                                  style: getTextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                    color: AppColors.whiteColor,
+                                    lineHeight: 10,
                                   ),
-                                ],
-                              ),
-                            ],
+                                ),
+                                SizedBox(height: 5.h),
+                                TextField(
+                                  controller:
+                                      controller.groupDescriptionTEController,
+                                  style: getTextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                    color: AppColors.whiteColor,
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: description,
+                                    hintStyle: getTextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w400,
+                                      color: AppColors.whiteColor,
+                                      lineHeight: 10,
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12.r),
+                                      borderSide: BorderSide(
+                                        color: AppColors.whiteColor,
+                                        width: 1.w,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12.r),
+                                      borderSide: BorderSide(
+                                        color: AppColors.whiteColor,
+                                        width: 1.w,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(height: 12.h),
+
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    CustomButton(
+                                      title: "Update Group",
+                                      fontSize: 12,
+                                      lineHeight: 9,
+                                      ontap: () {
+                                        controller.updateGroup();
+                                        Get.back();
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  );
-                },
-                child: Image.asset(IconPath.penIcon, height: 16.h, width: 16.w),
-              ),
+                        );
+                      },
+                    );
+                  },
+                  child: Image.asset(
+                    IconPath.penIcon,
+                    height: 16.h,
+                    width: 16.w,
+                  ),
+                ),
+              if (detail?.createdBy != StorageService.userId)
+                GestureDetector(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          backgroundColor: AppColors.backgroundDarkColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                            side: BorderSide(
+                              color: AppColors.whiteColor.withValues(
+                                alpha: 0.5,
+                              ),
+                              width: 1.w,
+                            ),
+                          ),
+                          title: Text(
+                            "Leave Group",
+                            style: getTextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.teal0C98AFColor,
+                              lineHeight: 10,
+                            ),
+                          ),
+                          content: Text(
+                            "Are you sure you want to leave this group?",
+                            style: getTextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.whiteColor,
+                              lineHeight: 10,
+                            ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Get.back(),
+                              child: Text(
+                                "Cancel",
+                                style: getTextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.teal0C98AFColor,
+                                  lineHeight: 10,
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                controller.leaveGroup();
+                                Get.back();
+                              },
+                              child: Text(
+                                "Leave",
+                                style: getTextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.redDA605CColor,
+                                  lineHeight: 10,
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                  child: Transform.rotate(
+                    angle: math.pi,
+                    child: Image.asset(
+                      IconPath.logoutIcon,
+                      height: 16.h,
+                      width: 16.w,
+                    ),
+                  ),
+                ),
             ],
           ),
         ],

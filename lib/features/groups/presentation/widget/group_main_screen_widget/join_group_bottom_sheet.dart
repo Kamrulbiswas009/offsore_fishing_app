@@ -371,7 +371,7 @@ class _JoinGroupSuccessContent extends GetView<GroupMainScreenController> {
             ),
             children: [
               TextSpan(
-                text: controller.joinedGroupName,
+                text: controller.joinedGroupName.value,
                 style: getTextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
