@@ -13,7 +13,7 @@ class GroupMainScreenController extends GetxController {
   final TextEditingController inviteCodeController = TextEditingController();
   final RxBool hasInviteCode = false.obs;
   final RxBool hasJoinedGroup = false.obs;
-  final String joinedGroupName = 'Miami Offshore Crew';
+  final RxString joinedGroupName = 'Miami Offshore Crew'.obs;
 
   // ── Group list API state ────────────────────────────────────────────
   final RxList<GroupListItem> groupList = <GroupListItem>[].obs;
@@ -83,7 +83,74 @@ class GroupMainScreenController extends GetxController {
 
   void joinGroup() {
     if (!hasInviteCode.value) return;
-    hasJoinedGroup.value = true;
+    joinGroupWithCode();
+  }
+
+  // ── Join group with invite code ─────────────────────────────────────
+  Future<void> joinGroupWithCode() async {
+    final code = inviteCodeController.text.trim();
+    if (code.isEmpty) return;
+
+    await EasyLoading.show(status: 'Joining group...');
+
+    try {
+      final accessToken = StorageService.token;
+      final token = (accessToken != null && accessToken.isNotEmpty)
+          ? 'Bearer $accessToken'
+          : null;
+
+      AppLoggerHelper.info(
+        '[GroupMain] joinGroupWithCode | inviteCode: $code',
+      );
+
+      final response = await _networkCaller.postRequest(
+        ApiConstants.joinGroupWithCodeApi,
+        body: {'inviteCode': code},
+        token: token,
+      );
+
+      if (response.isSuccess) {
+        final body = response.responseData;
+        AppLoggerHelper.info(
+          '[GroupMain] joinGroupWithCode success | '
+          'statusCode: ${response.statusCode} | '
+          'body: $body',
+        );
+
+        // Try to pick up a group name from the response for the success screen;
+        // fall back gracefully if the field is absent.
+        final data = body is Map ? body['data'] : null;
+        final groupName = (data is Map ? data['groupName'] : null)
+            as String?;
+        if (groupName != null && groupName.isNotEmpty) {
+          joinedGroupName.value = groupName;
+        }
+
+        hasJoinedGroup.value = true;
+
+        // Refresh group list so the newly joined group appears immediately.
+        await fetchGroupList();
+      } else {
+        AppLoggerHelper.error(
+          '[GroupMain] joinGroupWithCode failed | '
+          'statusCode: ${response.statusCode} | '
+          'error: ${response.errorMessage}',
+        );
+
+        CommonMessage.showMessage(
+          title: 'Failed',
+          message: response.errorMessage,
+        );
+      }
+    } catch (e) {
+      AppLoggerHelper.error('[GroupMain] joinGroupWithCode exception', e);
+      CommonMessage.showMessage(
+        title: 'Error',
+        message: 'Something went wrong. Please try again.',
+      );
+    } finally {
+      await EasyLoading.dismiss();
+    }
   }
 
   void closeJoinGroupSheet() {

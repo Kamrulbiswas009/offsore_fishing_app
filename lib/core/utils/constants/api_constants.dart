@@ -25,4 +25,9 @@ class ApiConstants {
   static String updateGroupApi(String groupId) => "$baseUrl/groups/$groupId";
   static String deleteGroupApi(String groupId) => "$baseUrl/groups/$groupId";
 
+
+ //Group Invitation Flow ->
+  static String generateGroupInvitationCodeApi(String groupId) => "$baseUrl/invites/groups/$groupId";
+  static const String joinGroupWithCodeApi = "$baseUrl/invites/join";
+  static String leaveGroupApi(String groupId)=>"$baseUrl/groups/$groupId/leave";
 }
