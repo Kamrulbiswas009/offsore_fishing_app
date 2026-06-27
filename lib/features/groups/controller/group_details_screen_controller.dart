@@ -161,6 +161,10 @@ class GroupDetailsScreenController extends GetxController {
     ),
   ].obs;
 
+  // ── Pending group invites (API) ────────────────────────────────────
+  final RxList<PendingGroupInviteItem> pendingGroupInvites =
+      <PendingGroupInviteItem>[].obs;
+
   final RxList<InvitableFriendItem> invitableFriends = <InvitableFriendItem>[].obs;
   final ScrollController inviteFriendsScrollController = ScrollController();
   int _currentPage = 1;
@@ -334,6 +338,14 @@ class GroupDetailsScreenController extends GetxController {
             Map<String, dynamic>.from(rawData),
           );
           groupDetail.value = detail;
+
+          // If the Members tab is already active and this user is the owner,
+          // fetch pending invites now (fixes race where changeTab fired before
+          // groupDetail was populated).
+          if (selectedTab.value == GroupDetailsTab.members &&
+              _isCurrentUserGroupOwner()) {
+            fetchPendingGroupInvites();
+          }
         }
       } else {
         AppLoggerHelper.error(
@@ -549,6 +561,22 @@ class GroupDetailsScreenController extends GetxController {
 
   void changeTab(GroupDetailsTab tab) {
     selectedTab.value = tab;
+    // Auto-fetch pending invites when group owner opens the Members tab
+    if (tab == GroupDetailsTab.members && _isCurrentUserGroupOwner()) {
+      fetchPendingGroupInvites();
+    }
+  }
+
+  /// Public getter used by the UI to check if the logged-in user is the owner.
+  bool get isCurrentUserGroupOwner => _isCurrentUserGroupOwner();
+
+  /// Returns true if the logged-in user is the group owner.
+  bool _isCurrentUserGroupOwner() {
+    final detail = groupDetail.value;
+    if (detail == null) return false;
+    final currentUserId = StorageService.userId;
+    if (currentUserId == null || currentUserId.isEmpty) return false;
+    return detail.createdBy == currentUserId;
   }
 
   void selectReportSpecies(String species) {
@@ -766,6 +794,197 @@ class GroupDetailsScreenController extends GetxController {
     searchQuery.value = '';
     invitableFriends.clear();
     fetchUserForInvitation(isRefresh: true);
+  }
+
+  // ── Fetch all pending invitations for the current group ──────────
+  Future<void> fetchPendingGroupInvites() async {
+    final id = _groupId ?? groupDetail.value?.groupId;
+    if (id == null || id.isEmpty) {
+      AppLoggerHelper.error(
+        '[GroupDetails] fetchPendingGroupInvites failed: Group ID is missing',
+      );
+      return;
+    }
+
+    await EasyLoading.show(status: 'Loading pending invites...');
+
+    try {
+      final accessToken = StorageService.token;
+      final token = (accessToken != null && accessToken.isNotEmpty)
+          ? 'Bearer $accessToken'
+          : null;
+
+      final response = await _networkCaller.getRequest(
+        ApiConstants.showAllPendingInvitationOfAGroupApi(id),
+        token: token,
+      );
+
+      if (response.isSuccess) {
+        final body = response.responseData;
+        AppLoggerHelper.info(
+          '[GroupDetails] fetchPendingGroupInvites success | '
+          'statusCode: ${response.statusCode} | '
+          'body: $body',
+        );
+
+        final rawData = body is Map ? body['data'] : null;
+        if (rawData is List) {
+          final all = rawData
+              .map(
+                (e) => PendingGroupInviteItem.fromJson(
+                  Map<String, dynamic>.from(e as Map),
+                ),
+              )
+              .toList();
+          // Keep only PENDING status items
+          pendingGroupInvites.assignAll(
+            all.where((item) => item.status == 'PENDING').toList(),
+          );
+        } else {
+          pendingGroupInvites.clear();
+        }
+      } else {
+        AppLoggerHelper.error(
+          '[GroupDetails] fetchPendingGroupInvites failed | '
+          'statusCode: ${response.statusCode} | '
+          'error: ${response.errorMessage}',
+        );
+      }
+    } catch (e) {
+      AppLoggerHelper.error(
+        '[GroupDetails] fetchPendingGroupInvites exception',
+        e,
+      );
+    } finally {
+      await EasyLoading.dismiss();
+    }
+  }
+
+  // ── Revoke (cancel) a pending group invite ────────────────────────
+  Future<void> revokeGroupInvite(PendingGroupInviteItem invite) async {
+    await EasyLoading.show(status: 'Revoking invite...');
+
+    try {
+      final accessToken = StorageService.token;
+      final token = (accessToken != null && accessToken.isNotEmpty)
+          ? 'Bearer $accessToken'
+          : null;
+
+      final response = await _networkCaller.deleteRequest(
+        ApiConstants.revokeInvitationUserApi(invite.id),
+        token: token,
+      );
+
+      if (response.isSuccess) {
+        AppLoggerHelper.info(
+          '[GroupDetails] revokeGroupInvite success | '
+          'inviteId: ${invite.id} | '
+          'statusCode: ${response.statusCode}',
+        );
+        // Remove from local list immediately for instant UI feedback
+        pendingGroupInvites.removeWhere((item) => item.id == invite.id);
+      } else {
+        AppLoggerHelper.error(
+          '[GroupDetails] revokeGroupInvite failed | '
+          'statusCode: ${response.statusCode} | '
+          'error: ${response.errorMessage}',
+        );
+        CommonMessage.showMessage(
+          title: 'Failed',
+          message: response.errorMessage,
+        );
+      }
+    } catch (e) {
+      AppLoggerHelper.error(
+        '[GroupDetails] revokeGroupInvite exception',
+        e,
+      );
+      CommonMessage.showMessage(
+        title: 'Error',
+        message: 'Something went wrong. Please try again.',
+      );
+    } finally {
+      await EasyLoading.dismiss();
+    }
+  }
+
+  // ── Remove a member from the group (owner only) ────────────────────
+  Future<void> removeMember(GroupDetailMember member) async {
+    final groupId = _groupId ?? groupDetail.value?.groupId;
+    if (groupId == null || groupId.isEmpty) {
+      AppLoggerHelper.error('[GroupDetails] removeMember failed: Group ID is missing');
+      CommonMessage.showMessage(
+        title: 'Error',
+        message: 'Group ID is missing. Please reload the group.',
+      );
+      return;
+    }
+
+    await EasyLoading.show(status: 'Removing member...');
+
+    try {
+      final accessToken = StorageService.token;
+      final token = (accessToken != null && accessToken.isNotEmpty)
+          ? 'Bearer $accessToken'
+          : null;
+
+      final response = await _networkCaller.deleteRequest(
+        ApiConstants.removeMemberFromGroupByOwnerApi(groupId, member.userId),
+        token: token,
+      );
+
+      if (response.isSuccess) {
+        AppLoggerHelper.info(
+          '[GroupDetails] removeMember success | '
+          'groupId: $groupId | '
+          'userId: ${member.userId} | '
+          'statusCode: ${response.statusCode}',
+        );
+
+        // Remove from local members list for instant UI feedback
+        final current = groupDetail.value;
+        if (current != null) {
+          final updatedMembers = current.members
+              .where((m) => m.userId != member.userId)
+              .toList();
+          groupDetail.value = GroupDetailModel(
+            groupId: current.groupId,
+            name: current.name,
+            description: current.description,
+            isPrivate: current.isPrivate,
+            isActive: current.isActive,
+            createdBy: current.createdBy,
+            inviteCode: current.inviteCode,
+            createdAt: current.createdAt,
+            updatedAt: current.updatedAt,
+            members: updatedMembers,
+          );
+        }
+
+        CommonMessage.showMessage(
+          title: 'Success',
+          message: 'Member removed successfully.',
+        );
+      } else {
+        AppLoggerHelper.error(
+          '[GroupDetails] removeMember failed | '
+          'statusCode: ${response.statusCode} | '
+          'error: ${response.errorMessage}',
+        );
+        CommonMessage.showMessage(
+          title: 'Failed',
+          message: response.errorMessage,
+        );
+      }
+    } catch (e) {
+      AppLoggerHelper.error('[GroupDetails] removeMember exception', e);
+      CommonMessage.showMessage(
+        title: 'Error',
+        message: 'Something went wrong. Please try again.',
+      );
+    } finally {
+      await EasyLoading.dismiss();
+    }
   }
 
   void approveRequest(GroupMemberRequest request) {

@@ -31,6 +31,7 @@ class GroupDetailsMembersTab extends GetView<GroupDetailsScreenController> {
       final apiDetail = controller.groupDetail.value;
       final apiMembers = apiDetail?.members ?? [];
       final hasFetched = apiDetail != null;
+      final isOwner = controller.isCurrentUserGroupOwner;
 
       return ListView(
         padding: EdgeInsets.zero,
@@ -54,21 +55,37 @@ class GroupDetailsMembersTab extends GetView<GroupDetailsScreenController> {
           ),
           SizedBox(height: 16.h),
 
-          // ── Pending requests (static for now) ──────────────────────
-          Text(
-            'Pending Requests (${controller.pendingRequests.length})',
-            style: getTextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              color: AppColors.whiteColor,
-              lineHeight: 12,
+          // ── Pending requests (visible to group owner only) ──────────
+          if (isOwner) ...[
+            Text(
+              'Pending Requests (${controller.pendingGroupInvites.length})',
+              style: getTextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: AppColors.whiteColor,
+                lineHeight: 12,
+              ),
             ),
-          ),
-          SizedBox(height: 12.h),
-          ...controller.pendingRequests.map(
-            (request) => _PendingRequestCard(request: request),
-          ),
-          SizedBox(height: 20.h),
+            SizedBox(height: 12.h),
+            if (controller.pendingGroupInvites.isEmpty)
+              Padding(
+                padding: EdgeInsets.only(bottom: 8.h),
+                child: Text(
+                  'No pending invitations.',
+                  style: getTextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.grey8B95A5Color,
+                    lineHeight: 11,
+                  ),
+                ),
+              )
+            else
+              ...controller.pendingGroupInvites.map(
+                (invite) => _PendingRequestCard(invite: invite),
+              ),
+            SizedBox(height: 20.h),
+          ],
 
           // ── Members from API ────────────────────────────────────────
           Text(
@@ -96,13 +113,17 @@ class GroupDetailsMembersTab extends GetView<GroupDetailsScreenController> {
   }
 }
 
-// ── Pending request card (unchanged) ─────────────────────────────────────────
+// ── Pending request card (uses live API invite data) ──────────────────────
 class _PendingRequestCard extends GetView<GroupDetailsScreenController> {
-  final GroupMemberRequest request;
-  const _PendingRequestCard({required this.request});
+  final PendingGroupInviteItem invite;
+  const _PendingRequestCard({required this.invite});
 
   @override
   Widget build(BuildContext context) {
+    final inviteeName =
+        invite.invitee.name.isNotEmpty ? invite.invitee.name : 'Unknown';
+    final inviteeEmail = invite.invitee.email;
+
     return Container(
       margin: EdgeInsets.only(bottom: 18.h),
       padding: EdgeInsets.all(14.r),
@@ -123,7 +144,7 @@ class _PendingRequestCard extends GetView<GroupDetailsScreenController> {
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  request.name.characters.first,
+                  inviteeName.characters.first.toUpperCase(),
                   style: getTextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w500,
@@ -138,7 +159,7 @@ class _PendingRequestCard extends GetView<GroupDetailsScreenController> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      request.name,
+                      inviteeName,
                       style: getTextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -147,7 +168,7 @@ class _PendingRequestCard extends GetView<GroupDetailsScreenController> {
                       ),
                     ),
                     Text(
-                      request.email,
+                      inviteeEmail,
                       style: getTextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
@@ -158,13 +179,24 @@ class _PendingRequestCard extends GetView<GroupDetailsScreenController> {
                   ],
                 ),
               ),
-              Text(
-                request.timeAgo,
-                style: getTextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.grey8B95A5Color,
-                  lineHeight: 10,
+              // Status badge
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 8.w,
+                  vertical: 4.h,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.orangeFF6B35Color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Text(
+                  invite.status,
+                  style: getTextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.orangeFF6B35Color,
+                    lineHeight: 9,
+                  ),
                 ),
               ),
             ],
@@ -172,22 +204,38 @@ class _PendingRequestCard extends GetView<GroupDetailsScreenController> {
           SizedBox(height: 12.h),
           Row(
             children: [
+              // Approve button shows the invite status (read-only indicator)
               Expanded(
-                child: CustomButton(
-                  ontap: () => controller.approveRequest(request),
-                  title: 'Approve',
-                  fontSize: 14,
-                  lineHeight: 11,
-                  bgColor: AppColors.blue00D4FFColor,
-                  titleColor: AppColors.whiteColor,
-                  borderRadius: 12,
+                child: Container(
+                  alignment: Alignment.center,
+                  padding: EdgeInsets.symmetric(
+                    vertical: 10.h,
+                    horizontal: 8.w,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.blue00D4FFColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(
+                      color: AppColors.blue00D4FFColor.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  child: Text(
+                    invite.status,
+                    style: getTextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.blue00D4FFColor,
+                      lineHeight: 11,
+                    ),
+                  ),
                 ),
               ),
               SizedBox(width: 10.w),
+              // Revoke button – cancels the pending invite
               Expanded(
                 child: CustomButton(
-                  ontap: () => controller.declineRequest(request),
-                  title: 'Decline',
+                  ontap: () => controller.revokeGroupInvite(invite),
+                  title: 'Revoke',
                   fontSize: 14,
                   lineHeight: 11,
                   bgColor: AppColors.transparentColor,
@@ -205,7 +253,7 @@ class _PendingRequestCard extends GetView<GroupDetailsScreenController> {
 }
 
 // ── API member card ───────────────────────────────────────────────────────────
-class _ApiMemberCard extends StatelessWidget {
+class _ApiMemberCard extends GetView<GroupDetailsScreenController> {
   final GroupDetailMember member;
   const _ApiMemberCard({required this.member});
 
@@ -223,99 +271,188 @@ class _ApiMemberCard extends StatelessWidget {
     final isOwner = member.role == 'OWNER';
     final profileImageUrl = member.user.profileImage;
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      padding: EdgeInsets.all(12.r),
-      decoration: BoxDecoration(
-        color: AppColors.black0F1E33Color,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppColors.grey3A4B62Color),
-      ),
-      child: Row(
-        children: [
-          // Avatar: network image if available, else letter placeholder
-          ClipRRect(
-            borderRadius: BorderRadius.circular(22.r),
-            child:
-                (profileImageUrl != null && profileImageUrl.isNotEmpty)
-                    ? Image.network(
-                        profileImageUrl,
-                        width: 44.r,
-                        height: 44.r,
-                        fit: BoxFit.cover,
-                        errorBuilder:
-                            (context, error, stackTrace) => _LetterAvatar(
-                              name: member.user.name,
-                              size: 44.r,
-                            ),
-                      )
-                    : _LetterAvatar(name: member.user.name, size: 44.r),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+    return GestureDetector(
+      onLongPress: () {
+        // Only the group owner can remove members (and cannot remove themselves / the owner card)
+        if (!isOwner && controller.isCurrentUserGroupOwner) {
+          showDialog(context: context, builder: (context) {
+            return Dialog(
+              backgroundColor: AppColors.backgroundDarkColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+                side: BorderSide(
+                  color: AppColors.whiteColor.withValues(alpha: 0.5),
+                  width: 1.w,
+                ),
+              ),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.r, vertical: 16.r),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Remove Member',
+                          style: getTextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.redDA605CColor,
+                            lineHeight: 12,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => Get.back(),
+                          child: Icon(
+                            Icons.close,
+                            size: 24,
+                            color: AppColors.grey8B95A5Color,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 18.h),
                     Text(
-                      member.user.name,
+                      'Are you sure you want to remove this member?',
                       style: getTextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.whiteColor,
-                        lineHeight: 12,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.grey8B95A5Color,
+                        lineHeight: 11,
                       ),
                     ),
-                    if (isOwner) ...[
-                      SizedBox(width: 6.w),
-                      Image.asset(
-                        IconPath.crownIcon,
-                        width: 14.r,
-                        height: 14.r,
-                      ),
-                    ],
+                    SizedBox(height: 25.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CustomButton(
+                          ontap: () => Get.back(),
+                          title: 'Cancel',
+                          fontSize: 14,
+                          lineHeight: 11,
+                          bgColor: AppColors.transparentColor,
+                          titleColor: AppColors.grey8B95A5Color,
+                          borderColor: AppColors.grey8B95A5Color,
+                          borderRadius: 12,
+                        ),
+                        SizedBox(width: 25.w),
+                        CustomButton(
+                          ontap: () {
+                            Get.back(); // close dialog first
+                            controller.removeMember(member);
+                          },
+                          title: 'Remove',
+                          fontSize: 14,
+                          lineHeight: 11,
+                          bgColor: AppColors.transparentColor,
+                          titleColor: AppColors.redDA605CColor,
+                          borderColor: AppColors.redDA605CColor,
+                          borderRadius: 12,
+                        ),
+                      ],
+                    ),
                   ],
                 ),
-                SizedBox(height: 2.h),
+              ),
+            );
+          });
+        }
+      },
+      child: Container(
+        margin: EdgeInsets.only(bottom: 12.h),
+        padding: EdgeInsets.all(12.r),
+        decoration: BoxDecoration(
+          color: AppColors.black0F1E33Color,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: AppColors.grey3A4B62Color),
+        ),
+        child: Row(
+          children: [
+            // Avatar: network image if available, else letter placeholder
+            ClipRRect(
+              borderRadius: BorderRadius.circular(22.r),
+              child:
+                  (profileImageUrl != null && profileImageUrl.isNotEmpty)
+                      ? Image.network(
+                          profileImageUrl,
+                          width: 44.r,
+                          height: 44.r,
+                          fit: BoxFit.cover,
+                          errorBuilder:
+                              (context, error, stackTrace) => _LetterAvatar(
+                                name: member.user.name,
+                                size: 44.r,
+                              ),
+                        )
+                      : _LetterAvatar(name: member.user.name, size: 44.r),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        member.user.name,
+                        style: getTextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.whiteColor,
+                          lineHeight: 12,
+                        ),
+                      ),
+                      if (isOwner) ...[
+                        SizedBox(width: 6.w),
+                        Image.asset(
+                          IconPath.crownIcon,
+                          width: 14.r,
+                          height: 14.r,
+                        ),
+                      ],
+                    ],
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    'Joined ${_formatDate(member.joinedAt)}',
+                    style: getTextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.grey8B95A5Color,
+                      lineHeight: 10,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
                 Text(
-                  'Joined ${_formatDate(member.joinedAt)}',
+                  member.role,
                   style: getTextStyle(
                     fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.grey8B95A5Color,
+                    lineHeight: 9,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                // Report count placeholder (next time)
+                Text(
+                  '– reports',
+                  style: getTextStyle(
+                    fontSize: 11,
                     fontWeight: FontWeight.w400,
                     color: AppColors.grey8B95A5Color,
-                    lineHeight: 10,
+                    lineHeight: 8,
                   ),
                 ),
               ],
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                member.role,
-                style: getTextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.grey8B95A5Color,
-                  lineHeight: 9,
-                ),
-              ),
-              SizedBox(height: 4.h),
-              // Report count placeholder (next time)
-              Text(
-                '– reports',
-                style: getTextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.grey8B95A5Color,
-                  lineHeight: 8,
-                ),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
