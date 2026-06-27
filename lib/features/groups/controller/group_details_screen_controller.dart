@@ -32,6 +32,7 @@ class GroupDetailsScreenController extends GetxController {
 
   final TextEditingController groupNameTEController = TextEditingController();
   final TextEditingController groupDescriptionTEController = TextEditingController();
+  final TextEditingController searchUserTEController = TextEditingController();
 
   // ── API state ───────────────────────────────────────────────────────
   final Rxn<GroupDetailModel> groupDetail = Rxn<GroupDetailModel>();
@@ -160,31 +161,145 @@ class GroupDetailsScreenController extends GetxController {
     ),
   ].obs;
 
-  final RxList<InvitableFriendItem> invitableFriends = <InvitableFriendItem>[
-    const InvitableFriendItem(
-      id: 'marvin-mckinney',
-      name: 'Marvin McKinney',
-      subtitle: 'crew',
-      avatarPath: ImagePath.miamiOffShoreCrewImage,
-    ),
-    const InvitableFriendItem(
-      id: 'devon-lane',
-      name: 'Devon Lane',
-      subtitle: 'crew',
-      avatarPath: ImagePath.messageProfileImage,
-    ),
-    const InvitableFriendItem(
-      id: 'wade-warren',
-      name: 'Wade Warren',
-      subtitle: 'crew',
-      avatarPath: ImagePath.miamiOffShoreCrewImage,
-    ),
-  ].obs;
+  final RxList<InvitableFriendItem> invitableFriends = <InvitableFriendItem>[].obs;
+  final ScrollController inviteFriendsScrollController = ScrollController();
+  int _currentPage = 1;
+  bool _hasMore = true;
+  bool _isPaginationLoading = false;
+  static const int _limit = 10;
+  final RxString searchQuery = ''.obs;
+  final RxBool isPaginationLoading = false.obs;
+  String _lastSearchQuery = '';
 
   @override
   void onInit() {
     super.onInit();
     inviteEmailController.addListener(_handleInviteEmailsChanged);
+    searchUserTEController.addListener(_handleSearchChanged);
+    inviteFriendsScrollController.addListener(_scrollListener);
+
+    debounce(searchQuery, (query) {
+      final trimmed = query.trim();
+      if (trimmed != _lastSearchQuery) {
+        _lastSearchQuery = trimmed;
+        if (trimmed.isEmpty || trimmed.length >= 2) {
+          fetchUserForInvitation(isRefresh: true);
+        }
+      }
+    }, time: const Duration(milliseconds: 500));
+  }
+
+  void _handleSearchChanged() {
+    searchQuery.value = searchUserTEController.text;
+  }
+
+  void _scrollListener() {
+    if (inviteFriendsScrollController.hasClients) {
+      final threshold = 200.0;
+      if (inviteFriendsScrollController.position.pixels >=
+          inviteFriendsScrollController.position.maxScrollExtent - threshold) {
+        fetchUserForInvitation(isRefresh: false);
+      }
+    }
+  }
+
+  Future<void> fetchUserForInvitation({bool isRefresh = false}) async {
+    if (isRefresh) {
+      _currentPage = 1;
+      _hasMore = true;
+      _isPaginationLoading = false;
+    }
+
+    if (!_hasMore || _isPaginationLoading) return;
+
+    _isPaginationLoading = true;
+    if (!isRefresh) {
+      isPaginationLoading.value = true;
+    }
+
+    if (isRefresh) {
+      await EasyLoading.show(status: 'Fetching users...');
+    }
+
+    final id = _groupId ?? groupDetail.value?.groupId;
+    if (id == null || id.isEmpty) {
+      AppLoggerHelper.error('[GroupDetails] fetchUserForInvitation failed: Group ID is missing');
+      _isPaginationLoading = false;
+      isPaginationLoading.value = false;
+      if (isRefresh) {
+        await EasyLoading.dismiss();
+      }
+      return;
+    }
+
+    try {
+      final accessToken = StorageService.token;
+      final token = (accessToken != null && accessToken.isNotEmpty)
+          ? 'Bearer $accessToken'
+          : null;
+
+      final queryText = searchQuery.value.trim();
+      final url = ApiConstants.featchUserForInviationApi(
+        queryText,
+        _currentPage,
+        _limit,
+        id,
+      );
+
+      final response = await _networkCaller.getRequest(url, token: token);
+
+      if (response.isSuccess) {
+        final body = response.responseData;
+        AppLoggerHelper.info(
+          '[GroupDetails] fetchUserForInvitation success | '
+          'statusCode: ${response.statusCode} | '
+          'body: $body',
+        );
+
+        final rawData = body is Map ? body['data'] : null;
+        final rawMeta = body is Map ? body['meta'] : null;
+
+        List<InvitableFriendItem> newUsers = [];
+        if (rawData is List) {
+          newUsers = rawData
+              .map((e) => InvitableFriendItem.fromJson(Map<String, dynamic>.from(e as Map)))
+              .toList();
+        }
+
+        if (isRefresh) {
+          invitableFriends.assignAll(newUsers);
+        } else {
+          invitableFriends.addAll(newUsers);
+        }
+
+        if (rawMeta is Map) {
+          final totalPages = (rawMeta['totalPages'] as num?)?.toInt() ?? 1;
+          final currentPageMeta = (rawMeta['page'] as num?)?.toInt() ?? _currentPage;
+          _currentPage = currentPageMeta + 1;
+          _hasMore = currentPageMeta < totalPages;
+        } else {
+          if (newUsers.length < _limit) {
+            _hasMore = false;
+          } else {
+            _currentPage++;
+          }
+        }
+      } else {
+        AppLoggerHelper.error(
+          '[GroupDetails] fetchUserForInvitation failed | '
+          'statusCode: ${response.statusCode} | '
+          'error: ${response.errorMessage}',
+        );
+      }
+    } catch (e) {
+      AppLoggerHelper.error('[GroupDetails] fetchUserForInvitation exception', e);
+    } finally {
+      _isPaginationLoading = false;
+      isPaginationLoading.value = false;
+      if (isRefresh) {
+        await EasyLoading.dismiss();
+      }
+    }
   }
 
   // ── Fetch single group details ──────────────────────────────────────
@@ -475,14 +590,69 @@ class GroupDetailsScreenController extends GetxController {
     return selectedFriendIds.contains(friendId);
   }
 
-  void inviteSelectedFriends() {
+  Future<void> inviteSelectedFriends() async {
     if (selectedFriendIds.isEmpty) return;
 
-    final int invitedCount = selectedFriendIds.length;
-    closeInviteMembersSheet();
-    _showInviteFeedback(
-      invitedCount == 1 ? '1 friend invited' : '$invitedCount friends invited',
-    );
+    final id = _groupId ?? groupDetail.value?.groupId;
+    if (id == null || id.isEmpty) {
+      AppLoggerHelper.error('[GroupDetails] inviteSelectedFriends failed: Group ID is missing');
+      CommonMessage.showMessage(
+        title: 'Error',
+        message: 'Group ID is missing. Please reload the group.',
+      );
+      return;
+    }
+
+    await EasyLoading.show(status: 'Sending invitations...');
+
+    try {
+      final accessToken = StorageService.token;
+      final token = (accessToken != null && accessToken.isNotEmpty)
+          ? 'Bearer $accessToken'
+          : null;
+
+      final response = await _networkCaller.postRequest(
+        ApiConstants.generateGroupInvitationCodeApi(id),
+        body: {
+          'type': 'USER',
+          'inviteeUserIds': selectedFriendIds.toList(),
+        },
+        token: token,
+      );
+
+      if (response.isSuccess) {
+        final body = response.responseData;
+        AppLoggerHelper.info(
+          '[GroupDetails] inviteSelectedFriends success | '
+          'statusCode: ${response.statusCode} | '
+          'body: $body',
+        );
+
+        final int invitedCount = selectedFriendIds.length;
+        closeInviteMembersSheet();
+        _showInviteFeedback(
+          invitedCount == 1 ? '1 friend invited' : '$invitedCount friends invited',
+        );
+      } else {
+        AppLoggerHelper.error(
+          '[GroupDetails] inviteSelectedFriends failed | '
+          'statusCode: ${response.statusCode} | '
+          'error: ${response.errorMessage}',
+        );
+        CommonMessage.showMessage(
+          title: 'Failed',
+          message: response.errorMessage,
+        );
+      }
+    } catch (e) {
+      AppLoggerHelper.error('[GroupDetails] inviteSelectedFriends exception', e);
+      CommonMessage.showMessage(
+        title: 'Error',
+        message: 'Something went wrong. Please try again.',
+      );
+    } finally {
+      await EasyLoading.dismiss();
+    }
   }
 
   Future<void> copyInviteCode() async {
@@ -587,6 +757,15 @@ class GroupDetailsScreenController extends GetxController {
     inviteEmailController.clear();
     hasInviteEmails.value = false;
     inviteCode.value = '';
+
+    _currentPage = 1;
+    _hasMore = true;
+    _isPaginationLoading = false;
+    _lastSearchQuery = '';
+    searchUserTEController.clear();
+    searchQuery.value = '';
+    invitableFriends.clear();
+    fetchUserForInvitation(isRefresh: true);
   }
 
   void approveRequest(GroupMemberRequest request) {
@@ -645,6 +824,12 @@ class GroupDetailsScreenController extends GetxController {
   void onClose() {
     inviteEmailController
       ..removeListener(_handleInviteEmailsChanged)
+      ..dispose();
+    searchUserTEController
+      ..removeListener(_handleSearchChanged)
+      ..dispose();
+    inviteFriendsScrollController
+      ..removeListener(_scrollListener)
       ..dispose();
     messageController.dispose();
     groupNameTEController.dispose();

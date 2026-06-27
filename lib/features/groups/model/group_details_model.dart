@@ -76,11 +76,26 @@ class InvitableFriendItem {
   final String name;
   final String subtitle;
   final String avatarPath;
+  final String? email;
+  final String? profileImage;
 
   const InvitableFriendItem({
     required this.id,
     required this.name,
-    required this.subtitle,
-    required this.avatarPath,
+    this.subtitle = '',
+    this.avatarPath = '',
+    this.email,
+    this.profileImage,
   });
+
+  factory InvitableFriendItem.fromJson(Map<String, dynamic> json) {
+    return InvitableFriendItem(
+      id: (json['userId'] as String?) ?? '',
+      name: (json['name'] as String?) ?? '',
+      subtitle: (json['email'] as String?) ?? '',
+      avatarPath: '',
+      email: json['email'] as String?,
+      profileImage: json['profileImage'] as String?,
+    );
+  }
 }

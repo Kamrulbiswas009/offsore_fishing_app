@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/services/permissions/location_permission_service.dart';
+import 'package:paytonpieper/features/groups/controller/see_my_invitation_controller.dart';
 import 'package:paytonpieper/features/main_screen/controller/filter_controller.dart';
 import 'package:paytonpieper/features/main_screen/controller/main_screen_controller.dart';
 import 'package:paytonpieper/features/groups/controller/create_group_screen_controller.dart';
@@ -71,5 +72,6 @@ class ControllerBinder extends Bindings {
       () => OfflineReportsTabController(),
       fenix: true,
     );
+    Get.lazyPut<SeeMyInvitationController>(()=>SeeMyInvitationController(),fenix: true);
   }
 }
