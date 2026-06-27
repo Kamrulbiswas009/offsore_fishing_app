@@ -43,4 +43,8 @@ class ApiConstants {
   static const String seeMyInvitationApi = "$baseUrl/invites/my-pending";
   static String approveInvitationApi(String inviteId) => "$baseUrl/invites/$inviteId/accept";
   static String rejectInvitationApi(String inviteId) => "$baseUrl/invites/$inviteId/decline";
+  static String showAllPendingInvitationOfAGroupApi(String groupId)=> "$baseUrl/invites/groups/$groupId";
+  static String revokeInvitationUserApi(String inviteId) => "$baseUrl/invites/$inviteId/revoke";
+  static String removeMemberFromGroupByOwnerApi(String groupId, String userId)=> 
+  "$baseUrl/groups/$groupId/members/$userId";
 }

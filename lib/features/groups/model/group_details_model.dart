@@ -99,3 +99,48 @@ class InvitableFriendItem {
     );
   }
 }
+
+// ─────────────────────────────────────────
+// Model: Pending Group Invite (showAllPendingInvitationOfAGroupApi)
+// ─────────────────────────────────────────
+
+class PendingGroupInviteInvitee {
+  final String name;
+  final String email;
+
+  const PendingGroupInviteInvitee({
+    required this.name,
+    required this.email,
+  });
+
+  factory PendingGroupInviteInvitee.fromJson(Map<String, dynamic> json) {
+    return PendingGroupInviteInvitee(
+      name: (json['name'] as String?) ?? '',
+      email: (json['email'] as String?) ?? '',
+    );
+  }
+}
+
+class PendingGroupInviteItem {
+  final String id;
+  final String groupId;
+  final String status;
+  final PendingGroupInviteInvitee invitee;
+
+  const PendingGroupInviteItem({
+    required this.id,
+    required this.groupId,
+    required this.status,
+    required this.invitee,
+  });
+
+  factory PendingGroupInviteItem.fromJson(Map<String, dynamic> json) {
+    final rawInvitee = json['invitee'] as Map<String, dynamic>? ?? {};
+    return PendingGroupInviteItem(
+      id: (json['id'] as String?) ?? '',
+      groupId: (json['groupId'] as String?) ?? '',
+      status: (json['status'] as String?) ?? '',
+      invitee: PendingGroupInviteInvitee.fromJson(rawInvitee),
+    );
+  }
+}
