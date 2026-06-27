@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/common/widgets/custom_back_button.dart';
 import 'package:paytonpieper/core/common/widgets/custom_button.dart';
+import 'package:paytonpieper/core/common/widgets/custom_text_field.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/groups/controller/group_details_screen_controller.dart';
@@ -38,6 +39,7 @@ class InviteMemberBottomSheetWidget
             child: ClipRRect(
               borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
               child: SingleChildScrollView(
+                controller: controller.inviteFriendsScrollController,
                 child: Obx(
                   () => Column(
                     mainAxisSize: MainAxisSize.min,
@@ -248,6 +250,13 @@ class _FriendsInviteContent extends GetView<GroupDetailsScreenController> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          //here show a search box for searching friends
+          CustomTextField(
+            controller: controller.searchUserTEController,
+            hintText: "Search with name or email",
+            prefixIcon: Icons.search,
+          ),
+          SizedBox(height: 8.h),
           Text(
             'SELECT FRIENDS',
             style: getTextStyle(
@@ -258,9 +267,34 @@ class _FriendsInviteContent extends GetView<GroupDetailsScreenController> {
             ),
           ),
           SizedBox(height: 12.h),
+          if (controller.invitableFriends.isEmpty &&
+              !controller.isPaginationLoading.value)
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 20.h),
+              child: Center(
+                child: Text(
+                  'No users found',
+                  style: getTextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.grey8B95A5Color,
+                    lineHeight: 10,
+                  ),
+                ),
+              ),
+            ),
           ...controller.invitableFriends.map(
             (friend) => _FriendSelectionTile(friend: friend),
           ),
+          if (controller.isPaginationLoading.value)
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 10.h),
+              child: const Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.blue00D4FFColor,
+                ),
+              ),
+            ),
           SizedBox(height: 14.h),
           Opacity(
             opacity: hasSelection ? 1 : 0.55,
@@ -301,6 +335,30 @@ class _FriendSelectionTile extends GetView<GroupDetailsScreenController> {
 
   const _FriendSelectionTile({required this.friend});
 
+  Widget _buildAvatar() {
+    if (friend.profileImage != null && friend.profileImage!.isNotEmpty) {
+      return Image.network(
+        friend.profileImage!,
+        width: 44.r,
+        height: 44.r,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) =>
+            _LetterAvatar(name: friend.name, size: 44.r),
+      );
+    } else if (friend.avatarPath.isNotEmpty) {
+      return Image.asset(
+        friend.avatarPath,
+        width: 44.r,
+        height: 44.r,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) =>
+            _LetterAvatar(name: friend.name, size: 44.r),
+      );
+    } else {
+      return _LetterAvatar(name: friend.name, size: 44.r);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Obx(() {
@@ -333,12 +391,7 @@ class _FriendSelectionTile extends GetView<GroupDetailsScreenController> {
               SizedBox(width: 12.w),
               ClipRRect(
                 borderRadius: BorderRadius.circular(22.r),
-                child: Image.asset(
-                  friend.avatarPath,
-                  width: 44.r,
-                  height: 44.r,
-                  fit: BoxFit.cover,
-                ),
+                child: _buildAvatar(),
               ),
               SizedBox(width: 10.w),
               Expanded(
@@ -356,7 +409,7 @@ class _FriendSelectionTile extends GetView<GroupDetailsScreenController> {
                     ),
                     SizedBox(height: 3.h),
                     Text(
-                      friend.subtitle,
+                      friend.email ?? friend.subtitle,
                       style: getTextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
@@ -372,6 +425,35 @@ class _FriendSelectionTile extends GetView<GroupDetailsScreenController> {
         ),
       );
     });
+  }
+}
+
+class _LetterAvatar extends StatelessWidget {
+  final String name;
+  final double size;
+  const _LetterAvatar({required this.name, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    final letter = name.isNotEmpty ? name.characters.first.toUpperCase() : '?';
+    return Container(
+      width: size,
+      height: size,
+      decoration: const BoxDecoration(
+        color: AppColors.tealColor117A88,
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        letter,
+        style: getTextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: AppColors.whiteColor,
+          lineHeight: 12,
+        ),
+      ),
+    );
   }
 }
 
