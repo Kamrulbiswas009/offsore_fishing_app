@@ -60,11 +60,11 @@ class CreateGroupScreen extends StatelessWidget {
                 CustomTextField(
                   fillColor: Color(0x14FFFFFF),
                   controller: controller.groupNameTEController,
-                  hintText: "Miami Offshore Crew",
+                  hintText: "Enter your group's name",
                   textCapitalization: TextCapitalization.words,
                 ),
                 SizedBox(height: 14.h),
-                const AuthFieldLabel("Description"),
+                const AuthFieldLabel("Description *"),
                 SizedBox(height: 8.h),
                 CustomTextField(
                   fillColor: Color(0x14FFFFFF),

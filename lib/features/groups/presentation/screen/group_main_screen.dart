@@ -52,76 +52,90 @@ class GroupMainScreen extends StatelessWidget {
       backgroundColor: AppColors.backgroundDarkColor,
       body: Padding(
         padding: EdgeInsets.all(20.r),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                "Groups",
-                style: getTextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.whiteColor,
-                  lineHeight: 16,
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await Future.wait([
+              controller.fetchGroupList(),
+              seeMyInvitationController.seeMyInvitations(showHUD: false),
+            ]);
+          },
+          color: AppColors.tealColor117A88,
+          backgroundColor: AppColors.backgroundDarkColor,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  "Groups",
+                  style: getTextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.whiteColor,
+                    lineHeight: 16,
+                  ),
                 ),
-              ),
-              Text(
-                "Share offshore reports with the crew you trust",
-                style: getTextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.grey8B95A5Color,
-                  lineHeight: 10,
+                Text(
+                  "Share offshore reports with the crew you trust",
+                  style: getTextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.grey8B95A5Color,
+                    lineHeight: 10,
+                  ),
                 ),
-              ),
-              SizedBox(height: 16.h),
-              CustomButton(
-                ontap: () {
-                  Get.to(() => CreateGroupScreen());
-                },
-                title: " Create Group",
-                prefixIcon: Image.asset(
-                  IconPath.addIcon,
-                  width: 18.r,
-                  height: 18.r,
-                ),
-                bgColor: AppColors.tealColor117A88,
-                titleColor: AppColors.whiteColor,
-              ),
-              SizedBox(height: 24.h),
-              JoinGroupCardWidget(onTap: () => _openJoinGroupSheet(context)),
-              SizedBox(height: 15.h),
-              //Here show all my invitation-
-              if(seeMyInvitationController.invitations.isNotEmpty) ...[
-              Text(
-                "Requested Invitations",
-                style: getTextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.grey8B95A5Color,
-                  lineHeight: 12,
-                ),
-              ),
-              SizedBox(height: 10.h),],
-              Obx(() {
-                if (seeMyInvitationController.invitations.isEmpty) {
-                  return SizedBox.shrink();
-                }
-                return ListView.builder(
-                  padding: EdgeInsets.zero,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: seeMyInvitationController.invitations.length,
-                  itemBuilder: (context, index) {
-                    final invitation =
-                        seeMyInvitationController.invitations[index];
-                    return SeeMyInvitationWidget(
-                      seeMyInvitationController: seeMyInvitationController,
-                      invitation: invitation,
-                    );
+                SizedBox(height: 16.h),
+                CustomButton(
+                  ontap: () {
+                    Get.to(() => CreateGroupScreen());
                   },
-                );
-              }),
+                  title: " Create Group",
+                  prefixIcon: Image.asset(
+                    IconPath.addIcon,
+                    width: 18.r,
+                    height: 18.r,
+                  ),
+                  bgColor: AppColors.tealColor117A88,
+                  titleColor: AppColors.whiteColor,
+                ),
+                SizedBox(height: 24.h),
+                JoinGroupCardWidget(onTap: () => _openJoinGroupSheet(context)),
+                SizedBox(height: 15.h),
+                //Here show all my invitation-
+                Obx(() {
+                  if (seeMyInvitationController.invitations.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Requested Invitations",
+                        style: getTextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.grey8B95A5Color,
+                          lineHeight: 12,
+                        ),
+                      ),
+                      SizedBox(height: 10.h),
+                      ListView.builder(
+                        padding: EdgeInsets.zero,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: seeMyInvitationController.invitations.length,
+                        itemBuilder: (context, index) {
+                          final invitation =
+                              seeMyInvitationController.invitations[index];
+                          return SeeMyInvitationWidget(
+                            seeMyInvitationController: seeMyInvitationController,
+                            invitation: invitation,
+                          );
+                        },
+                      ),
+                    ],
+                  );
+                }),
 
               SizedBox(height: 16.h),
               Text(
@@ -287,6 +301,7 @@ class GroupMainScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

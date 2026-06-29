@@ -101,7 +101,7 @@ class OnboardingScreen1 extends StatelessWidget {
                                 ),
                                 child: Image.asset(
                                   IconPath.arrowUpRight,
-                                  color: AppColors.whiteColor,
+                                 // color: AppColors.whiteColor,
                                   height: 18.h,
                                   width: 18.w,
                                 ),
