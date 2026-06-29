@@ -94,6 +94,7 @@ class OnboardingScreen4 extends StatelessWidget {
                         prefixIcon: Icon(
                           Icons.keyboard_arrow_left,
                           color: AppColors.whiteColor,
+                          size: 23.sp,
                         ),
                       ),
                     ),
@@ -106,7 +107,7 @@ class OnboardingScreen4 extends StatelessWidget {
                         child: Container(
                           height: 36.h,
                           decoration: BoxDecoration(
-                            color: AppColors.orangeFF6B35Color,
+                            color: Color(0XFFE25301),
                             borderRadius: BorderRadius.circular(50.r),
                           ),
                           child: Row(
@@ -135,7 +136,7 @@ class OnboardingScreen4 extends StatelessWidget {
                                     IconPath.arrowUpRight,
                                     width: 20.r,
                                     height: 20.r,
-                                    color: AppColors.whiteColor,
+                                    //color: AppColors.whiteColor,
                                   ),
                                 ),
                               ),

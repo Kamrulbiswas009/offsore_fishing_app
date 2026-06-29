@@ -9,7 +9,7 @@ import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/profile_and_setting/controller/profile_main_screen_controller.dart';
 import 'package:paytonpieper/features/profile_and_setting/presentation/widget/profile_main_screen_widget/profile_info_card_widget.dart';
 import 'package:paytonpieper/features/profile_and_setting/presentation/widget/profile_main_screen_widget/profile_stat_card_widget.dart';
-import 'package:paytonpieper/features/profile_and_setting/presentation/widget/profile_main_screen_widget/subscription_plan_card_widget.dart';
+import 'package:paytonpieper/features/profile_and_setting/presentation/widget/profile_main_screen_widget/subscription_plan_widget.dart';
 
 class ProfileMainScreen extends StatelessWidget {
   final ProfileMainScreenController controller =
@@ -98,10 +98,33 @@ class ProfileMainScreen extends StatelessWidget {
                   lineHeight: 12,
                 ),
               ),
+              Text(
+                'Compare features and choose the plan that fits your fishing.',
+                style: getTextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.greyC8D0DBColor,
+                  lineHeight: 9,
+                ),
+              ),
               SizedBox(height: 14.h),
-              SubscriptionPlanCardWidget(
-                plan: controller.subscriptionPlan,
-                onUpgradeTap: controller.onUpgradeToPro,
+              SubscriptionPlanWidget(),
+              // SubscriptionPlanCardWidget(
+              //   plan: controller.subscriptionPlan,
+              //   onUpgradeTap: controller.onUpgradeToPro,
+              // ),
+              SizedBox(height: 8.h),
+              CustomButton(title: "Unlock Pro >", lineHeight: 14, fontSize: 16),
+              SizedBox(height: 4.h),
+              Text(
+                "• Secure payments powered by Stripe. Your payment information is never stored by us.",
+                style: getTextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.greyC8D0DBColor,
+                  lineHeight: 9,
+                ),
+                textAlign: TextAlign.center,
               ),
               SizedBox(height: 28.h),
               CustomButton(

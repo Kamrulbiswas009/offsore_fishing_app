@@ -51,6 +51,7 @@ class ForgotPasswordScreenController extends GetxController {
       CommonMessage.showMessage(
         title: 'Email Required',
         message: 'Please enter your email address.',
+        backgroundColor: Colors.red,
       );
       return;
     }
@@ -59,6 +60,7 @@ class ForgotPasswordScreenController extends GetxController {
       CommonMessage.showMessage(
         title: 'Invalid Email',
         message: 'Please enter a valid email address.',
+        backgroundColor: Colors.red,
       );
       return;
     }
@@ -96,6 +98,7 @@ class ForgotPasswordScreenController extends GetxController {
         CommonMessage.showMessage(
           title: 'Failed',
           message: response.errorMessage,
+          backgroundColor: Colors.red,
         );
       }
     } catch (e) {
@@ -103,6 +106,7 @@ class ForgotPasswordScreenController extends GetxController {
       CommonMessage.showMessage(
         title: 'Error',
         message: 'Something went wrong. Please try again.',
+        backgroundColor: Colors.red,
       );
     } finally {
       isLoading.value = false;
@@ -150,6 +154,7 @@ class ForgotPasswordScreenController extends GetxController {
       CommonMessage.showMessage(
         title: 'Password Too Short',
         message: 'Password must be at least 8 characters long.',
+        backgroundColor: Colors.red,
       );
       return;
     }
@@ -192,6 +197,7 @@ class ForgotPasswordScreenController extends GetxController {
         CommonMessage.showMessage(
           title: 'Reset Failed',
           message: response.errorMessage,
+          backgroundColor: Colors.red,
         );
       }
     } catch (e) {
@@ -199,6 +205,7 @@ class ForgotPasswordScreenController extends GetxController {
       CommonMessage.showMessage(
         title: 'Error',
         message: 'Something went wrong. Please try again.',
+        backgroundColor: Colors.red,
       );
     } finally {
       isLoading.value = false;

@@ -45,6 +45,8 @@ post_install do |installer|
         'PERMISSION_LOCATION=0',
         'PERMISSION_LOCATION_WHENINUSE=1',
       ]
+      # Force minimum iOS deployment target to 14.0 to satisfy mapbox-maps-flutter SPM requirement
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
     end
   end
 end

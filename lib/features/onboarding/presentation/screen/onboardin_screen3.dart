@@ -85,6 +85,45 @@ class OnboardingScreen3 extends StatelessWidget {
                 Spacer(flex: 3),
                 Row(
                   children: [
+                    // Expanded(
+                    //   child: GestureDetector(
+                    //     onTap: () {
+                    //       controller.goBackToStep(0);
+                    //     },
+                    //     child: Container(
+                    //       padding: EdgeInsets.all(8.r),
+                    //       decoration: BoxDecoration(
+                    //         color: AppColors.whiteColor.withValues(alpha: 0.20),
+                    //         borderRadius: BorderRadius.circular(50.r),
+                    //       ),
+                    //       child: Align(
+                    //         alignment: Alignment.center,
+                    //         child: Row(
+                    //           mainAxisSize: MainAxisSize.min,
+                    //           mainAxisAlignment: MainAxisAlignment.center,
+                    //          // crossAxisAlignment: CrossAxisAlignment.center,
+                    //           children: [
+                    //             Icon(
+                            
+                    //               Icons.keyboard_arrow_left,
+                    //               color: AppColors.whiteColor,
+                    //               size: 30,
+                    //             ),
+                    //             Text(
+                    //               "Back",
+                    //               style: getTextStyle(
+                    //                 color: AppColors.whiteColor,
+                    //                 fontSize: 18,
+                    //                 fontWeight: FontWeight.w500,
+                    //                 lineHeight: 12,
+                    //               ),
+                    //             ),
+                    //           ],
+                    //         ),
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
                     Expanded(
                       child: CustomButton(
                         bgColor: AppColors.whiteColor.withValues(alpha: 0.20),
@@ -95,6 +134,7 @@ class OnboardingScreen3 extends StatelessWidget {
                         prefixIcon: Icon(
                           Icons.keyboard_arrow_left,
                           color: AppColors.whiteColor,
+                          size: 23.sp,
                         ),
                       ),
                     ),
@@ -107,7 +147,7 @@ class OnboardingScreen3 extends StatelessWidget {
                         child: Container(
                           height: 36.h,
                           decoration: BoxDecoration(
-                            color: AppColors.orangeFF6B35Color,
+                            color: Color(0XFFE25301),
                             borderRadius: BorderRadius.circular(50.r),
                           ),
                           child: Row(
@@ -137,7 +177,7 @@ class OnboardingScreen3 extends StatelessWidget {
                                     IconPath.arrowUpRight,
                                     width: 20.r,
                                     height: 20.r,
-                                    color: AppColors.whiteColor,
+                                    //color: AppColors.whiteColor,
                                   ),
                                 ),
                               ),

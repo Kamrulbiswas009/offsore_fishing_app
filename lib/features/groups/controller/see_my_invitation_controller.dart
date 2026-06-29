@@ -19,9 +19,11 @@ class SeeMyInvitationController extends GetxController {
     seeMyInvitations();
   }
 
-  Future<void> seeMyInvitations() async {
+  Future<void> seeMyInvitations({bool showHUD = true}) async {
     isLoading.value = true;
-    EasyLoading.show(status: 'Loading invitations...');
+    if (showHUD) {
+      EasyLoading.show(status: 'Loading invitations...');
+    }
     try {
       final accessToken = StorageService.token;
       final token = (accessToken != null && accessToken.isNotEmpty)
@@ -69,7 +71,9 @@ class SeeMyInvitationController extends GetxController {
       );
     } finally {
       isLoading.value = false;
-      EasyLoading.dismiss();
+      if (showHUD) {
+        EasyLoading.dismiss();
+      }
     }
   }
 

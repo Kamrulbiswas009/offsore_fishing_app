@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
+// import 'package:get/get_core/src/get_main.dart';
+// import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:paytonpieper/core/utils/constants/colors.dart';
@@ -30,6 +30,7 @@ class GlobalRealMapBox extends StatelessWidget {
               'global-mapbox-${center.latitude}-${center.longitude}',
             ),
             styleUri: mapbox.MapboxStyles.SATELLITE,
+            // ignore: deprecated_member_use
             cameraOptions: mapbox.CameraOptions(
               center: mapbox.Point(
                 coordinates: mapbox.Position(center.longitude, center.latitude),
@@ -75,22 +76,22 @@ class GlobalRealMapBox extends StatelessWidget {
           ),
 
           // 4. TOP NAVIGATION (Back Button)
-          Positioned(
-            top: 50.h,
-            left: 20.w,
-            child: GestureDetector(
-              onTap: () => Get.back(),
-              child: CircleAvatar(
-                radius: 20.r,
-                backgroundColor: Colors.black.withValues(alpha: 0.5),
-                child: const Icon(
-                  Icons.arrow_back,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-            ),
-          ),
+          // Positioned(
+          //   top: 50.h,
+          //   left: 20.w,
+          //   child: GestureDetector(
+          //     onTap: () => Get.back(),
+          //     child: CircleAvatar(
+          //       radius: 20.r,
+          //       backgroundColor: Colors.black.withValues(alpha: 0.5),
+          //       child: const Icon(
+          //         Icons.arrow_back,
+          //         color: Colors.white,
+          //         size: 20,
+          //       ),
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );
