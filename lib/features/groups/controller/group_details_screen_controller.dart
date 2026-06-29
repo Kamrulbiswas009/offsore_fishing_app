@@ -39,6 +39,8 @@ class GroupDetailsScreenController extends GetxController {
   final RxBool isDetailLoading = false.obs;
   String? _groupId;
 
+  String? get groupId => _groupId ?? groupDetail.value?.groupId;
+
   final NetworkCaller _networkCaller = NetworkCaller();
 
   // ── Legacy static fields (still used by existing widgets) ──────────
@@ -307,10 +309,12 @@ class GroupDetailsScreenController extends GetxController {
   }
 
   // ── Fetch single group details ──────────────────────────────────────
-  Future<void> fetchGroupDetails(String groupId) async {
+  Future<void> fetchGroupDetails(String groupId, {bool showHUD = true}) async {
     _groupId = groupId;
     isDetailLoading.value = true;
-    await EasyLoading.show(status: 'Loading group details...');
+    if (showHUD) {
+      await EasyLoading.show(status: 'Loading group details...');
+    }
 
     try {
       final accessToken = StorageService.token;
@@ -344,7 +348,7 @@ class GroupDetailsScreenController extends GetxController {
           // groupDetail was populated).
           if (selectedTab.value == GroupDetailsTab.members &&
               _isCurrentUserGroupOwner()) {
-            fetchPendingGroupInvites();
+            fetchPendingGroupInvites(showHUD: showHUD);
           }
         }
       } else {
@@ -358,7 +362,9 @@ class GroupDetailsScreenController extends GetxController {
       AppLoggerHelper.error('[GroupDetails] fetchGroupDetails exception', e);
     } finally {
       isDetailLoading.value = false;
-      await EasyLoading.dismiss();
+      if (showHUD) {
+        await EasyLoading.dismiss();
+      }
     }
   }
 
@@ -661,6 +667,10 @@ class GroupDetailsScreenController extends GetxController {
         _showInviteFeedback(
           invitedCount == 1 ? '1 friend invited' : '$invitedCount friends invited',
         );
+
+        if (_isCurrentUserGroupOwner()) {
+          fetchPendingGroupInvites(showHUD: false);
+        }
       } else {
         AppLoggerHelper.error(
           '[GroupDetails] inviteSelectedFriends failed | '
@@ -797,7 +807,7 @@ class GroupDetailsScreenController extends GetxController {
   }
 
   // ── Fetch all pending invitations for the current group ──────────
-  Future<void> fetchPendingGroupInvites() async {
+  Future<void> fetchPendingGroupInvites({bool showHUD = true}) async {
     final id = _groupId ?? groupDetail.value?.groupId;
     if (id == null || id.isEmpty) {
       AppLoggerHelper.error(
@@ -806,7 +816,9 @@ class GroupDetailsScreenController extends GetxController {
       return;
     }
 
-    await EasyLoading.show(status: 'Loading pending invites...');
+    if (showHUD) {
+      await EasyLoading.show(status: 'Loading pending invites...');
+    }
 
     try {
       final accessToken = StorageService.token;
@@ -856,7 +868,9 @@ class GroupDetailsScreenController extends GetxController {
         e,
       );
     } finally {
-      await EasyLoading.dismiss();
+      if (showHUD) {
+        await EasyLoading.dismiss();
+      }
     }
   }
 
