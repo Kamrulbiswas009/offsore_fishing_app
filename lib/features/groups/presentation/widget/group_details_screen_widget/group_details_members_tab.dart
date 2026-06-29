@@ -33,81 +33,99 @@ class GroupDetailsMembersTab extends GetView<GroupDetailsScreenController> {
       final hasFetched = apiDetail != null;
       final isOwner = controller.isCurrentUserGroupOwner;
 
-      return ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          CustomButton(
-            ontap: () => _openInviteMembersSheet(context),
-            title: ' Invite Members',
-            fontSize: 16,
-            lineHeight: 13,
-            bgColor: AppColors.orangeFF6B35Color,
-            borderRadius: 12,
-            prefixIcon: Padding(
-              padding: EdgeInsets.only(right: 8.w),
-              child: Image.asset(
-                IconPath.doublePersonWhiteIcon,
-                width: 16.r,
-                height: 16.r,
-                color: AppColors.whiteColor,
+      return RefreshIndicator(
+        onRefresh: () async {
+          final id = controller.groupId;
+          if (id != null && id.isNotEmpty) {
+            final List<Future<dynamic>> futures = [
+              controller.fetchGroupDetails(id, showHUD: false),
+            ];
+            if (isOwner) {
+              futures.add(controller.fetchPendingGroupInvites(showHUD: false));
+            }
+            await Future.wait(futures);
+          }
+        },
+        color: AppColors.tealColor117A88,
+        backgroundColor: AppColors.backgroundDarkColor,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          children: [
+            if(isOwner)
+            CustomButton(
+              ontap: () => _openInviteMembersSheet(context),
+              title: ' Invite Members',
+              fontSize: 16,
+              lineHeight: 13,
+              bgColor: AppColors.orangeFF6B35Color,
+              borderRadius: 12,
+              prefixIcon: Padding(
+                padding: EdgeInsets.only(right: 8.w),
+                child: Image.asset(
+                  IconPath.doublePersonWhiteIcon,
+                  width: 16.r,
+                  height: 16.r,
+                  color: AppColors.whiteColor,
+                ),
               ),
             ),
-          ),
-          SizedBox(height: 16.h),
+            SizedBox(height: 16.h),
 
-          // ── Pending requests (visible to group owner only) ──────────
-          if (isOwner) ...[
+            // ── Pending requests (visible to group owner only) ──────────
+            if (isOwner) ...[
+              Text(
+                'Pending Requests (${controller.pendingGroupInvites.length})',
+                style: getTextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.whiteColor,
+                  lineHeight: 12,
+                ),
+              ),
+              SizedBox(height: 12.h),
+              if (controller.pendingGroupInvites.isEmpty)
+                Padding(
+                  padding: EdgeInsets.only(bottom: 8.h),
+                  child: Text(
+                    'No pending invitations.',
+                    style: getTextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.grey8B95A5Color,
+                      lineHeight: 11,
+                    ),
+                  ),
+                )
+              else
+                ...controller.pendingGroupInvites.map(
+                  (invite) => _PendingRequestCard(invite: invite),
+                ),
+              SizedBox(height: 20.h),
+            ],
+
+            // ── Members from API ────────────────────────────────────────
             Text(
-              'Pending Requests (${controller.pendingGroupInvites.length})',
+              hasFetched
+                  ? 'Members (${apiMembers.length})'
+                  : 'Members (${controller.members.length})',
               style: getTextStyle(
                 fontSize: 18,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
                 color: AppColors.whiteColor,
                 lineHeight: 12,
               ),
             ),
-            SizedBox(height: 12.h),
-            if (controller.pendingGroupInvites.isEmpty)
-              Padding(
-                padding: EdgeInsets.only(bottom: 8.h),
-                child: Text(
-                  'No pending invitations.',
-                  style: getTextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.grey8B95A5Color,
-                    lineHeight: 11,
-                  ),
-                ),
-              )
+            SizedBox(height: 14.h),
+
+            if (hasFetched)
+              ...apiMembers.map((m) => _ApiMemberCard(member: m))
             else
-              ...controller.pendingGroupInvites.map(
-                (invite) => _PendingRequestCard(invite: invite),
-              ),
+              ...controller.members.map((m) => _MemberCard(member: m)),
+
             SizedBox(height: 20.h),
           ],
-
-          // ── Members from API ────────────────────────────────────────
-          Text(
-            hasFetched
-                ? 'Members (${apiMembers.length})'
-                : 'Members (${controller.members.length})',
-            style: getTextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: AppColors.whiteColor,
-              lineHeight: 12,
-            ),
-          ),
-          SizedBox(height: 14.h),
-
-          if (hasFetched)
-            ...apiMembers.map((m) => _ApiMemberCard(member: m))
-          else
-            ...controller.members.map((m) => _MemberCard(member: m)),
-
-          SizedBox(height: 20.h),
-        ],
+        ),
       );
     });
   }
