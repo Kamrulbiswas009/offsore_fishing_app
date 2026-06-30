@@ -55,6 +55,55 @@ class CreateGroupScreen extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 20.h),
+                Obx(
+                  () => Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 50.r,
+                        backgroundColor: AppColors.black2A2F3AColor,
+                        backgroundImage: controller.groupImage != null
+                            ? FileImage(controller.groupImage!)
+                            : null,
+                        child: controller.groupImage == null
+                            ? Icon(
+                                Icons.group,
+                                size: 40.r,
+                                color: AppColors.grey8B95A5Color,
+                              )
+                            : null,
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: InkWell(
+                          onTap: () async {
+                            final image = await controller.pickImage();
+                            if (image != null) {
+                              controller.groupImage = image;
+                            }
+                          },
+                          child: Container(
+                            padding: EdgeInsets.all(5.r),
+                            decoration: BoxDecoration(
+                              color: AppColors.orangeFF6B35Color,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppColors.backgroundDarkColor,
+                                width: 2,
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.camera_alt,
+                              size: 20.r,
+                              color: AppColors.whiteColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
                 const AuthFieldLabel("Group Name *"),
                 SizedBox(height: 8.h),
                 CustomTextField(
@@ -94,7 +143,7 @@ class CreateGroupScreen extends StatelessWidget {
                     lineHeight: 12,
                   ),
                 ),
-                SizedBox(height: 50.h,),
+                SizedBox(height: 50.h),
                 //Spacer(flex: 1,),
                 Container(
                   padding: EdgeInsets.all(17.r),
@@ -104,11 +153,11 @@ class CreateGroupScreen extends StatelessWidget {
                     border: Border.all(
                       color: Color(0xFF00D4FF).withValues(alpha: 0.3),
                       width: 1.2,
-                    )
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Image.asset(IconPath.infoIcon, width: 24.r, height: 24.r,),
+                      Image.asset(IconPath.infoIcon, width: 24.r, height: 24.r),
                       SizedBox(width: 8.w),
                       Expanded(
                         child: Text(
@@ -125,7 +174,7 @@ class CreateGroupScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                SizedBox(height: 40.h)
+                SizedBox(height: 40.h),
               ],
             ),
           ),

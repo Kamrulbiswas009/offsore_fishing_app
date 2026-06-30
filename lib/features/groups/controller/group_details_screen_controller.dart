@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/services/network_caller.dart';
@@ -39,16 +41,33 @@ class GroupDetailsScreenController extends GetxController {
   final RxBool isDetailLoading = false.obs;
   String? _groupId;
 
+  final Rxn<File> updateGroupImage = Rxn<File>();
+
+  Future<void> pickUpdateGroupImage() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
+      if (image != null) {
+        updateGroupImage.value = File(image.path);
+      }
+    } catch (e) {
+      AppLoggerHelper.error('[GroupDetails] pickUpdateGroupImage exception', e);
+    }
+  }
+
   String? get groupId => _groupId ?? groupDetail.value?.groupId;
 
   final NetworkCaller _networkCaller = NetworkCaller();
 
   // ── Legacy static fields (still used by existing widgets) ──────────
-  String groupName = 'Miami Offshore Crew';
-  String groupMembers = '24 members';
-  String groupCreatedBy = 'Created by Captain Mike';
-  String groupDescription = 'South Florida offshore fishing community';
-  String groupImage = ImagePath.miamiOffShoreCrewImage;
+  String groupName = '';
+  String groupMembers = '';
+  String groupCreatedBy = '';
+  String groupDescription = '';
+  String groupImage = '';
   final RxString inviteCode = ''.obs;
 
   final GroupReportFilterOption speciesFilter = const GroupReportFilterOption(
@@ -311,6 +330,12 @@ class GroupDetailsScreenController extends GetxController {
   // ── Fetch single group details ──────────────────────────────────────
   Future<void> fetchGroupDetails(String groupId, {bool showHUD = true}) async {
     _groupId = groupId;
+    groupDetail.value = null; // Clear previous details to avoid leaking old data
+    groupName = '';
+    groupMembers = '';
+    groupCreatedBy = '';
+    groupDescription = '';
+    groupImage = '';
     isDetailLoading.value = true;
     if (showHUD) {
       await EasyLoading.show(status: 'Loading group details...');
@@ -342,6 +367,13 @@ class GroupDetailsScreenController extends GetxController {
             Map<String, dynamic>.from(rawData),
           );
           groupDetail.value = detail;
+
+          // Update legacy variables with server data to ensure consistency across pages
+          groupName = detail.name;
+          groupMembers = '${detail.members.length} member${detail.members.length == 1 ? '' : 's'}';
+          groupCreatedBy = detail.ownerName.isNotEmpty ? 'Created by ${detail.ownerName}' : '';
+          groupDescription = detail.description;
+          groupImage = detail.photoUrl;
 
           // If the Members tab is already active and this user is the owner,
           // fetch pending invites now (fixes race where changeTab fired before
@@ -401,13 +433,15 @@ class GroupDetailsScreenController extends GetxController {
           ? 'Bearer $accessToken'
           : null;
 
-      final response = await _networkCaller.patchRequest(
+      final response = await _networkCaller.patchMultipartRequest(
         ApiConstants.updateGroupApi(id),
-        body: {
+        fields: {
           'name': nameText,
           'description': descriptionText,
-          'isPrivate': true,
+          'isPrivate': 'true',
         },
+        file: updateGroupImage.value,
+        fileFieldName: 'photo',
         token: token,
       );
 
@@ -540,23 +574,23 @@ class GroupDetailsScreenController extends GetxController {
 
     // If we already have fetched details, keep them; otherwise fall back
     // to argument values (legacy path or fallback).
-    groupName = args['groupName'] as String? ?? groupDetail.value?.name ?? 'Miami Offshore Crew';
+    groupName = args['groupName'] as String? ?? groupDetail.value?.name ?? '';
     groupMembers =
         args['groupMembers'] as String? ??
         (groupDetail.value != null
             ? '${groupDetail.value!.members.length} member${groupDetail.value!.members.length == 1 ? '' : 's'}'
-            : '24 members');
+            : '');
     groupCreatedBy =
         args['groupCreatedBy'] as String? ??
         (groupDetail.value?.ownerName != null && groupDetail.value!.ownerName.isNotEmpty
             ? 'Created by ${groupDetail.value!.ownerName}'
-            : 'Created by Captain Mike');
+            : '');
     groupDescription =
         args['groupDescription'] as String? ??
         groupDetail.value?.description ??
-        'South Florida offshore fishing community';
+        '';
     groupImage =
-        args['groupImage'] as String? ?? ImagePath.miamiOffShoreCrewImage;
+        args['groupImage'] as String? ?? groupDetail.value?.photoUrl ?? '';
 
     final tabName = args['initialTab'] as String?;
     selectedTab.value = GroupDetailsTab.values.firstWhere(
@@ -965,6 +999,7 @@ class GroupDetailsScreenController extends GetxController {
             groupId: current.groupId,
             name: current.name,
             description: current.description,
+            photoUrl: current.photoUrl,
             isPrivate: current.isPrivate,
             isActive: current.isActive,
             createdBy: current.createdBy,

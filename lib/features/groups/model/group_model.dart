@@ -38,6 +38,7 @@ class GroupListItem {
   final String groupId;
   final String name;
   final String description;
+  final String photo;
   final String createdBy;
   final String inviteCode;
   final bool isPrivate;
@@ -51,6 +52,7 @@ class GroupListItem {
     required this.groupId,
     required this.name,
     required this.description,
+    required this.photo,
     required this.createdBy,
     required this.inviteCode,
     required this.isPrivate,
@@ -69,6 +71,7 @@ class GroupListItem {
       groupId: (json['groupId'] as String?) ?? '',
       name: (json['name'] as String?) ?? '',
       description: (json['description'] as String?) ?? '',
+      photo: (json['photo'] as String?) ?? '',
       createdBy: (json['createdBy'] as String?) ?? '',
       inviteCode: (json['inviteCode'] as String?) ?? '',
       isPrivate: (json['isPrivate'] as bool?) ?? true,
@@ -163,6 +166,7 @@ class GroupDetailModel {
   final String groupId;
   final String name;
   final String description;
+  final String photoUrl;
   final String createdBy;
   final String inviteCode;
   final bool isPrivate;
@@ -175,6 +179,7 @@ class GroupDetailModel {
     required this.groupId,
     required this.name,
     required this.description,
+    required this.photoUrl,
     required this.createdBy,
     required this.inviteCode,
     required this.isPrivate,
@@ -190,6 +195,7 @@ class GroupDetailModel {
       groupId: (json['groupId'] as String?) ?? '',
       name: (json['name'] as String?) ?? '',
       description: (json['description'] as String?) ?? '',
+      photoUrl: (json['photoUrl'] as String?) ?? (json['photo'] as String?) ?? '',
       createdBy: (json['createdBy'] as String?) ?? '',
       inviteCode: (json['inviteCode'] as String?) ?? '',
       isPrivate: (json['isPrivate'] as bool?) ?? true,

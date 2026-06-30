@@ -120,8 +120,8 @@ class GroupMainScreenController extends GetxController {
         // Try to pick up a group name from the response for the success screen;
         // fall back gracefully if the field is absent.
         final data = body is Map ? body['data'] : null;
-        final groupName = (data is Map ? data['groupName'] : null)
-            as String?;
+        final group = (data is Map ? data['group'] : null) as Map?;
+        final groupName = (group != null ? group['name'] : null) as String?;
         if (groupName != null && groupName.isNotEmpty) {
           joinedGroupName.value = groupName;
         }
