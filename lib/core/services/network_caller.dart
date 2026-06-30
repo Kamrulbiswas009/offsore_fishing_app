@@ -137,6 +137,48 @@ class NetworkCaller {
     }
   }
 
+  // POST multipart/form-data method (for file uploads)
+  Future<ResponseData> postMultipartRequest(
+    String url, {
+    Map<String, String>? fields,
+    File? file,
+    String fileFieldName = 'file',
+    String? token,
+  }) async {
+    log('POST Multipart Request: $url');
+    try {
+      final request = MultipartRequest('POST', Uri.parse(url));
+
+      if (token != null && token.isNotEmpty) {
+        request.headers['Authorization'] = token;
+      }
+
+      if (fields != null) {
+        request.fields.addAll(fields);
+      }
+
+      if (file != null) {
+        final mimeType = _guessMimeType(file.path);
+        request.files.add(
+          await MultipartFile.fromPath(
+            fileFieldName,
+            file.path,
+            contentType: MediaType.parse(mimeType),
+          ),
+        );
+      }
+
+      final streamedResponse = await request.send().timeout(
+        Duration(seconds: timeoutDuration),
+      );
+      final response = await Response.fromStream(streamedResponse);
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+
   String _guessMimeType(String path) {
     final ext = path.split('.').last.toLowerCase();
     switch (ext) {

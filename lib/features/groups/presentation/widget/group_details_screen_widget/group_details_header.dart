@@ -19,16 +19,24 @@ class GroupDetailsHeader extends GetView<GroupDetailsScreenController> {
     return Obx(() {
       final detail = controller.groupDetail.value;
 
-      // Resolved display values: prefer API data, fall back to legacy fields.
-      final name = detail?.name ?? controller.groupName;
-      final memberCount = detail?.members.length ?? 0;
-      final membersLabel = detail != null
-          ? '$memberCount member${memberCount == 1 ? '' : 's'}'
-          : controller.groupMembers;
-      final ownerName = (detail != null && detail.ownerName.isNotEmpty)
+      if (detail == null) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CustomBackButton(ontap: Get.back),
+            SizedBox(height: 16.h),
+          ],
+        );
+      }
+
+      final name = detail.name;
+      final description = detail.description;
+      final photoUrl = detail.photoUrl;
+      final memberCount = detail.members.length;
+      final membersLabel = '$memberCount member${memberCount == 1 ? '' : 's'}';
+      final ownerName = detail.ownerName.isNotEmpty
           ? 'Created by ${detail.ownerName}'
-          : controller.groupCreatedBy;
-      final description = detail?.description ?? controller.groupDescription;
+          : '';
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,15 +55,40 @@ class GroupDetailsHeader extends GetView<GroupDetailsScreenController> {
                   borderRadius: BorderRadius.circular(24.r),
                 ),
                 alignment: Alignment.center,
-                child: Text(
-                  name.isNotEmpty ? name.characters.first.toUpperCase() : 'G',
-                  style: getTextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.tealColor117A88,
-                    lineHeight: 16,
-                  ),
-                ),
+                child: photoUrl.isNotEmpty
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(24.r),
+                        child: Image.network(
+                          photoUrl,
+                          width: 56.r,
+                          height: 56.r,
+                          fit: BoxFit.fill,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Text(
+                              name.isNotEmpty
+                                  ? name.characters.first.toUpperCase()
+                                  : 'G',
+                              style: getTextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.tealColor117A88,
+                                lineHeight: 16,
+                              ),
+                            );
+                          },
+                        ),
+                      )
+                    : Text(
+                        name.isNotEmpty
+                            ? name.characters.first.toUpperCase()
+                            : 'G',
+                        style: getTextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.tealColor117A88,
+                          lineHeight: 16,
+                        ),
+                      ),
               ),
               SizedBox(width: 12.w),
               Expanded(
@@ -73,7 +106,9 @@ class GroupDetailsHeader extends GetView<GroupDetailsScreenController> {
                     ),
                     SizedBox(height: 3.h),
                     Text(
-                      '$membersLabel · $ownerName',
+                      ownerName.isNotEmpty
+                          ? '$membersLabel · $ownerName'
+                          : membersLabel,
                       style: getTextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
@@ -94,9 +129,10 @@ class GroupDetailsHeader extends GetView<GroupDetailsScreenController> {
                   ],
                 ),
               ),
-              if (detail?.createdBy == StorageService.userId)
+              if (detail.createdBy == StorageService.userId)
                 GestureDetector(
                   onTap: () {
+                    controller.updateGroupImage.value = null; // Clear previous image
                     controller.groupNameTEController.text = name;
                     controller.groupDescriptionTEController.text = description;
                     showDialog(
@@ -144,6 +180,61 @@ class GroupDetailsHeader extends GetView<GroupDetailsScreenController> {
                                     ),
                                   ],
                                 ),
+                                SizedBox(height: 16.h),
+                                Obx(() {
+                                  final localFile = controller.updateGroupImage.value;
+                                  return Center(
+                                    child: Stack(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 40.r,
+                                          backgroundColor: AppColors.tealColor117A88.withValues(alpha: 0.25),
+                                          backgroundImage: localFile != null
+                                              ? FileImage(localFile)
+                                              : (photoUrl.isNotEmpty
+                                                  ? NetworkImage(photoUrl) as ImageProvider
+                                                  : null),
+                                          child: (localFile == null && photoUrl.isEmpty)
+                                              ? Text(
+                                                  name.isNotEmpty
+                                                      ? name.characters.first.toUpperCase()
+                                                      : 'G',
+                                                  style: getTextStyle(
+                                                    fontSize: 32,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: AppColors.tealColor117A88,
+                                                    lineHeight: 16,
+                                                  ),
+                                                )
+                                              : null,
+                                        ),
+                                        Positioned(
+                                          bottom: 0,
+                                          right: 0,
+                                          child: InkWell(
+                                            onTap: () => controller.pickUpdateGroupImage(),
+                                            child: Container(
+                                              padding: EdgeInsets.all(5.r),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.orangeFF6B35Color,
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: AppColors.backgroundDarkColor,
+                                                  width: 1.5,
+                                                ),
+                                              ),
+                                              child: Icon(
+                                                Icons.camera_alt,
+                                                size: 16.r,
+                                                color: AppColors.whiteColor,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
                                 SizedBox(height: 16.h),
                                 Text(
                                   "Group Name",
@@ -259,7 +350,7 @@ class GroupDetailsHeader extends GetView<GroupDetailsScreenController> {
                     width: 16.w,
                   ),
                 ),
-              if (detail?.createdBy != StorageService.userId)
+              if (detail.createdBy != StorageService.userId)
                 GestureDetector(
                   onTap: () {
                     showDialog(

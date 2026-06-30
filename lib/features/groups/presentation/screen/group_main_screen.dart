@@ -287,6 +287,7 @@ class GroupMainScreen extends StatelessWidget {
                         child: GroupCardWidget(
                           onTap: () => _navigateToGroupDetails(group),
                           groupName: group.name,
+                          groupPhoto: group.photo,
                           groupMember:
                               '${group.count.members} member${group.count.members == 1 ? '' : 's'}',
                           description: group.description,
