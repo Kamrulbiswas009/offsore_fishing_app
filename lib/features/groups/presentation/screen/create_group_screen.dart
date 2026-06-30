@@ -56,54 +56,56 @@ class CreateGroupScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 20.h),
                 Obx(
-                  () => Stack(
-                    children: [
-                      CircleAvatar(
-                        radius: 50.r,
-                        backgroundColor: AppColors.black2A2F3AColor,
-                        backgroundImage: controller.groupImage != null
-                            ? FileImage(controller.groupImage!)
-                            : null,
-                        child: controller.groupImage == null
-                            ? Icon(
-                                Icons.group,
-                                size: 40.r,
-                                color: AppColors.grey8B95A5Color,
-                              )
-                            : null,
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: InkWell(
-                          onTap: () async {
-                            final image = await controller.pickImage();
-                            if (image != null) {
-                              controller.groupImage = image;
-                            }
-                          },
-                          child: Container(
-                            padding: EdgeInsets.all(5.r),
-                            decoration: BoxDecoration(
-                              color: AppColors.orangeFF6B35Color,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: AppColors.backgroundDarkColor,
-                                width: 2,
+                  () => Center(
+                    child: Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 50.r,
+                          backgroundColor: AppColors.black2A2F3AColor,
+                          backgroundImage: controller.groupImage != null
+                              ? FileImage(controller.groupImage!)
+                              : null,
+                          child: controller.groupImage == null
+                              ? Icon(
+                                  Icons.group,
+                                  size: 40.r,
+                                  color: AppColors.grey8B95A5Color,
+                                )
+                              : null,
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: GestureDetector(
+                            onTap: () async {
+                              final image = await controller.pickImage();
+                              if (image != null) {
+                                controller.groupImage = image;
+                              }
+                            },
+                            child: Container(
+                              padding: EdgeInsets.all(5.r),
+                              decoration: BoxDecoration(
+                                color: AppColors.orangeFF6B35Color,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: AppColors.backgroundDarkColor,
+                                  width: 2,
+                                ),
                               ),
-                            ),
-                            child: Icon(
-                              Icons.camera_alt,
-                              size: 20.r,
-                              color: AppColors.whiteColor,
+                              child: Icon(
+                                Icons.camera_alt,
+                                size: 20.r,
+                                color: AppColors.whiteColor,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-
+                SizedBox(height: 16.h),
                 const AuthFieldLabel("Group Name *"),
                 SizedBox(height: 8.h),
                 CustomTextField(
