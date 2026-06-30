@@ -211,7 +211,7 @@ class GroupDetailsHeader extends GetView<GroupDetailsScreenController> {
                                         Positioned(
                                           bottom: 0,
                                           right: 0,
-                                          child: InkWell(
+                                          child: GestureDetector(
                                             onTap: () => controller.pickUpdateGroupImage(),
                                             child: Container(
                                               padding: EdgeInsets.all(5.r),
