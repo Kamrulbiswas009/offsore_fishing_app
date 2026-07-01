@@ -165,17 +165,21 @@ class SummaryController extends GetxController {
         if (cleanReportDepth != null) {
           final range = selectedDepth.value;
           if (range == "0-50 ft" &&
-              (cleanReportDepth < 0 || cleanReportDepth > 50))
+              (cleanReportDepth < 0 || cleanReportDepth > 50)) {
             return false;
+          }
           if (range == "50-100 ft" &&
-              (cleanReportDepth < 50 || cleanReportDepth > 100))
+              (cleanReportDepth < 50 || cleanReportDepth > 100)) {
             return false;
+          }
           if (range == "100-200 ft" &&
-              (cleanReportDepth < 100 || cleanReportDepth > 200))
+              (cleanReportDepth < 100 || cleanReportDepth > 200)) {
             return false;
+          }
           if (range == "200-500 ft" &&
-              (cleanReportDepth < 200 || cleanReportDepth > 500))
+              (cleanReportDepth < 200 || cleanReportDepth > 500)) {
             return false;
+          }
           if (range == "500+ ft" && cleanReportDepth < 500) return false;
         }
       }

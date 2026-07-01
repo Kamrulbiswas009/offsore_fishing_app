@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "411800532163",
+    "project_id": "on-the-bite",
+    "storage_bucket": "on-the-bite.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:411800532163:android:8cf39c52d226d5e4f1de76",
+        "android_client_info": {
+          "package_name": "com.example.paytonpieper"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcc38IofGiek6U63nC4ZI226gLjtnxNNQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
