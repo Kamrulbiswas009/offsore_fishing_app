@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -83,110 +85,63 @@ class OnboardingScreen3 extends StatelessWidget {
                 SizedBox(height: 18.h),
                 //OnboardingIndexTracker(controller: controller),
                 Spacer(flex: 3),
-                Row(
+                Column(
                   children: [
-                    // Expanded(
-                    //   child: GestureDetector(
-                    //     onTap: () {
-                    //       controller.goBackToStep(0);
-                    //     },
-                    //     child: Container(
-                    //       padding: EdgeInsets.all(8.r),
-                    //       decoration: BoxDecoration(
-                    //         color: AppColors.whiteColor.withValues(alpha: 0.20),
-                    //         borderRadius: BorderRadius.circular(50.r),
-                    //       ),
-                    //       child: Align(
-                    //         alignment: Alignment.center,
-                    //         child: Row(
-                    //           mainAxisSize: MainAxisSize.min,
-                    //           mainAxisAlignment: MainAxisAlignment.center,
-                    //          // crossAxisAlignment: CrossAxisAlignment.center,
-                    //           children: [
-                    //             Icon(
-                            
-                    //               Icons.keyboard_arrow_left,
-                    //               color: AppColors.whiteColor,
-                    //               size: 30,
-                    //             ),
-                    //             Text(
-                    //               "Back",
-                    //               style: getTextStyle(
-                    //                 color: AppColors.whiteColor,
-                    //                 fontSize: 18,
-                    //                 fontWeight: FontWeight.w500,
-                    //                 lineHeight: 12,
-                    //               ),
-                    //             ),
-                    //           ],
-                    //         ),
-                    //       ),
-                    //     ),
-                    //   ),
-                    // ),
-                    Expanded(
-                      child: CustomButton(
-                        bgColor: AppColors.whiteColor.withValues(alpha: 0.20),
-                        ontap: () {
-                          controller.goBackToStep(0);
-                        },
-                        title: 'Back',
-                        prefixIcon: Icon(
-                          Icons.keyboard_arrow_left,
-                          color: AppColors.whiteColor,
-                          size: 23.sp,
+                    GestureDetector(
+                      onTap: () {
+                        controller.goToStep(4, () => OnboardingScreen4());
+                      },
+                      child: Container(
+                        height: 36.h,
+                        decoration: BoxDecoration(
+                          color: Color(0XFFE25301),
+                          borderRadius: BorderRadius.circular(50.r),
                         ),
+                        child: Row(
+                          children: [
+                            SizedBox(width: 12.w),
+                            Spacer(flex: 5),
+                            Text(
+                              "Next",
+                              style: getTextStyle(
+                                color: AppColors.whiteColor,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                lineHeight: 10,
+                              ),
+                            ),
+                            Spacer(flex: 4),
+                            Transform.rotate(
+                              angle: 90 / 360 * pi,
+                              child: Padding(
+                                padding: const EdgeInsets.all(4.0),
+                                child: Image.asset(
+                                  IconPath.arrowUpRight,
+                                  width: 20.r,
+                                  height: 20.r,
+                                  //color: AppColors.whiteColor,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 12.w),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    CustomButton(
+                      bgColor: Colors.transparent,
+                      ontap: () {
+                        controller.goBackToStep(0);
+                      },
+                      title: 'Back',
+                      prefixIcon: Icon(
+                        Icons.keyboard_arrow_left,
+                        color: AppColors.whiteColor,
+                        size: 23.sp,
                       ),
                     ),
                     SizedBox(width: 12.w),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          controller.goToStep(4, () => OnboardingScreen4());
-                        },
-                        child: Container(
-                          height: 36.h,
-                          decoration: BoxDecoration(
-                            color: Color(0XFFE25301),
-                            borderRadius: BorderRadius.circular(50.r),
-                          ),
-                          child: Row(
-                            children: [
-                              SizedBox(width: 12.w),
-                              Text(
-                                "Next",
-                                style: getTextStyle(
-                                  color: AppColors.whiteColor,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  lineHeight: 10,
-                                ),
-                              ),
-                              Spacer(),
-                              Container(
-                                //padding: EdgeInsets.all(8.r),
-                                decoration: BoxDecoration(
-                                  color: AppColors.whiteColor.withValues(
-                                    alpha: 0.2,
-                                  ),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(4.0),
-                                  child: Image.asset(
-                                    IconPath.arrowUpRight,
-                                    width: 20.r,
-                                    height: 20.r,
-                                    //color: AppColors.whiteColor,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 12.w),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ],

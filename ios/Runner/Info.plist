@@ -28,6 +28,20 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>We request your location so we can enable location-based map features in a future update.</string>
+	
+	<key>CFBundleURLTypes</key>
+	<array>
+  		<dict>
+    		<key>CFBundleTypeRole</key>
+    		<string>Editor</string>
+    		<key>CFBundleURLSchemes</key>
+    		<array>
+      			<string>com.googleusercontent.apps.411800532163-drq4ursdk7rlc56ldmjmhtimsugkgn51</string>
+    		</array>
+  		</dict>
+	</array>
+	
+	
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

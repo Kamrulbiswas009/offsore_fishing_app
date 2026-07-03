@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/services/permissions/location_permission_service.dart';
+import 'package:paytonpieper/features/authentication/controllers/apple_login_controller.dart';
+import 'package:paytonpieper/features/authentication/controllers/google_login_controller.dart';
 import 'package:paytonpieper/features/groups/controller/see_my_invitation_controller.dart';
 import 'package:paytonpieper/features/main_screen/controller/filter_controller.dart';
 import 'package:paytonpieper/features/main_screen/controller/main_screen_controller.dart';
@@ -73,5 +75,7 @@ class ControllerBinder extends Bindings {
       fenix: true,
     );
     Get.lazyPut<SeeMyInvitationController>(()=>SeeMyInvitationController(),fenix: true);
+    Get.lazyPut<GoogleLoginController>(() => GoogleLoginController(), fenix: true);
+    Get.lazyPut<AppleLoginController>(() => AppleLoginController(), fenix: true);
   }
 }

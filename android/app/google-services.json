@@ -12,7 +12,20 @@
           "package_name": "com.example.paytonpieper"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "411800532163-2fang0crbcvsj0ler3dktmbuud8cvhuo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.paytonpieper",
+            "certificate_hash": "7828df7534f478f6c9321c385c480d729d355ac8"
+          }
+        },
+        {
+          "client_id": "411800532163-pkjm2lmid4lppd5g552m3cg4qv8olj4o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDcc38IofGiek6U63nC4ZI226gLjtnxNNQ"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "411800532163-pkjm2lmid4lppd5g552m3cg4qv8olj4o.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "411800532163-drq4ursdk7rlc56ldmjmhtimsugkgn51.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.paytonpieper"
+              }
+            }
+          ]
         }
       }
     }
