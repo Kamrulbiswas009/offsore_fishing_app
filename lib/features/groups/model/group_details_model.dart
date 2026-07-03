@@ -28,18 +28,34 @@ class GroupReportItem {
 }
 
 class GroupChatMessage {
+  final String messageId;
+  final String groupId;
+  final String senderId;
   final String sender;
   final String text;
   final String time;
   final bool isMine;
   final String? avatarPath;
+  final String type;
+  final bool isEdited;
+  final bool isDeleted;
+  final String? replyToId;
+  final DateTime? createdAt;
 
   const GroupChatMessage({
+    this.messageId = '',
+    this.groupId = '',
+    this.senderId = '',
     required this.sender,
     required this.text,
     required this.time,
     required this.isMine,
     this.avatarPath,
+    this.type = 'TEXT',
+    this.isEdited = false,
+    this.isDeleted = false,
+    this.replyToId,
+    this.createdAt,
   });
 }
 

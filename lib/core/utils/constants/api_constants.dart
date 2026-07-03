@@ -2,6 +2,8 @@ class ApiConstants {
   //static const String baseUrl =
   // "https://coefficiently-vermiform-tatiana.ngrok-free.dev/api/v1";
   static const String baseUrl = "http://172.252.13.68:8000/api/v1";
+  static String get socketBaseUrl =>
+      baseUrl.replaceFirst(RegExp(r'/api/v\d+/?$'), '');
 
   //Authentication Flow ->
   static const String createAccountApi = "$baseUrl/auth/signup";

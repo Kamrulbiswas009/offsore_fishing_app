@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/features/groups/controller/group_details_screen_controller.dart';
+import 'package:paytonpieper/features/groups/controller/message_service_controller.dart';
 import 'package:paytonpieper/features/groups/presentation/widget/group_details_screen_widget/group_details_chat_tab.dart';
 import 'package:paytonpieper/features/groups/presentation/widget/group_details_screen_widget/group_details_header.dart';
 import 'package:paytonpieper/features/groups/presentation/widget/group_details_screen_widget/group_details_members_tab.dart';
@@ -12,6 +13,9 @@ import 'package:paytonpieper/features/groups/presentation/widget/group_details_s
 class GroupDetailsScreen extends StatelessWidget {
   final GroupDetailsScreenController controller =
       Get.find<GroupDetailsScreenController>();
+
+  final MessageServiceController messageServiceController =
+      Get.find<MessageServiceController>();
 
   GroupDetailsScreen({super.key}) {
     // setGroupDetails reads from controller.groupDetail if already fetched,
@@ -35,7 +39,12 @@ class GroupDetailsScreen extends StatelessWidget {
               const GroupDetailsTabBar(),
               SizedBox(height: 14.h),
               Expanded(
-                child: Obx(() => _buildTabBody(controller.selectedTab.value)),
+                child: Obx(
+                  () => _buildTabBody(
+                    controller.selectedTab.value,
+                    controller.groupId,
+                  ),
+                ),
               ),
             ],
           ),
@@ -44,11 +53,12 @@ class GroupDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTabBody(GroupDetailsTab tab) {
+  Widget _buildTabBody(GroupDetailsTab tab, String? groupId) {
     switch (tab) {
       case GroupDetailsTab.reports:
         return const GroupDetailsReportsTab();
       case GroupDetailsTab.chat:
+        messageServiceController.openGroup(groupId);
         return const GroupDetailsChatTab();
       case GroupDetailsTab.members:
         return const GroupDetailsMembersTab();
