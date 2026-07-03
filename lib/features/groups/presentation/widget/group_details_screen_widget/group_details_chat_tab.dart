@@ -4,10 +4,11 @@ import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
-import 'package:paytonpieper/features/groups/controller/group_details_screen_controller.dart';
+import 'package:paytonpieper/core/utils/constants/image_path.dart';
+import 'package:paytonpieper/features/groups/controller/message_service_controller.dart';
 import 'package:paytonpieper/features/groups/model/group_details_model.dart';
 
-class GroupDetailsChatTab extends GetView<GroupDetailsScreenController> {
+class GroupDetailsChatTab extends GetView<MessageServiceController> {
   const GroupDetailsChatTab({super.key});
 
   @override
@@ -17,12 +18,13 @@ class GroupDetailsChatTab extends GetView<GroupDetailsScreenController> {
         Expanded(
           child: Obx(
             () => ListView(
+              controller: controller.scrollController,
               padding: EdgeInsets.zero,
               children: [
                 SizedBox(height: 18.h),
                 Center(
                   child: Text(
-                    'Wed, 2:31pm',
+                    controller.connectionStatus.value,
                     style: getTextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
@@ -35,32 +37,33 @@ class GroupDetailsChatTab extends GetView<GroupDetailsScreenController> {
                 ...controller.messages.map(
                   (message) => _MessageBubble(message: message),
                 ),
-                Padding(
-                  padding: EdgeInsets.only(left: 8.w, top: 4.h),
-                  child: Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(14.r),
-                        child: Image.asset(
-                          controller.groupImage,
-                          width: 28.r,
-                          height: 28.r,
-                          fit: BoxFit.cover,
+                if (controller.typingUsers.isNotEmpty)
+                  Padding(
+                    padding: EdgeInsets.only(left: 8.w, top: 4.h),
+                    child: Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(14.r),
+                          child: Image.asset(
+                            ImagePath.messageProfileImage,
+                            width: 28.r,
+                            height: 28.r,
+                            fit: BoxFit.cover,
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 8.w),
-                      Text(
-                        'Typing...',
-                        style: getTextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.grey8B95A5Color,
-                          lineHeight: 11,
+                        SizedBox(width: 8.w),
+                        Text(
+                          'Typing...',
+                          style: getTextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.grey8B95A5Color,
+                            lineHeight: 11,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
                 SizedBox(height: 20.h),
               ],
             ),
@@ -103,12 +106,26 @@ class GroupDetailsChatTab extends GetView<GroupDetailsScreenController> {
                   ),
                 ),
               ),
-              GestureDetector(
-                onTap: controller.sendMessage,
-                child: Image.asset(
-                  IconPath.messageSentIcon,
-                  width: 22.r,
-                  height: 22.r,
+              Obx(
+                () => GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: controller.isSending.value
+                      ? null
+                      : () => controller.sendMessage(),
+                  child: SizedBox(
+                    width: 22.r,
+                    height: 22.r,
+                    child: controller.isSending.value
+                        ? CircularProgressIndicator(
+                            strokeWidth: 2.r,
+                            color: AppColors.whiteColor,
+                          )
+                        : Image.asset(
+                            IconPath.messageSentIcon,
+                            width: 22.r,
+                            height: 22.r,
+                          ),
+                  ),
                 ),
               ),
             ],
@@ -177,11 +194,10 @@ class _MessageBubble extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(14.r),
-            child: Image.asset(
-              message.avatarPath ?? '',
+            child: _MessageAvatar(
+              imagePath: message.avatarPath,
               width: 28.r,
               height: 28.r,
-              fit: BoxFit.cover,
             ),
           ),
           SizedBox(width: 8.w),
@@ -235,6 +251,50 @@ class _MessageBubble extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _MessageAvatar extends StatelessWidget {
+  final String? imagePath;
+  final double width;
+  final double height;
+
+  const _MessageAvatar({
+    required this.imagePath,
+    required this.width,
+    required this.height,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final path = imagePath ?? ImagePath.messageProfileImage;
+    if (path.startsWith('http')) {
+      return Image.network(
+        path,
+        width: width,
+        height: height,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Image.asset(
+          ImagePath.messageProfileImage,
+          width: width,
+          height: height,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+
+    return Image.asset(
+      path.isEmpty ? ImagePath.messageProfileImage : path,
+      width: width,
+      height: height,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => Image.asset(
+        ImagePath.messageProfileImage,
+        width: width,
+        height: height,
+        fit: BoxFit.cover,
       ),
     );
   }
