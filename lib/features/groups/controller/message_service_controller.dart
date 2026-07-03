@@ -24,6 +24,7 @@ class MessageServiceController extends GetxController {
   final RxBool isSending = false.obs;
   final RxBool hasMoreMessages = true.obs;
   final RxString connectionStatus = 'Disconnected'.obs;
+  final Rxn<GroupChatMessage> replyingTo = Rxn<GroupChatMessage>();
 
   io.Socket? _socket;
   String? _activeGroupId;
@@ -49,6 +50,7 @@ class MessageServiceController extends GetxController {
     typingUsers.clear();
     onlineUserIds.clear();
     messages.clear();
+    replyingTo.value = null;
 
     _connectSocket();
   }
@@ -78,7 +80,9 @@ class MessageServiceController extends GetxController {
             final loadedMessages = rawMessages
                 .whereType<Map>()
                 .map(
-                  (item) => _messageFromJson(Map<String, dynamic>.from(item)),
+                  (item) => _withReplyFallback(
+                    _messageFromJson(Map<String, dynamic>.from(item)),
+                  ),
                 )
                 .toList();
 
@@ -107,6 +111,7 @@ class MessageServiceController extends GetxController {
   Future<void> sendMessage({String type = 'TEXT', String? replyToId}) async {
     final groupId = _activeGroupId;
     final text = messageController.text.trim();
+    final selectedReplyToId = replyToId ?? replyingTo.value?.messageId;
 
     if (text.isEmpty) return;
 
@@ -118,9 +123,13 @@ class MessageServiceController extends GetxController {
       return;
     }
 
+    isSending.value = true;
+    final selectedReply = replyingTo.value;
+
     final connected = await _ensureSocketConnected();
     final socket = _socket;
     if (!connected || socket == null) {
+      isSending.value = false;
       CommonMessage.showMessage(
         title: 'Message',
         message: 'Chat is not connected. Please try again.',
@@ -128,7 +137,6 @@ class MessageServiceController extends GetxController {
       return;
     }
 
-    isSending.value = true;
     _emitTyping(false);
 
     socket.emitWithAck(
@@ -137,16 +145,21 @@ class MessageServiceController extends GetxController {
         'groupId': groupId,
         'content': text,
         'type': type,
-        'replyToId': replyToId,
+        'replyToId': selectedReplyToId,
       },
       ack: (response) {
         try {
           final ackData = _asMap(response);
           if (ackData['success'] == true) {
             messageController.clear();
+            replyingTo.value = null;
             final data = ackData['data'];
             if (data is Map) {
-              _upsertMessage(_messageFromJson(Map<String, dynamic>.from(data)));
+              final sentMessage = _withReplyFallback(
+                _messageFromJson(Map<String, dynamic>.from(data)),
+                selectedReply,
+              );
+              _upsertMessage(sentMessage);
               _scrollToBottom();
             }
           } else {
@@ -166,6 +179,15 @@ class MessageServiceController extends GetxController {
         }
       },
     );
+  }
+
+  void startReply(GroupChatMessage message) {
+    if (message.messageId.isEmpty || message.isDeleted) return;
+    replyingTo.value = message;
+  }
+
+  void cancelReply() {
+    replyingTo.value = null;
   }
 
   Future<void> deleteMessage(String messageId) async {
@@ -282,7 +304,7 @@ class MessageServiceController extends GetxController {
 
     socket.on('newMessage', (data) {
       try {
-        final message = _messageFromJson(_asMap(data));
+        final message = _withReplyFallback(_messageFromJson(_asMap(data)));
         if (message.groupId != _activeGroupId) return;
         _upsertMessage(message);
         _scrollToBottom();
@@ -432,6 +454,8 @@ class MessageServiceController extends GetxController {
       isEdited: old.isEdited,
       isDeleted: true,
       replyToId: old.replyToId,
+      replySender: old.replySender,
+      replyText: old.replyText,
       createdAt: old.createdAt,
     );
   }
@@ -441,6 +465,12 @@ class MessageServiceController extends GetxController {
     final senderId = (json['senderId'] ?? sender?['userId'] ?? '').toString();
     final createdAt = DateTime.tryParse((json['createdAt'] ?? '').toString());
     final isDeleted = json['isDeleted'] == true;
+    final replyTo = _asNullableMap(json['replyTo']);
+    final replyToSender = _asNullableMap(replyTo?['sender']);
+    final replyToId =
+        (json['replyToId'] as String?) ??
+        (replyTo?['messageId'] as String?) ??
+        (replyTo?['id'] as String?);
 
     return GroupChatMessage(
       messageId: (json['messageId'] ?? '').toString(),
@@ -457,8 +487,57 @@ class MessageServiceController extends GetxController {
       type: (json['type'] ?? 'TEXT').toString(),
       isEdited: json['isEdited'] == true,
       isDeleted: isDeleted,
-      replyToId: json['replyToId'] as String?,
+      replyToId: replyToId,
+      replySender: replyTo == null
+          ? null
+          : (replyToSender?['name'] ?? 'Replied message').toString(),
+      replyText: replyTo == null
+          ? null
+          : (replyTo['isDeleted'] == true
+                ? 'Message deleted'
+                : (replyTo['content'] ?? '').toString()),
       createdAt: createdAt,
+    );
+  }
+
+  GroupChatMessage _withReplyFallback(
+    GroupChatMessage message, [
+    GroupChatMessage? selectedReply,
+  ]) {
+    if (message.replyToId == null ||
+        message.replyToId!.isEmpty ||
+        (message.replyText?.isNotEmpty ?? false)) {
+      return message;
+    }
+
+    GroupChatMessage? reply = selectedReply;
+    if (reply == null || reply.messageId != message.replyToId) {
+      for (final item in messages) {
+        if (item.messageId == message.replyToId) {
+          reply = item;
+          break;
+        }
+      }
+    }
+
+    if (reply == null) return message;
+
+    return GroupChatMessage(
+      messageId: message.messageId,
+      groupId: message.groupId,
+      senderId: message.senderId,
+      sender: message.sender,
+      text: message.text,
+      time: message.time,
+      isMine: message.isMine,
+      avatarPath: message.avatarPath,
+      type: message.type,
+      isEdited: message.isEdited,
+      isDeleted: message.isDeleted,
+      replyToId: message.replyToId,
+      replySender: reply.isMine ? 'You' : reply.sender,
+      replyText: reply.text,
+      createdAt: message.createdAt,
     );
   }
 

@@ -35,7 +35,10 @@ class GroupDetailsChatTab extends GetView<MessageServiceController> {
                 ),
                 SizedBox(height: 16.h),
                 ...controller.messages.map(
-                  (message) => _MessageBubble(message: message),
+                  (message) => _MessageBubble(
+                    message: message,
+                    onLongPress: () => controller.startReply(message),
+                  ),
                 ),
                 if (controller.typingUsers.isNotEmpty)
                   Padding(
@@ -69,6 +72,70 @@ class GroupDetailsChatTab extends GetView<MessageServiceController> {
             ),
           ),
         ),
+        Obx(() {
+          final reply = controller.replyingTo.value;
+          if (reply == null) return const SizedBox.shrink();
+
+          return Container(
+            width: double.infinity,
+            margin: EdgeInsets.only(top: 8.h, bottom: 2.h),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              color: AppColors.black0F1E33Color,
+              borderRadius: BorderRadius.circular(10.r),
+              border: Border(
+                left: BorderSide(color: const Color(0xFF117E97), width: 3.w),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        reply.isMine ? 'You' : reply.sender,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: getTextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.whiteColor,
+                          lineHeight: 10,
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        reply.text,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: getTextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.grey8B95A5Color,
+                          lineHeight: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: controller.cancelReply,
+                  child: Padding(
+                    padding: EdgeInsets.all(4.r),
+                    child: Icon(
+                      Icons.close,
+                      size: 16.r,
+                      color: AppColors.grey8B95A5Color,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
         Container(
           margin: EdgeInsets.only(top: 10.h, bottom: 4.h),
           padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
@@ -138,104 +205,34 @@ class GroupDetailsChatTab extends GetView<MessageServiceController> {
 
 class _MessageBubble extends StatelessWidget {
   final GroupChatMessage message;
+  final VoidCallback onLongPress;
 
-  const _MessageBubble({required this.message});
+  const _MessageBubble({required this.message, required this.onLongPress});
 
   @override
   Widget build(BuildContext context) {
     if (message.isMine) {
-      return Padding(
-        padding: EdgeInsets.only(left: 70.w, bottom: 12.h),
-        child: Align(
-          alignment: Alignment.centerRight,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: AppColors.black2A2F3AColor.withValues(alpha: 0.75),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(10.r),
-                    topRight: Radius.circular(10.r),
-                    bottomLeft: Radius.circular(10.r),
-                  ),
-                ),
-                child: Text(
-                  message.text,
-                  style: getTextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.whiteColor,
-                    lineHeight: 10,
-                  ),
-                ),
-              ),
-              SizedBox(height: 4.h),
-              Text(
-                message.time,
-                style: getTextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.grey8B95A5Color,
-                  lineHeight: 8,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Padding(
-      padding: EdgeInsets.only(bottom: 12.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(14.r),
-            child: _MessageAvatar(
-              imagePath: message.avatarPath,
-              width: 28.r,
-              height: 28.r,
-            ),
-          ),
-          SizedBox(width: 8.w),
-          Expanded(
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onLongPress: onLongPress,
+        child: Padding(
+          padding: EdgeInsets.only(left: 70.w, bottom: 12.h),
+          child: Align(
+            alignment: Alignment.centerRight,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  message.sender,
-                  style: getTextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.whiteColor,
-                    lineHeight: 10,
-                  ),
-                ),
-                SizedBox(height: 6.h),
                 Container(
-                  constraints: BoxConstraints(maxWidth: 210.w),
                   padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
                   decoration: BoxDecoration(
-                    color: Color(0xFF117E97),
+                    color: AppColors.black2A2F3AColor.withValues(alpha: 0.75),
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(10.r),
                       topRight: Radius.circular(10.r),
-                      bottomRight: Radius.circular(10.r),
-                      //bottomLeft: Radius.circular(14.r),
+                      bottomLeft: Radius.circular(10.r),
                     ),
                   ),
-                  child: Text(
-                    message.text,
-                    style: getTextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.whiteColor,
-                      lineHeight: 10,
-                    ),
-                  ),
+                  child: _MessageContent(message: message),
                 ),
                 SizedBox(height: 4.h),
                 Text(
@@ -250,8 +247,147 @@ class _MessageBubble extends StatelessWidget {
               ],
             ),
           ),
-        ],
+        ),
+      );
+    }
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onLongPress: onLongPress,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: 12.h),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14.r),
+              child: _MessageAvatar(
+                imagePath: message.avatarPath,
+                width: 28.r,
+                height: 28.r,
+              ),
+            ),
+            SizedBox(width: 8.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    message.sender,
+                    style: getTextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.whiteColor,
+                      lineHeight: 10,
+                    ),
+                  ),
+                  SizedBox(height: 6.h),
+                  Container(
+                    constraints: BoxConstraints(maxWidth: 210.w),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 6.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF117E97),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(10.r),
+                        topRight: Radius.circular(10.r),
+                        bottomRight: Radius.circular(10.r),
+                        //bottomLeft: Radius.circular(14.r),
+                      ),
+                    ),
+                    child: _MessageContent(message: message),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    message.time,
+                    style: getTextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.grey8B95A5Color,
+                      lineHeight: 8,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+}
+
+class _MessageContent extends StatelessWidget {
+  final GroupChatMessage message;
+
+  const _MessageContent({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasReply =
+        (message.replySender?.isNotEmpty ?? false) ||
+        (message.replyText?.isNotEmpty ?? false);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (hasReply) ...[
+          Container(
+            constraints: BoxConstraints(maxWidth: 190.w),
+            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 5.h),
+            decoration: BoxDecoration(
+              color: AppColors.black0F1E33Color.withValues(alpha: 0.45),
+              borderRadius: BorderRadius.circular(8.r),
+              border: Border(
+                left: BorderSide(color: AppColors.whiteColor, width: 2.w),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (message.replySender?.isNotEmpty ?? false)
+                  Text(
+                    message.replySender!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: getTextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.whiteColor,
+                      lineHeight: 9,
+                    ),
+                  ),
+                if (message.replyText?.isNotEmpty ?? false)
+                  Text(
+                    message.replyText!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: getTextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.grey8B95A5Color,
+                      lineHeight: 9,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          SizedBox(height: 6.h),
+        ],
+        Text(
+          message.text,
+          style: getTextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            color: AppColors.whiteColor,
+            lineHeight: 10,
+          ),
+        ),
+      ],
     );
   }
 }

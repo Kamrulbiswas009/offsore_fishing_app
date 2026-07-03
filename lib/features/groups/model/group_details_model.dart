@@ -40,6 +40,8 @@ class GroupChatMessage {
   final bool isEdited;
   final bool isDeleted;
   final String? replyToId;
+  final String? replySender;
+  final String? replyText;
   final DateTime? createdAt;
 
   const GroupChatMessage({
@@ -55,6 +57,8 @@ class GroupChatMessage {
     this.isEdited = false,
     this.isDeleted = false,
     this.replyToId,
+    this.replySender,
+    this.replyText,
     this.createdAt,
   });
 }
