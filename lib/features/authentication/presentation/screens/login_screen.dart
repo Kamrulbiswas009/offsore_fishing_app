@@ -6,12 +6,18 @@ import 'package:paytonpieper/core/common/widgets/custom_button.dart';
 import 'package:paytonpieper/core/common/widgets/custom_text_field.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
+import 'package:paytonpieper/features/authentication/controllers/apple_login_controller.dart';
+import 'package:paytonpieper/features/authentication/controllers/google_login_controller.dart';
 import 'package:paytonpieper/features/authentication/controllers/login_controller.dart';
 import 'package:paytonpieper/features/authentication/presentation/widgets/auth_common_widgets.dart';
 import 'package:paytonpieper/routes/app_routes.dart';
 
 class LoginScreen extends StatelessWidget {
   final LoginController controller = Get.find<LoginController>();
+  final GoogleLoginController googleLoginController =
+      Get.find<GoogleLoginController>();
+  final AppleLoginController appleLoginController =
+      Get.find<AppleLoginController>();
   LoginScreen({super.key});
 
   @override
@@ -115,7 +121,7 @@ class LoginScreen extends StatelessWidget {
                         child: AuthSocialButton(
                           title: 'Google',
                           iconPath: IconPath.googleIcon,
-                          onTap: controller.continueWithGoogle,
+                          onTap: googleLoginController.continueWithGoogle,
                         ),
                       ),
                       SizedBox(width: 12.w),
