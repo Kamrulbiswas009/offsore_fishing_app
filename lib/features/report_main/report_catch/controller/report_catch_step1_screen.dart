@@ -5,7 +5,7 @@ import 'package:paytonpieper/features/report_main/report_catch2/screen/report_ca
 class ReportCatchController extends GetxController {
   // Selection State
   var isGpsSelected = true.obs;
-  var detectedGrid = "GOM-A12".obs;
+  var detectedGrid = "GOM-2824".obs;
   var currentStep = 1.obs;
 
   void selectGps() => isGpsSelected.value = true;

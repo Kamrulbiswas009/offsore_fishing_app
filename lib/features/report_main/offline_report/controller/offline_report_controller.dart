@@ -1,10 +1,16 @@
+import 'dart:convert';
 import 'package:get/get.dart';
+import 'package:paytonpieper/core/services/sync_service.dart';
 import '../model/offline_report_model.dart';
 
 class OfflineReportsTabController extends GetxController {
+  final SyncService _syncService = Get.find<SyncService>();
+
   var selectedTab = "Reports".obs;
-  var isSyncing = true.obs;
-  var pendingSyncCount = 2.obs;
+  
+  // Bind properties to SyncService reactively
+  RxBool get isSyncing => _syncService.isSyncing;
+  RxInt get pendingSyncCount => _syncService.pendingCount;
 
   // Filter Observables
   var speciesFilter = "Tuna".obs;
@@ -51,10 +57,47 @@ class OfflineReportsTabController extends GetxController {
   void onInit() {
     super.onInit();
     loadReports();
+    // Re-load list when pending sync count updates
+    ever(_syncService.pendingCount, (_) => loadReports());
   }
 
-  void loadReports() {
+  Future<void> loadReports() async {
+    final pending = await _syncService.getPendingReports();
+    final List<OfflineReportModel> localReports = [];
+
+    for (final row in pending) {
+      try {
+        final payload = jsonDecode(row['payload']) as Map<String, dynamic>;
+        final speciesList = payload['species'] as List?;
+        final primarySpecies = (speciesList != null && speciesList.isNotEmpty)
+            ? speciesList[0]['speciesName']
+            : 'Unknown';
+
+        final method = payload['fishingMethod'] ?? 'Unknown';
+        final bait = payload['baitLureType'] ?? 'Unknown';
+        final depth = "${payload['waterDepthFt'] ?? 0}ft";
+        final zone = payload['zoneId'] ?? 'Unknown';
+        final note = payload['notes'];
+
+        localReports.add(OfflineReportModel(
+          id: row['frontendReportId'] ?? row['id'].toString(),
+          species: primarySpecies,
+          timeAgo: "Pending Sync (Offline)",
+          depth: depth,
+          zone: zone,
+          technique: method,
+          bait: bait,
+          note: note,
+          confirms: 0,
+          isVerified: false,
+        ));
+      } catch (e) {
+        // Ignore parsing errors
+      }
+    }
+
     reports.assignAll([
+      ...localReports,
       OfflineReportModel(
         id: "1",
         species: "Tuna",

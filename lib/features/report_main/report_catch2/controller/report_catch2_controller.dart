@@ -1,10 +1,12 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/features/report_main/offline_report/screen/offline_report_screen.dart';
 import 'package:paytonpieper/features/submit_report/screen/submit_report_screen.dart';
-import 'package:paytonpieper/core/utils/device/device_utility.dart';
+import 'package:paytonpieper/core/services/sync_service.dart';
+import 'package:paytonpieper/features/report_main/report_catch/controller/report_catch_step1_screen.dart';
 
 class ReportCatch2Controller extends GetxController {
   @override
@@ -156,39 +158,159 @@ class ReportCatch2Controller extends GetxController {
     }
   }
 
-  Future<void> submitReport() async {
-    // Package and simulate sending report payload to backend
-    final Map<String, dynamic> reportPayload;
-    if (isNothingCaught.value) {
-      reportPayload = {
-        "latitude": selectedLat.value,
-        "longitude": selectedLng.value,
-        "zero_catch": true,
-      };
+  // Helper to generate local UUID v4
+  String _generateUuid() {
+    final random = Random.secure();
+    final hexDigits = '0123456789abcdef';
+    final charCodes = List<int>.generate(36, (index) {
+      if (index == 8 || index == 13 || index == 18 || index == 23) {
+        return 45; // '-'
+      }
+      final r = random.nextInt(16);
+      if (index == 14) {
+        return 52; // '4'
+      }
+      if (index == 19) {
+        return hexDigits.codeUnitAt((r & 0x3) | 0x8);
+      }
+      return hexDigits.codeUnitAt(r);
+    });
+    return String.fromCharCodes(charCodes);
+  }
+
+  // Parse date and time into UTC ISO string
+  DateTime _getCatchDateTime(String dateStr, String timeStr) {
+    try {
+      final format = DateFormat('MM/dd/yyyy hh:mm a');
+      return format.parse('$dateStr $timeStr');
+    } catch (e) {
+      return DateTime.now();
+    }
+  }
+
+  // Mapping helpers
+  String _mapMethod(String method) {
+    final clean = method.trim().toUpperCase();
+    if (clean.contains("TROLLING")) return "TROLLING";
+    if (clean.contains("JIGGING")) return "JIGGING";
+    if (clean.contains("BOTTOM")) return "ANCHOR_SPOT_FISHING";
+    if (clean.contains("LIVE BAILT") || clean.contains("LIVE BAIT")) return "ANCHOR_SPOT_FISHING";
+    return "CASTING";
+  }
+
+  String _mapBait(String bait, String method) {
+    final cleanBait = bait.trim().toUpperCase();
+    final cleanMethod = _mapMethod(method);
+
+    if (cleanBait.contains("LIVE BAIT")) return "LIVE_BAIT";
+    if (cleanBait.contains("CUT BAIT")) return "CUT_BAIT";
+
+    // Handle method-specific defaults for artificial options
+    if (cleanMethod == "JIGGING") {
+      return "VERTICAL_JIG";
+    }
+    if (cleanMethod == "TROLLING") {
+      return "SKIRTED_LURE";
+    }
+    if (cleanMethod == "CASTING") {
+      return "POPPER";
+    }
+    return "OTHER";
+  }
+
+  String _mapWaterColumn(String pos) {
+    final clean = pos.trim().toUpperCase();
+    if (clean == "TOPWATER") return "TOP_COLUMN";
+    if (clean == "SUSPENDED") return "MID_COLUMN";
+    if (clean == "BOTTOM") return "BOTTOM_COLUMN";
+    return "MID_COLUMN";
+  }
+
+  Map<String, dynamic> buildReportPayload({required String visibility, String? groupId}) {
+    // Get and normalize zoneId from step 1 (backend strictly expects active DB zones like GOM-2824 or GOM-0042)
+    String zoneId = "GOM-2824";
+    try {
+      if (Get.isRegistered<ReportCatchController>()) {
+        final rawZone = Get.find<ReportCatchController>().detectedGrid.value;
+        if (rawZone.startsWith("GOM-")) {
+          final suffix = rawZone.substring(4);
+          if (RegExp(r'^\d+$').hasMatch(suffix) && suffix.length == 4) {
+            zoneId = rawZone;
+          } else {
+            // E.g., convert GOM-A12 or other invalid mock strings to valid GOM-2824
+            zoneId = "GOM-2824";
+          }
+        }
+      }
+    } catch (_) {}
+
+    final speciesList = <Map<String, dynamic>>[];
+    if (!isNothingCaught.value) {
+      for (var name in selectedSpeciesList) {
+        speciesList.add({
+          "speciesName": name,
+          "quantity": quantities[name] ?? 1,
+        });
+      }
     } else {
-      reportPayload = {
-        "latitude": selectedLat.value,
-        "longitude": selectedLng.value,
-        "zero_catch": false,
-        "isSamePattern": isSamePattern.value,
-        "selectedSpeciesList": selectedSpeciesList.toList(),
-        "quantities": quantities,
-        "waterPosition": waterPosition.value,
-        "waterDepth": depthController.text,
-        "strikeZone": strikeZoneController.text,
-        "selectedMethod": selectedMethod.value,
-        "selectedBait": selectedBait.value,
-        "selectedDate": selectedDate.value,
-        "selectedTime": selectedTime.value,
-        "notes": notesController.text,
-      };
+      speciesList.add({
+        "speciesName": "None",
+        "quantity": 0,
+      });
     }
 
-    debugPrint("SUBMITTING REPORT TO BACKEND PAYLOAD:");
-    debugPrint(reportPayload.toString());
+    final catchDateTime = _getCatchDateTime(selectedDate.value, selectedTime.value);
 
-    bool hasInternet = await AppDeviceUtility.hasInternetConnection();
-    if (!hasInternet) {
+    // Format ISO string to match curl example format (no milliseconds to avoid strict regex fails)
+    final catchTimestampStr = "${catchDateTime.toUtc().toIso8601String().split('.').first}Z";
+
+    final payload = {
+      "frontendReportId": _generateUuid(),
+      "zoneId": zoneId,
+      "reportLat": selectedLat.value ?? 28.4521,
+      "reportLng": selectedLng.value ?? -89.1234,
+      "species": speciesList,
+      "fishingMethod": _mapMethod(selectedMethod.value),
+      "baitLureType": _mapBait(selectedBait.value, selectedMethod.value),
+      "waterDepthFt": int.tryParse(depthController.text) ?? 120,
+      "waterColumn": _mapWaterColumn(waterPosition.value),
+      "notes": notesController.text,
+      "visibility": visibility,
+      "catchTimestamp": catchTimestampStr,
+      "capturedOfflineAt": null, // Will be set to current time when saved offline
+      "queueStatus": "PENDING",
+      "deviceLat": 0.0,
+      "deviceLng": 0.0,
+      "deviceFingerprint": "string",
+      "userAgent": "string",
+      "appVersion": "1.0.0"
+    };
+
+    if (groupId != null && groupId.isNotEmpty) {
+      payload["groupId"] = groupId;
+    }
+
+    return payload;
+  }
+
+  Future<void> submitReport() async {
+    final syncService = Get.find<SyncService>();
+    
+    // Double check with hasActualInternet in case they are offline
+    final online = syncService.isOnline.value;
+
+    if (!online) {
+      final payload = buildReportPayload(visibility: "PUBLIC");
+      await syncService.saveReportLocally(payload);
+      
+      Get.snackbar(
+        "Offline Mode",
+        "No connection. Your report is saved locally and will sync when you are online.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.orangeColor,
+        colorText: Colors.white,
+      );
+      
       Get.to(() => const OfflineReportsScreen());
     } else {
       Get.dialog(const VisibilitySharingDialog(), barrierDismissible: true);

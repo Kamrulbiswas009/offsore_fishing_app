@@ -5,6 +5,7 @@ import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/features/report_main/report_catch/controller/report_catch_step1_screen.dart';
 import 'package:paytonpieper/core/common/widgets/custom_button.dart';
 import '../../../../core/utils/constants/colors.dart';
+import 'package:paytonpieper/core/services/sync_service.dart';
 
 class ReportCatchStep1Screen extends GetView<ReportCatchController> {
   const ReportCatchStep1Screen({super.key});
@@ -100,42 +101,53 @@ class ReportCatchStep1Screen extends GetView<ReportCatchController> {
   }
 
   Widget _buildSyncStatusBar() {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: AppColors.blue0D2B43Color,
-        borderRadius: BorderRadius.circular(40.r),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.wifi, color: AppColors.green10B981Color, size: 16.sp),
-              SizedBox(width: 8.w),
+    final syncService = Get.find<SyncService>();
+    return Obx(() {
+      final online = syncService.isOnline.value;
+      final pendingCount = syncService.pendingCount.value;
+
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: AppColors.blue0D2B43Color,
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  online ? Icons.wifi : Icons.wifi_off,
+                  color: online ? AppColors.green10B981Color : AppColors.yellowFCEA74Color,
+                  size: 16.sp,
+                ),
+                SizedBox(width: 8.w),
+                Text(
+                  online ? "Online - Report will sync instantly" : "Offline - Queueing reports locally",
+                  style: getTextStyle(
+                    fontSize: 13,
+                    color: online ? AppColors.green10B981Color : AppColors.yellowFCEA74Color,
+                  ),
+                ),
+              ],
+            ),
+            if (pendingCount > 0) ...[
+              SizedBox(height: 6.h),
               Text(
-                "Online - Report will sync instantly",
+                "$pendingCount pending reports in queue",
                 style: getTextStyle(
-                  fontSize: 13,
-                  color: AppColors.green10B981Color,
-                  // fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],
-          ),
-          SizedBox(height: 6.h),
-          Text(
-            "Offline — report will sync when you’re back in service",
-            textAlign: TextAlign.center,
-            style: getTextStyle(
-              fontSize: 11,
-              color: AppColors.yellowFCEA74Color,
-            ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 
   // FIX 2: Fixed Horizontal Overflow by using Flexible and constrained widths

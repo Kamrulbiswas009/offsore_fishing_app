@@ -49,4 +49,7 @@ class ApiConstants {
   static String revokeInvitationUserApi(String inviteId) => "$baseUrl/invites/$inviteId/revoke";
   static String removeMemberFromGroupByOwnerApi(String groupId, String userId)=> 
   "$baseUrl/groups/$groupId/members/$userId";
+
+  //Reports Flow ->
+  static const String submitReportApi = "$baseUrl/reports";
 }

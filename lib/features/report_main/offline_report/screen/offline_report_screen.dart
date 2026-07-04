@@ -138,7 +138,7 @@ class OfflineReportsScreen extends GetView<OfflineReportsTabController> {
 
   Widget _buildAddReportButton() {
     return GestureDetector(
-      onTap: () => Get.toNamed('/addReport'),
+      onTap: () => Get.toNamed('/reportCatchScreen'),
       child: Container(
         height: 55.h,
         width: double.infinity,

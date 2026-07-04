@@ -6,6 +6,7 @@ import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/report_main/report_catch2/controller/report_catch2_controller.dart';
 import 'package:paytonpieper/core/common/widgets/custom_button.dart';
 import '../../../../core/utils/constants/colors.dart';
+import 'package:paytonpieper/core/services/sync_service.dart';
 
 class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
   /// Optional coordinates passed from manual map location picker.
@@ -100,28 +101,58 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
   }
 
   Widget _buildSyncStatus() {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: 12.h),
-      decoration: BoxDecoration(
-        color: AppColors.blue1B2134Color,
-        borderRadius: BorderRadius.circular(30.r),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.wifi, color: AppColors.green10B981Color, size: 16.sp),
-          SizedBox(width: 8.w),
-          Text(
-            "Online - Report will sync instantly",
-            style: getTextStyle(
-              fontSize: 13,
-              color: AppColors.green10B981Color,
+    final syncService = Get.find<SyncService>();
+    return Obx(() {
+      final online = syncService.isOnline.value;
+      final pendingCount = syncService.pendingCount.value;
+
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(vertical: 12.h),
+        decoration: BoxDecoration(
+          color: AppColors.blue1B2134Color,
+          borderRadius: BorderRadius.circular(30.r),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              online ? Icons.wifi : Icons.wifi_off,
+              color: online ? AppColors.green10B981Color : AppColors.yellowFCEA74Color,
+              size: 16.sp,
             ),
-          ),
-        ],
-      ),
-    );
+            SizedBox(width: 8.w),
+            Text(
+              online
+                  ? "Online - Report will sync instantly"
+                  : "Offline - Queueing locally",
+              style: getTextStyle(
+                fontSize: 13,
+                color: online ? AppColors.green10B981Color : AppColors.yellowFCEA74Color,
+              ),
+            ),
+            if (pendingCount > 0) ...[
+              SizedBox(width: 8.w),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                decoration: BoxDecoration(
+                  color: AppColors.orangeColor,
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Text(
+                  "$pendingCount",
+                  style: getTextStyle(
+                    fontSize: 11,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    });
   }
 
   /// Displays the manually selected lat/lng coordinates as a styled info chip.
