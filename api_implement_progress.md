@@ -76,16 +76,19 @@ Anglers offshore often lack internet access. To prevent data loss, the applicati
 
 ---
 
-## 4. Region Reports Feed integration
+## 4. Region & Zone Reports Feed Integration
 * **API Endpoint**: `GET /api/v1/zones/reports?regionCode=GOM&scope=region`
 * **Controller**: `SummaryController` (`lib/features/report_main/summary/controller/summary_details_controller.dart`)
 * **Widget**: `ReportTabWidget` (`lib/features/report_main/summary/widgets/report_tab_widget.dart`)
 * **Functionality**:
-  - Dynamically fetches catch reports in the specified region on initialization.
+  - Dynamically fetches catch reports in the specified region on screen initialization.
+  - Fixed a core issue in `NetworkCaller.getRequest` where passing a null token sent `'Authorization': 'null'`, resulting in request authentication failures on the server.
+  - Configured a developer Bearer token fallback to ensure successful API requests during local/test setups when not logged in.
+  - Client-side filters the reports list based on the active zone (`selectedZone.value?.name`) if we are viewing a specific zone page, restricting reports to only the selected zone.
   - Automatically maps response fields (including nested lists like `species` and complex objects like `user` and `biteConfirmations`) into native `FishingReport` model structures.
   - Formats `catchTimestamp` into an interactive relative "time ago" string.
   - Reverse-maps backend enums for fishing techniques and bait types to user-friendly titles.
-  - Features an reactive `isLoading` spinner in `ReportTabWidget` during network requests.
+  - Moves the pattern indicator widget inside the reactive `Obx()` list builder to dynamically display the number of reports matching the current zone (e.g., `"${list.length} Reports • Same Pattern"`).
 
 ---
 
@@ -99,5 +102,38 @@ Anglers offshore often lack internet access. To prevent data loss, the applicati
   - Calculates dynamic coordinates, species frequency (resolving `topSpecies`), average water depth (`avgDepth`), and report counts for each zone.
   - Dynamically sets the `ActivityLevel` (high, medium, low) per zone based on the count of active reports.
   - Populates Mapbox map grid cells reactively using a GetX worker listener (`ever`) in `ZoneMapScreen` to instantly trigger map redraws upon data fetch success.
+
+---
+
+## 6. Zone Summary Metrics & Graphics Integration
+* **API Endpoint**: `GET /api/v1/zones/summary?regionCode=GOM&page=1&limit=20`
+* **Controller**: `SummaryController` (`lib/features/report_main/summary/controller/summary_details_controller.dart`)
+* **Widget**: `SummaryTabWidget` (`lib/features/report_main/summary/widgets/summary_tab_widget.dart`)
+* **Functionality**:
+  - Fetches region summary on startup (and zone summary dynamically by appending `&zoneId=...` if `selectedZone` is set).
+  - **Activity Overview**: Dynamically binds target stats like "LAST 24H", "SUCCESS" (Hit Rate), "HOT ZONE", and "GROUPS" (Networks) to the returned `activityOverview` fields.
+  - **Pattern Intelligence**: Adds a text description paragraph displaying the AI `summaryText`, and parses common depth, bait, method, and strike column enums dynamically.
+  - **Activity Timing**: Linked peak window, most effective technique, and populated timing `BarChart` with dynamic 24-hour histogram rod values.
+  - **Top Species**: Generated ranked species widgets dynamically from the API results. Wrapped all ranked items in `Expanded` and bounded their texts using `maxLines: 1` and `TextOverflow.ellipsis` to make the layout fully responsive and prevent RenderFlex overflow.
+  - **Species Distribution**: Built `PieChartSectionData` list and legends dynamically matching the color palette.
+
+---
+
+## 7. Real-Time Marine Weather & Forecast Integration
+* **API Endpoints**: 
+  - Weather: `GET https://api.stormglass.io/v2/weather/point`
+* **Controller**: `SummaryController` (`lib/features/report_main/summary/controller/summary_details_controller.dart`)
+* **Widget**: `WeatherTabWidget` (`lib/features/report_main/summary/widgets/weather_tab_widget.dart`)
+* **Functionality**:
+  - Dynamically fetches local marine weather using StormGlass API for the active zone's coordinate parameters (`latitude`/`longitude`), falling back to Gulf of Mexico (GOM) regional center coordinates (`28.375`, `-89.125`) if no zone is selected.
+  - Queries wind speed, wind direction, wave height, air temperature, water temperature, and cloud cover.
+  - **"Now" Tab Metrics**:
+    - Displays dynamic wind speed (converted from m/s to mph) and cardinal wind directions (e.g. `NE`, `SW`).
+    - Displays dynamic wave height (converted from meters to feet), water temperatures, and cloud coverage rates.
+    - Updates swell directions, air temperatures, and cloudiness markers in the Marine Details section reactively.
+    - Implemented a loading indicator spinner inside `Obx` that runs while the StormGlass endpoint resolves.
+  - **"Forecast" Tab Metrics**:
+    - Dynamically generates the forecast select day tabs (e.g. `"Today"`, `"Mon 6"`, `"Tue 7"`) based on the sequential list of dates returned by the StormGlass forecast response payload.
+    - Dynamically resolves hourly weather cards for `"Morning"` (9:00 AM), `"Afternoon"` (3:00 PM), and `"Evening"` (8:00 PM) for any selected forecast date, pulling actual wind speed, wave height, cloudiness percentage, and swell direction parameters from the API.
 
 

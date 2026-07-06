@@ -93,7 +93,14 @@ class SummaryScreen extends GetView<SummaryController> {
                 right: index == tabs.length - 1 ? 0 : 12.w,
               ),
               child: GestureDetector(
-                onTap: () => controller.selectedTab.value = tab,
+                onTap: () {
+                  controller.selectedTab.value = tab;
+                  if (tab == 'Weather') {
+                    debugPrint("--- STORMGLASS WEATHER RESPONSE ---");
+                    debugPrint("${controller.weatherData.value}");
+                    debugPrint("-----------------------------------");
+                  }
+                },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
                   curve: Curves.easeOut,

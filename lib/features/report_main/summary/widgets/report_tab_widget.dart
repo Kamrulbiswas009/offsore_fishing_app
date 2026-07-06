@@ -44,10 +44,6 @@ class ReportTabWidget extends GetView<SummaryController> {
         _buildReportFilters(),
         SizedBox(height: 20.h),
 
-        // 2. Pattern Indicator
-        _buildPatternIndicator("3 Reports . Same Pattern"),
-        SizedBox(height: 20.h),
-
         // 3. Reports List
         Obx(() {
           if (controller.isLoading.value) {
@@ -75,14 +71,21 @@ class ReportTabWidget extends GetView<SummaryController> {
               ),
             );
           }
-          return ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: list.length,
-            separatorBuilder: (context, index) => SizedBox(height: 15.h),
-            itemBuilder: (context, index) {
-              return _buildReportCard(list[index], index);
-            },
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildPatternIndicator("${list.length} Reports • Same Pattern"),
+              SizedBox(height: 20.h),
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: list.length,
+                separatorBuilder: (context, index) => SizedBox(height: 15.h),
+                itemBuilder: (context, index) {
+                  return _buildReportCard(list[index], index);
+                },
+              ),
+            ],
           );
         }),
         SizedBox(height: 40.h),
