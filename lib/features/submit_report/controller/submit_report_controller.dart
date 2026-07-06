@@ -94,19 +94,35 @@ class VisibilitySharingController extends GetxController {
                 },
               );
             } else {
-              // Fail -> Save offline as fallback
-              AppLoggerHelper.error(
-                "Online report submission failed. StatusCode: ${response.statusCode}, Response: ${response.responseData}, Error: ${response.errorMessage}",
-              );
-              await syncService.saveReportLocally(payload);
-              Get.snackbar(
-                "Report Saved Offline",
-                "Submission failed (${response.statusCode}). Saved to local queue to sync later.",
-                snackPosition: SnackPosition.BOTTOM,
-                backgroundColor: AppColors.orangeColor,
-                colorText: Colors.white,
-              );
-              Get.offAll(() => const OfflineReportsScreen());
+              // Check if it is a client-side validation error (e.g. 400 or 422)
+              if (response.statusCode == 400 || response.statusCode == 422) {
+                AppLoggerHelper.error(
+                  "Online report validation failed. StatusCode: ${response.statusCode}, Response: ${response.responseData}, Error: ${response.errorMessage}",
+                );
+                Get.snackbar(
+                  "Submission Failed",
+                  response.errorMessage.isNotEmpty
+                      ? response.errorMessage
+                      : "Invalid input data. Please check your submission.",
+                  snackPosition: SnackPosition.BOTTOM,
+                  backgroundColor: const Color(0xFFDA605C),
+                  colorText: Colors.white,
+                );
+              } else {
+                // Fail -> Save offline as fallback for network/server issues
+                AppLoggerHelper.error(
+                  "Online report submission failed. StatusCode: ${response.statusCode}, Response: ${response.responseData}, Error: ${response.errorMessage}",
+                );
+                await syncService.saveReportLocally(payload);
+                Get.snackbar(
+                  "Report Saved Offline",
+                  "Submission failed (${response.statusCode}). Saved to local queue to sync later.",
+                  snackPosition: SnackPosition.BOTTOM,
+                  backgroundColor: AppColors.orangeColor,
+                  colorText: Colors.white,
+                );
+                Get.offAll(() => const OfflineReportsScreen());
+              }
             }
           } catch (e) {
             // Exception -> Save offline as fallback
