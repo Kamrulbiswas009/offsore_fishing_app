@@ -405,6 +405,16 @@ class SummaryController extends GetxController {
       colorText: Colors.white,
     );
   }
+
+  void rejectBite(int index) {
+    Get.snackbar(
+      "Rejected",
+      "You rejected this bite!",
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: const Color(0xFFEF4444),
+      colorText: Colors.white,
+    );
+  }
   // Main Tab (Summary, Reports, Weather)
 
   // Weather Sub-Tabs

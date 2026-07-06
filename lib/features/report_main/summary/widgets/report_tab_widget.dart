@@ -319,35 +319,68 @@ class ReportTabWidget extends GetView<SummaryController> {
 
           SizedBox(height: 12.h),
 
-          // Clickable Confirm Button
-          InkWell(
-            onTap: () => controller.confirmBite(index),
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFF8C42), Color(0xFFE25301)],
-                ),
-                borderRadius: BorderRadius.circular(10.r),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Image.asset(IconPath.hookIcon, width: 16.w, height: 16.h),
-
-                  SizedBox(width: 4.w),
-                  Text(
-                    "Confirm Bite",
-                    style: getTextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      lineHeight: 20,
+          // Action Buttons
+          Wrap(
+            spacing: 12.w,
+            runSpacing: 8.h,
+            children: [
+              // Clickable Confirm Button
+              InkWell(
+                onTap: () => controller.confirmBite(index),
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF8C42), Color(0xFFE25301)],
                     ),
+                    borderRadius: BorderRadius.circular(10.r),
                   ),
-                ],
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Image.asset(IconPath.hookIcon, width: 16.w, height: 16.h),
+                      SizedBox(width: 4.w),
+                      Text(
+                        "Confirm Bite",
+                        style: getTextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          lineHeight: 20,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+              // Clickable Reject Button
+              InkWell(
+                onTap: () => controller.rejectBite(index),
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEF4444),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Image.asset(IconPath.hookIcon, width: 16.w, height: 16.h),
+                      SizedBox(width: 4.w),
+                      Text(
+                        "Reject Bite",
+                        style: getTextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          lineHeight: 20,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
