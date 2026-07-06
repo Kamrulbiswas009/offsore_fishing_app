@@ -5,9 +5,18 @@ import 'package:paytonpieper/routes/app_routes.dart';
 
 class ReportSuccessController extends GetxController {
   // Dynamic data passed from the previous screen
-  final String species = "Wahoo";
-  final String zone = "Zone A-7";
-  final String sharingInfo = "1 Group";
+  late String species;
+  late String zone;
+  late String sharingInfo;
+
+  @override
+  void onInit() {
+    super.onInit();
+    final args = Get.arguments as Map<String, dynamic>?;
+    species = args?['species'] ?? "Wahoo";
+    zone = args?['zone'] ?? "Zone A-7";
+    sharingInfo = args?['sharingInfo'] ?? "1 Group";
+  }
 
   void viewReport() {
     // Navigate to the beautiful specific report details screen

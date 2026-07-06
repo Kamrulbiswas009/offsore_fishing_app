@@ -50,6 +50,16 @@ class ReportTabWidget extends GetView<SummaryController> {
 
         // 3. Reports List
         Obx(() {
+          if (controller.isLoading.value) {
+            return Padding(
+              padding: EdgeInsets.symmetric(vertical: 40.h),
+              child: const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.orangeColor),
+                ),
+              ),
+            );
+          }
           final list = controller.filteredReports;
           if (list.isEmpty) {
             return Padding(

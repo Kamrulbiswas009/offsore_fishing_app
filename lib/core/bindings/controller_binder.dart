@@ -19,10 +19,12 @@ import 'package:paytonpieper/features/report_main/report_catch/controller/report
 import 'package:paytonpieper/features/report_main/report_catch2/controller/report_catch2_controller.dart';
 import 'package:paytonpieper/features/report_main/summary/controller/summary_details_controller.dart';
 import 'package:paytonpieper/features/splash_screen/controller/splash_screen_controller.dart';
+import 'package:paytonpieper/core/services/sync_service.dart';
 
 class ControllerBinder extends Bindings {
   @override
   void dependencies() {
+    Get.put(SyncService(), permanent: true);
     Get.lazyPut<LocationPermissionService>(
       () => LocationPermissionService(),
       fenix: true,

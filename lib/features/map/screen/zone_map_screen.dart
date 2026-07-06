@@ -60,6 +60,11 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
       begin: const Offset(0, 1),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _panelAnim, curve: Curves.easeOutCubic));
+
+    // Reactively refresh grid when zones are loaded/updated from API
+    ever(controller.activeZones, (_) {
+      _updateGridForViewport();
+    });
   }
 
   @override
