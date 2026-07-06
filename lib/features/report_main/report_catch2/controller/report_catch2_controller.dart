@@ -226,12 +226,22 @@ class ReportCatch2Controller extends GetxController {
     return "MID_COLUMN";
   }
 
+  String _mapSpeciesToLeaf(String name) {
+    final clean = name.trim().toUpperCase();
+    if (clean == "TUNA") return "Yellowfin Tuna";
+    if (clean == "SNAPPER") return "Red Snapper";
+    if (clean == "MARLIN") return "Blue Marlin";
+    if (clean == "GROUPER") return "Red Grouper";
+    if (clean == "MAHI MAHI") return "Mahi";
+    return name;
+  }
+
   Map<String, dynamic> buildReportPayload({required String visibility, String? groupId}) {
     final speciesList = <Map<String, dynamic>>[];
     if (!isNothingCaught.value) {
       for (var name in selectedSpeciesList) {
         speciesList.add({
-          "speciesName": name,
+          "speciesName": _mapSpeciesToLeaf(name),
           "quantity": quantities[name] ?? 1,
         });
       }

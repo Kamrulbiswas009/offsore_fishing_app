@@ -19,6 +19,8 @@ class WeatherTabWidget extends GetView<SummaryController> {
       children: [
         _buildFishingConditionsCard(),
         SizedBox(height: 16.h),
+        _buildSelectDay(),
+        SizedBox(height: 16.h),
         _buildNowForecastToggle(),
         SizedBox(height: 16.h),
         Obx(() {
@@ -34,34 +36,46 @@ class WeatherTabWidget extends GetView<SummaryController> {
 
   // ── "Now" full content ──────────────────────────────────────────────────────
   Widget _buildNowContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLastUpdated(),
-        SizedBox(height: 16.h),
-        _buildActivityOverview(),
-        SizedBox(height: 16.h),
-        Container(
-          padding: EdgeInsets.all(16.w),
-          decoration: BoxDecoration(
-            color: AppColors.blue0D2B43Color.withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(16.r),
-            border: Border.all(
-              color: AppColors.blue153A56Color.withValues(alpha: 0.5),
+    return Obx(() {
+      if (controller.isWeatherLoading.value) {
+        return Padding(
+          padding: EdgeInsets.symmetric(vertical: 40.h),
+          child: const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.orangeColor),
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [_buildMarineDetails()],
+        );
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildLastUpdated(),
+          SizedBox(height: 16.h),
+          _buildActivityOverview(),
+          SizedBox(height: 16.h),
+          Container(
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              color: AppColors.blue0D2B43Color.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(16.r),
+              border: Border.all(
+                color: AppColors.blue153A56Color.withValues(alpha: 0.5),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [_buildMarineDetails()],
+            ),
           ),
-        ),
-        SizedBox(height: 20.h),
-        _buildSunMoon(),
-        SizedBox(height: 20.h),
-        _buildTideCurrents(),
-        SizedBox(height: 30.h),
-      ],
-    );
+          SizedBox(height: 20.h),
+          _buildSunMoon(),
+          SizedBox(height: 20.h),
+          _buildTideCurrents(),
+          SizedBox(height: 30.h),
+        ],
+      );
+    });
   }
 
   // ── "Forecast" full content ─────────────────────────────────────────────────
@@ -69,8 +83,6 @@ class WeatherTabWidget extends GetView<SummaryController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSelectDay(),
-        SizedBox(height: 26.h),
         _buildTimePeriodToggle(),
         SizedBox(height: 16.h),
         _buildForecastCard(),
@@ -230,8 +242,8 @@ class WeatherTabWidget extends GetView<SummaryController> {
           children: [
             _overviewItem(
               Icons.air,
-              '12 mph',
-              'NE',
+              controller.currentWindSpeed,
+              controller.currentWindDirection,
               label: 'Wind',
               iconColor: AppColors.orangeColor,
               borderColor: AppColors.blue00F0FFColor,
@@ -239,7 +251,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
             ),
             _overviewItem(
               Icons.waves,
-              '2-3 ft',
+              controller.currentWaveHeight,
               'Moderate',
               label: 'Waves',
               iconColor: AppColors.blue00F0FFColor,
@@ -248,7 +260,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
             ),
             _overviewItem(
               Icons.thermostat,
-              '78°F',
+              controller.currentWaterTemp,
               'Stable',
               label: 'Water Temp',
               iconColor: AppColors.orangeColor,
@@ -257,7 +269,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
             ),
             _overviewItem(
               Icons.water_drop_outlined,
-              '72%',
+              controller.currentCloudCover,
               'Normal',
               label: 'Storm Risk',
               iconColor: AppColors.blue00F0FFColor,
@@ -409,7 +421,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
         icon: Icons.explore,
         iconColor: AppColors.blue00F0FFColor,
         label: 'Swell Direction',
-        value: 'East',
+        value: controller.currentWindDirection,
       ),
       _MarineItem(
         icon: Icons.waves,
@@ -421,13 +433,13 @@ class WeatherTabWidget extends GetView<SummaryController> {
         icon: Icons.thermostat,
         iconColor: AppColors.blue00F0FFColor,
         label: 'Air Temperature',
-        value: '82°F',
+        value: controller.currentAirTemp,
       ),
       _MarineItem(
         icon: Icons.cloud_outlined,
         iconColor: const Color(0xFFE25301),
         label: 'Cloud Cover',
-        value: '25%',
+        value: controller.currentCloudCover,
       ),
     ];
 
@@ -857,14 +869,16 @@ class WeatherTabWidget extends GetView<SummaryController> {
         ),
         SizedBox(height: 15.h),
         Center(
-          child: Text(
-            'TODAY - SAT 18',
-            style: getTextStyle(
-              fontSize: 11,
-              color: AppColors.grey8B95A5Color,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+          child: Obx(() {
+            return Text(
+              controller.selectedDay.value.toUpperCase(),
+              style: getTextStyle(
+                fontSize: 11,
+                color: AppColors.grey8B95A5Color,
+                fontWeight: FontWeight.w500,
+              ),
+            );
+          }),
         ),
       ],
     );
@@ -1138,6 +1152,53 @@ class WeatherTabWidget extends GetView<SummaryController> {
   }
 
   Map<String, dynamic> _forecastDataFor(String period) {
+    final entry = controller.getForecastEntry(controller.selectedDay.value, period);
+    if (entry == null) {
+      return _mockForecastDataFor(period);
+    }
+    
+    final windVal = controller.extractSgValue(entry['windSpeed']);
+    final seasVal = controller.extractSgValue(entry['waveHeight']);
+    final skyVal = controller.extractSgValue(entry['cloudCover']);
+    final swellDirVal = controller.extractSgValue(entry['windDirection']);
+    
+    final wind = windVal != null ? (windVal * 2.237).toStringAsFixed(1) : "10";
+    final seas = seasVal != null ? (seasVal * 3.281).toStringAsFixed(1) : "2.0";
+    final sky = skyVal != null ? skyVal.toInt().toString() : "20";
+    final swellDirStr = swellDirVal != null ? controller.degreesToCardinal(swellDirVal) : "East";
+    
+    IconData icon = Icons.wb_sunny_outlined;
+    Color iconColor = const Color(0xFFFF5A36);
+    String badge = "Good";
+    String time = "6:00 AM - 12:00 PM";
+    
+    if (period == "Afternoon") {
+      icon = Icons.wb_sunny;
+      iconColor = const Color(0xFFFFAA00);
+      badge = "Fair";
+      time = "12:00 PM - 6:00 PM";
+    } else if (period == "Evening") {
+      icon = Icons.nightlight_round;
+      iconColor = AppColors.blue00F0FFColor;
+      badge = "Good";
+      time = "6:00 PM - 10:00 PM";
+    }
+    
+    return {
+      'icon': icon,
+      'iconColor': iconColor,
+      'time': time,
+      'badge': badge,
+      'wind': wind,
+      'seas': seas,
+      'sky': sky,
+      'swellDirection': swellDirStr,
+      'swellPeriod': '8 sec',
+      'description': 'Real-time forecast powered by StormGlass API.',
+    };
+  }
+
+  Map<String, dynamic> _mockForecastDataFor(String period) {
     switch (period) {
       case 'Afternoon':
         return {
@@ -1170,7 +1231,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
       default: // Morning
         return {
           'icon': Icons.wb_sunny_outlined,
-          'iconColor': const Color(0xFFFF5A36), // Sun orange color
+          'iconColor': const Color(0xFFFF5A36),
           'time': '6:00 AM - 12:00 PM',
           'badge': 'Good',
           'wind': '10',

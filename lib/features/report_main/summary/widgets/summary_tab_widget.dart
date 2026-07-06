@@ -193,25 +193,25 @@ class SummaryTabWidget extends StatelessWidget {
                 sub: "Reports",
                 borderColor: AppColors.blue00F0FFColor,
                 icon: IconPath.goalIcon,
-                val: '8',
+                val: "${controller.summaryReportsCount.value}",
               ),
               _statCard(
                 label: "SUCCESS",
-                val: "78%",
+                val: controller.summaryHitRate.value,
                 sub: "Hit Rate",
                 borderColor: AppColors.orangeColor,
                 icon: IconPath.redFish,
               ),
               _statCard(
                 label: "Hot ZONE",
-                val: "2",
+                val: "${controller.summaryHotZonesCount.value}",
                 sub: "Active",
                 borderColor: AppColors.blue00F0FFColor,
                 icon: IconPath.curveArrowIcon,
               ),
               _statCard(
                 label: "GROUPS",
-                val: "3",
+                val: "${controller.summaryNetworksCount.value}",
                 sub: "Networks",
                 borderColor: AppColors.orangeColor,
                 icon: IconPath.redGroupsIcon,
@@ -449,6 +449,19 @@ class SummaryTabWidget extends StatelessWidget {
               lineHeight: 12,
             ),
           ),
+          if (controller.patternSummaryText.value.isNotEmpty &&
+              controller.patternSummaryText.value != "—") ...[
+            SizedBox(height: 8.h),
+            Text(
+              controller.patternSummaryText.value,
+              style: getTextStyle(
+                fontSize: 12,
+                color: Colors.white70,
+                fontWeight: FontWeight.w400,
+                lineHeight: 16,
+              ),
+            ),
+          ],
           SizedBox(height: 18.h),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -459,13 +472,13 @@ class SummaryTabWidget extends StatelessWidget {
                   children: [
                     _patternMetric(
                       "MOST COMMON DEPTH",
-                      "120-180 ft",
+                      controller.patternDepth.value,
                       AppColors.blue00D4FFColor,
                     ),
                     SizedBox(height: 16.h),
                     _patternMetric(
                       "TOP BAIT / LURE",
-                      "Blue/White Ilander",
+                      controller.patternBait.value,
                       AppColors.blue00D4FFColor,
                     ),
                   ],
@@ -478,13 +491,13 @@ class SummaryTabWidget extends StatelessWidget {
                   children: [
                     _patternMetric(
                       "MOST EFFECTIVE METHOD",
-                      "Trolling",
+                      controller.patternMethod.value,
                       AppColors.blue00D4FFColor,
                     ),
                     SizedBox(height: 16.h),
                     _patternMetric(
                       "STRIKE ZONE",
-                      "Mid Column / Thermocline",
+                      controller.patternStrikeZone.value,
                       const Color(0xFFFF4842),
                     ),
                   ],
@@ -503,21 +516,23 @@ class SummaryTabWidget extends StatelessWidget {
       children: [
         Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: getTextStyle(
-            fontSize: 12,
-            color: AppColors.whiteColor,
-            fontWeight: FontWeight.w400,
-            lineHeight: 9,
+            fontSize: 10,
+            color: AppColors.whiteColor.withOpacity(0.6),
+            fontWeight: FontWeight.w500,
           ),
         ),
         SizedBox(height: 5.h),
         Text(
           value,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
           style: getTextStyle(
             fontSize: 12,
-            fontWeight: FontWeight.w400,
+            fontWeight: FontWeight.w600,
             color: valueColor,
-            lineHeight: 9,
           ),
         ),
       ],
@@ -584,7 +599,7 @@ class SummaryTabWidget extends StatelessWidget {
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      "6.00 AM - 10.00 AM",
+                      controller.peakWindow.value,
                       style: getTextStyle(
                         fontSize: 12,
                         color: AppColors.blue00D4FFColor,
@@ -615,7 +630,7 @@ class SummaryTabWidget extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20.r),
                       ),
                       child: Text(
-                        "Trolling",
+                        controller.effectiveMethod.value,
                         style: getTextStyle(
                           fontSize: 12,
                           color: AppColors.blue00F0FFColor,
@@ -650,9 +665,34 @@ class SummaryTabWidget extends StatelessWidget {
                           sideTitles: SideTitles(
                             showTitles: true,
                             getTitlesWidget: (value, meta) {
-                              if (value % 3 == 0) {
+                              final intVal = value.toInt();
+                              if (intVal == 0) {
                                 return Text(
-                                  "${value.toInt()} am",
+                                  "12am",
+                                  style: getTextStyle(
+                                    fontSize: 8,
+                                    color: Colors.white38,
+                                  ),
+                                );
+                              } else if (intVal == 6) {
+                                return Text(
+                                  "6am",
+                                  style: getTextStyle(
+                                    fontSize: 8,
+                                    color: Colors.white38,
+                                  ),
+                                );
+                              } else if (intVal == 12) {
+                                return Text(
+                                  "12pm",
+                                  style: getTextStyle(
+                                    fontSize: 8,
+                                    color: Colors.white38,
+                                  ),
+                                );
+                              } else if (intVal == 18) {
+                                return Text(
+                                  "6pm",
                                   style: getTextStyle(
                                     fontSize: 8,
                                     color: Colors.white38,
@@ -676,16 +716,12 @@ class SummaryTabWidget extends StatelessWidget {
   }
 
   Widget _buildTopSpecies() {
-    final List<Map<String, String>> speciesData = [
-      {"name": "Tuna", "count": "16"},
-      {"name": "Snapper", "count": "12"},
-      {"name": "Grouper", "count": "08"},
-      {"name": "Mahi", "count": "06"},
-      {"name": "Wahoo", "count": "05"},
-    ];
-
+    final speciesList = controller.summaryTopSpecies;
+    if (speciesList.isEmpty) {
+      return const SizedBox.shrink();
+    }
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 15.w),
+      padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 10.w),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -710,10 +746,10 @@ class SummaryTabWidget extends StatelessWidget {
               lineHeight: 12,
             ),
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: 10.h),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(speciesData.length * 2 - 1, (index) {
+            children: List.generate(speciesList.length * 2 - 1, (index) {
               if (index.isOdd) {
                 return Container(
                   height: 40.h,
@@ -722,9 +758,12 @@ class SummaryTabWidget extends StatelessWidget {
                 );
               }
               final dataIndex = index ~/ 2;
-              return _speciesItem(
-                speciesData[dataIndex]["name"]!,
-                speciesData[dataIndex]["count"]!,
+              final item = speciesList[dataIndex];
+              return Expanded(
+                child: _speciesItem(
+                  item["name"]?.toString() ?? 'Unknown',
+                  (item["count"] ?? 0).toString().padLeft(2, '0'),
+                ),
               );
             }),
           ),
@@ -735,6 +774,8 @@ class SummaryTabWidget extends StatelessWidget {
 
   Widget _speciesItem(String name, String count) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Image.asset(
           IconPath.fishRealIcon,
@@ -745,6 +786,7 @@ class SummaryTabWidget extends StatelessWidget {
         SizedBox(height: 8.h),
         Text(
           count,
+          textAlign: TextAlign.center,
           style: getTextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w400,
@@ -752,12 +794,16 @@ class SummaryTabWidget extends StatelessWidget {
             lineHeight: 9,
           ),
         ),
+        SizedBox(height: 4.h),
         Text(
           name,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: getTextStyle(
-            fontSize: 12,
-            color: Color(0xFF767E8A),
-            lineHeight: 9,
+            fontSize: 10.sp,
+            color: const Color(0xFF767E8A),
+            lineHeight: 12,
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -766,6 +812,16 @@ class SummaryTabWidget extends StatelessWidget {
   }
 
   Widget _buildSpeciesDistribution() {
+    final dist = controller.speciesDistribution;
+    final List<Color> colors = [
+      const Color(0xFFE25301),
+      const Color(0xFF00D4F5),
+      const Color(0xFF0D47A1),
+      const Color(0xFF00E676),
+      const Color(0xFFFFB300),
+      const Color(0xFF8E24AA),
+    ];
+
     return Container(
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
@@ -793,32 +849,19 @@ class SummaryTabWidget extends StatelessWidget {
               PieChartData(
                 sectionsSpace: 4,
                 centerSpaceRadius: 45.r,
-                sections: [
-                  PieChartSectionData(
-                    color: const Color(0xFFE25301),
-                    value: 40,
+                sections: List.generate(dist.length, (index) {
+                  final item = dist[index];
+                  final percentage =
+                      (item['percentage'] as num?)?.toDouble() ?? 0.0;
+                  final color = colors[index % colors.length];
+
+                  return PieChartSectionData(
+                    color: color,
+                    value: percentage,
                     title: '',
                     radius: 12.r,
-                  ),
-                  PieChartSectionData(
-                    color: const Color(0xFF00D4F5),
-                    value: 20,
-                    title: '',
-                    radius: 12.r,
-                  ),
-                  PieChartSectionData(
-                    color: const Color(0xFF0D47A1),
-                    value: 25,
-                    title: '',
-                    radius: 12.r,
-                  ),
-                  PieChartSectionData(
-                    color: const Color(0xFF00E676),
-                    value: 15,
-                    title: '',
-                    radius: 12.r,
-                  ),
-                ],
+                  );
+                }),
               ),
             ),
           ),
@@ -830,25 +873,55 @@ class SummaryTabWidget extends StatelessWidget {
   }
 
   Widget _buildSpeciesLegend() {
-    return Column(
-      children: [
+    final dist = controller.speciesDistribution;
+    final List<Color> colors = [
+      const Color(0xFFE25301),
+      const Color(0xFF00D4F5),
+      const Color(0xFF0D47A1),
+      const Color(0xFF00E676),
+      const Color(0xFFFFB300),
+      const Color(0xFF8E24AA),
+    ];
+
+    final List<Widget> rows = [];
+    for (int i = 0; i < dist.length; i += 2) {
+      final leftItem = dist[i];
+      final leftColor = colors[i % colors.length];
+      final leftPct = "${(leftItem['percentage'] as num?)?.toInt() ?? 0}%";
+
+      Widget rightWidget = const Spacer();
+      if (i + 1 < dist.length) {
+        final rightItem = dist[i + 1];
+        final rightColor = colors[(i + 1) % colors.length];
+        final rightPct = "${(rightItem['percentage'] as num?)?.toInt() ?? 0}%";
+        rightWidget = _legendItem(
+          rightColor,
+          rightItem['name']?.toString() ?? 'Others',
+          rightPct,
+        );
+      }
+
+      rows.add(
         Row(
           children: [
-            _legendItem(const Color(0xFFE25301), "Others", "40%"),
+            Expanded(
+              child: _legendItem(
+                leftColor,
+                leftItem['name']?.toString() ?? 'Others',
+                leftPct,
+              ),
+            ),
             const Spacer(),
-            _legendItem(const Color(0xFF00D4F5), "Tuna", "25%"),
+            Expanded(child: rightWidget),
           ],
         ),
-        SizedBox(height: 12.h),
-        Row(
-          children: [
-            _legendItem(const Color(0xFF0D47A1), "Snapper", "20%"),
-            const Spacer(),
-            _legendItem(const Color(0xFF00E676), "Grouper", "15%"),
-          ],
-        ),
-      ],
-    );
+      );
+      if (i + 2 < dist.length) {
+        rows.add(SizedBox(height: 12.h));
+      }
+    }
+
+    return Column(children: rows);
   }
 
   Widget _legendItem(Color color, String label, String percentage) {

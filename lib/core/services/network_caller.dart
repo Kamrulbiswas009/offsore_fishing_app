@@ -17,7 +17,7 @@ class NetworkCaller {
       final Response response = await get(
         Uri.parse(url),
         headers: {
-          'Authorization': token.toString(),
+          if (token != null && token.isNotEmpty) 'Authorization': token,
           'Content-type': 'application/json',
         },
       ).timeout(Duration(seconds: timeoutDuration));

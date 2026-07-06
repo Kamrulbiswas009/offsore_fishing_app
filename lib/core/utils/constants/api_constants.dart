@@ -53,5 +53,6 @@ class ApiConstants {
   //Reports Flow ->
   static const String submitReportApi = "$baseUrl/reports";
   static const String getRegionReportsApi = "$baseUrl/zones/reports?regionCode=GOM&scope=region";
+  static const String getZoneSummaryApi = "$baseUrl/zones/summary";
 }
 
