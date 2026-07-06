@@ -1,11 +1,16 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
 import '../model/map_zone_model.dart';
 import '../utils/zone_grid_helper.dart';
+import 'package:paytonpieper/core/services/network_caller.dart';
+import 'package:paytonpieper/core/services/storage_service.dart';
+import 'package:paytonpieper/core/utils/constants/api_constants.dart';
+import 'package:paytonpieper/core/utils/logging/logger.dart';
 
 // ── Source / Layer IDs ────────────────────────────────────────────────────
 const kGridCellSourceId  = 'zone-grid-cell-source';   // polygons (fill + line)
@@ -32,6 +37,8 @@ class MapScreenController extends GetxController {
   var selectedZone = Rxn<MapZoneModel>();
   var selectedCellId = RxnString();
 
+  var isLoading = false.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -40,6 +47,7 @@ class MapScreenController extends GetxController {
       cellMiles: 8.0,
     );
     loadMockData();
+    fetchReportsAndPopulateMap();
   }
 
   // ── Map layer setup (called once after style loads) ───────────────────
@@ -208,6 +216,133 @@ class MapScreenController extends GetxController {
       final cell = gridHelper.cellForCoordinate(z.location);
       if (cell == null) continue;
       activityMap[cell.id] = {'level': z.level.name, 'count': z.count};
+    }
+  }
+
+  Future<void> fetchReportsAndPopulateMap() async {
+    isLoading.value = true;
+    try {
+      final network = NetworkCaller();
+      final accessToken = StorageService.token;
+      final token = (accessToken != null && accessToken.isNotEmpty)
+          ? 'Bearer $accessToken'
+          : null;
+
+      final response = await network.getRequest(
+        ApiConstants.getRegionReportsApi,
+        token: token,
+      );
+
+      if (response.isSuccess) {
+        AppLoggerHelper.info(
+          "Successfully fetched map reports. API: ${ApiConstants.getRegionReportsApi}, Response: ${response.responseData}",
+        );
+        final data = response.responseData['data'] as List?;
+        if (data != null && data.isNotEmpty) {
+          // Group reports by zoneId
+          final Map<String, List<Map<String, dynamic>>> zoneReportsMap = {};
+          for (var item in data) {
+            if (item is Map<String, dynamic>) {
+              final zoneId = item['zoneId'] ?? item['zone']?['zoneId'];
+              if (zoneId != null) {
+                zoneReportsMap.putIfAbsent(zoneId, () => []).add(item);
+              }
+            }
+          }
+
+          final List<MapZoneModel> dynamicZones = [];
+          int zoneIndex = 1;
+
+          zoneReportsMap.forEach((zoneId, reportsList) {
+            // Calculate center coordinate
+            double sumLat = 0;
+            double sumLng = 0;
+            int coordCount = 0;
+
+            final Map<String, int> speciesCounts = {};
+            int totalDepth = 0;
+            int depthCount = 0;
+
+            for (var report in reportsList) {
+              final reportLat = report['reportLat'] ?? report['zone']?['centerLat'];
+              final reportLng = report['reportLng'] ?? report['zone']?['centerLng'];
+              if (reportLat != null && reportLng != null) {
+                sumLat += (reportLat as num).toDouble();
+                sumLng += (reportLng as num).toDouble();
+                coordCount++;
+              }
+
+              final speciesList = report['species'] as List?;
+              if (speciesList != null) {
+                for (var s in speciesList) {
+                  final name = s['speciesName'] ?? 'Unknown';
+                  final qty = s['quantity'] ?? 1;
+                  speciesCounts[name] = (speciesCounts[name] ?? 0) + (qty as int);
+                }
+              }
+
+              final depth = report['waterDepthFt'];
+              if (depth != null) {
+                totalDepth += (depth as num).toInt();
+                depthCount++;
+              }
+            }
+
+            final lat = coordCount > 0 ? sumLat / coordCount : 28.5;
+            final lng = coordCount > 0 ? sumLng / coordCount : -88.5;
+
+            String topSpecies = 'None';
+            int maxSpeciesCount = 0;
+            speciesCounts.forEach((speciesName, count) {
+              if (count > maxSpeciesCount) {
+                maxSpeciesCount = count;
+                topSpecies = speciesName;
+              }
+            });
+
+            final avgDepthVal = depthCount > 0 ? totalDepth ~/ depthCount : 120;
+            final count = reportsList.length;
+
+            ActivityLevel level = ActivityLevel.low;
+            if (count >= 5) {
+              level = ActivityLevel.high;
+            } else if (count >= 2) {
+              level = ActivityLevel.medium;
+            }
+
+            dynamicZones.add(MapZoneModel(
+              id: zoneIndex.toString(),
+              name: zoneId,
+              location: LatLng(lat, lng),
+              count: count,
+              level: level,
+              reports: count,
+              topSpecies: topSpecies,
+              avgDepth: "${avgDepthVal} ft",
+              activityScore: count / 10.0 > 1.0 ? 1.0 : count / 10.0,
+              trend: TrendDirection.stable,
+            ));
+            zoneIndex++;
+          });
+
+          activeZones.assignAll(dynamicZones);
+
+          activityMap.clear();
+          for (final z in activeZones) {
+            final cell = gridHelper.cellForCoordinate(z.location);
+            if (cell == null) continue;
+            activityMap[cell.id] = {'level': z.level.name, 'count': z.count};
+          }
+        }
+      } else {
+        AppLoggerHelper.error(
+          "Failed to fetch map reports. StatusCode: ${response.statusCode}, Error: ${response.errorMessage}",
+        );
+      }
+    } catch (e, stack) {
+      AppLoggerHelper.error("Exception fetching map reports: $e", stack);
+    } finally {
+      isLoading.value = false;
     }
   }
 }

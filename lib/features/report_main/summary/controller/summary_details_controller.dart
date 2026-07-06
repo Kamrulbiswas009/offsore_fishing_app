@@ -4,6 +4,11 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:paytonpieper/features/map/model/map_zone_model.dart';
 import 'package:paytonpieper/features/report_main/report/model/report_model.dart';
 import 'package:paytonpieper/features/report_main/report_catch/screen/report_catch_screen.dart';
+import 'package:paytonpieper/core/services/network_caller.dart';
+import 'package:paytonpieper/core/services/storage_service.dart';
+import 'package:paytonpieper/core/utils/constants/api_constants.dart';
+import 'package:paytonpieper/core/utils/logging/logger.dart';
+
 
 class SummaryController extends GetxController {
   var selectedTab = "Summary".obs;
@@ -23,6 +28,7 @@ class SummaryController extends GetxController {
   }
 
   var selectedZone = Rxn<MapZoneModel>();
+  var isLoading = false.obs;
 
   @override
   void onInit() {
@@ -30,6 +36,7 @@ class SummaryController extends GetxController {
     if (Get.arguments is MapZoneModel) {
       selectedZone.value = Get.arguments;
     }
+    fetchReports();
   }
 
   List<BarChartGroupData> get activityData => [
@@ -103,7 +110,7 @@ class SummaryController extends GetxController {
   final List<String> timeList = ["6h", "12h", "24h", "48h", "Week"];
   final List<String> reportTypeList = ["Public", "Group", "My reports"];
 
-  final List<FishingReport> reports = [
+  final RxList<FishingReport> reports = <FishingReport>[
     FishingReport(
       title: "Tuna (Blackfin)",
       timeAgo: "about 3 hours ago",
@@ -136,7 +143,126 @@ class SummaryController extends GetxController {
       confirms: 4,
       type: "My reports",
     ),
-  ];
+  ].obs;
+
+  Future<void> fetchReports() async {
+    isLoading.value = true;
+    try {
+      final network = NetworkCaller();
+      final accessToken = StorageService.token;
+      final token = (accessToken != null && accessToken.isNotEmpty)
+          ? 'Bearer $accessToken'
+          : null;
+
+      final response = await network.getRequest(
+        ApiConstants.getRegionReportsApi,
+        token: token,
+      );
+
+      if (response.isSuccess) {
+        AppLoggerHelper.info(
+          "Successfully fetched region reports. API: ${ApiConstants.getRegionReportsApi}, Response: ${response.responseData}",
+        );
+        final data = response.responseData['data'] as List?;
+        if (data != null) {
+          final List<FishingReport> fetchedList = [];
+          for (var item in data) {
+            try {
+              final speciesList = item['species'] as List?;
+              final title = (speciesList != null && speciesList.isNotEmpty)
+                  ? speciesList.map((s) => s['speciesName']).join(', ')
+                  : 'Unknown';
+
+              final catchTimestamp = item['catchTimestamp'] as String?;
+              final timeAgo = _formatTimeAgo(catchTimestamp);
+
+              final depth = "${item['waterDepthFt'] ?? 0}ft";
+              final zone = item['zoneId'] ?? item['zone']?['zoneId'] ?? 'Unknown';
+              final technique = _mapBackendMethodToUser(item['fishingMethod']);
+              final bait = _mapBackendBaitToUser(item['baitLureType']);
+              final note = item['notes'];
+              final confirms = item['biteConfirmations']?['confirmed'] ?? 0;
+              final author = item['user']?['name'];
+              final type = item['visibility']?.toString().toLowerCase() ?? 'public';
+
+              fetchedList.add(FishingReport(
+                title: title,
+                timeAgo: timeAgo,
+                depth: depth,
+                zone: zone,
+                technique: technique,
+                bait: bait,
+                note: note,
+                confirms: confirms,
+                author: author,
+                type: type,
+              ));
+            } catch (e) {
+              debugPrint("Error parsing report item: $e");
+            }
+          }
+          reports.assignAll(fetchedList);
+        }
+      } else {
+        debugPrint("Failed to fetch reports: ${response.errorMessage}");
+      }
+    } catch (e) {
+      debugPrint("Exception fetching reports: $e");
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  String _formatTimeAgo(String? timestampStr) {
+    if (timestampStr == null) return "Unknown time";
+    try {
+      final dateTime = DateTime.parse(timestampStr);
+      final difference = DateTime.now().difference(dateTime);
+
+      if (difference.inSeconds < 60) {
+        return "just now";
+      } else if (difference.inMinutes < 60) {
+        return "about ${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago";
+      } else if (difference.inHours < 24) {
+        return "about ${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago";
+      } else {
+        return "about ${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago";
+      }
+    } catch (e) {
+      return "Unknown time";
+    }
+  }
+
+  String _mapBackendMethodToUser(String? method) {
+    if (method == null) return "Unknown";
+    final clean = method.trim().toUpperCase();
+    if (clean == "BOTTOM_FISHING") return "Bottom Fishing";
+    if (clean == "ANCHOR_SPOT_FISHING") return "Anchor Spot Fishing";
+    if (clean == "FLY_FISHING") return "Fly Fishing";
+    if (clean == "JIGGING") return "Jigging";
+    if (clean == "TROLLING") return "Trolling";
+    if (clean == "DRIFTING") return "Drifting";
+    
+    // Capitalize first letter of each word if not specifically mapped
+    return clean.split('_').map((word) {
+      if (word.isEmpty) return '';
+      return word[0] + word.substring(1).toLowerCase();
+    }).join(' ');
+  }
+
+  String _mapBackendBaitToUser(String? bait) {
+    if (bait == null) return "Unknown";
+    final clean = bait.trim().toUpperCase();
+    if (clean == "LIVE_BALLYHOO") return "Live Ballyhoo";
+    if (clean == "CUT_BAIT") return "Cut Bait";
+    if (clean == "VERTICAL_JIG") return "Vertical Jig";
+    if (clean == "SKIRTED_LURE") return "Skirted Lure";
+    
+    return clean.split('_').map((word) {
+      if (word.isEmpty) return '';
+      return word[0] + word.substring(1).toLowerCase();
+    }).join(' ');
+  }
 
   List<FishingReport> get filteredReports {
     if (selectedSpecies.isEmpty &&

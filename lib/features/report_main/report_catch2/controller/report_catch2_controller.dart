@@ -227,23 +227,6 @@ class ReportCatch2Controller extends GetxController {
   }
 
   Map<String, dynamic> buildReportPayload({required String visibility, String? groupId}) {
-    // Get and normalize zoneId from step 1 (backend strictly expects active DB zones like GOM-2824 or GOM-0042)
-    String zoneId = "GOM-2824";
-    try {
-      if (Get.isRegistered<ReportCatchController>()) {
-        final rawZone = Get.find<ReportCatchController>().detectedGrid.value;
-        if (rawZone.startsWith("GOM-")) {
-          final suffix = rawZone.substring(4);
-          if (RegExp(r'^\d+$').hasMatch(suffix) && suffix.length == 4) {
-            zoneId = rawZone;
-          } else {
-            // E.g., convert GOM-A12 or other invalid mock strings to valid GOM-2824
-            zoneId = "GOM-2824";
-          }
-        }
-      }
-    } catch (_) {}
-
     final speciesList = <Map<String, dynamic>>[];
     if (!isNothingCaught.value) {
       for (var name in selectedSpeciesList) {
@@ -266,7 +249,7 @@ class ReportCatch2Controller extends GetxController {
 
     final payload = {
       "frontendReportId": _generateUuid(),
-      "zoneId": zoneId,
+      "zoneId": null,
       "reportLat": selectedLat.value ?? 28.4521,
       "reportLng": selectedLng.value ?? -89.1234,
       "species": speciesList,

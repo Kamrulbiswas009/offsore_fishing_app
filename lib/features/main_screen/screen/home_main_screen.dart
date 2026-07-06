@@ -26,13 +26,13 @@ class MainScreen extends GetView<MainScreenController> {
                 index: controller.currentIndex.value,
                 children: [
                   const ZoneMapScreen(), // The Map Content (Code below)
-                  const SummaryScreen(isReportMainScreen: true,),
-                   GroupMainScreen(),
+                  const SummaryScreen(isReportMainScreen: true),
+                  GroupMainScreen(),
                   ProfileMainScreen(),
                 ],
               ),
             ),
-        
+
             // Floating Bottom Navigation Bar
             const Align(
               alignment: Alignment.bottomCenter,

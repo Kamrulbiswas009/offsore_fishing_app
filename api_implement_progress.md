@@ -73,3 +73,31 @@ Anglers offshore often lack internet access. To prevent data loss, the applicati
    - Triggers `triggerBackgroundSync()`.
    - Sends the report to the API backend in order.
    - Deletes the synced items from SQLite to clear the local queue.
+
+---
+
+## 4. Region Reports Feed integration
+* **API Endpoint**: `GET /api/v1/zones/reports?regionCode=GOM&scope=region`
+* **Controller**: `SummaryController` (`lib/features/report_main/summary/controller/summary_details_controller.dart`)
+* **Widget**: `ReportTabWidget` (`lib/features/report_main/summary/widgets/report_tab_widget.dart`)
+* **Functionality**:
+  - Dynamically fetches catch reports in the specified region on initialization.
+  - Automatically maps response fields (including nested lists like `species` and complex objects like `user` and `biteConfirmations`) into native `FishingReport` model structures.
+  - Formats `catchTimestamp` into an interactive relative "time ago" string.
+  - Reverse-maps backend enums for fishing techniques and bait types to user-friendly titles.
+  - Features an reactive `isLoading` spinner in `ReportTabWidget` during network requests.
+
+---
+
+## 5. Map Screen Dynamic Grid Integration
+* **API Endpoint**: `GET /api/v1/zones/reports?regionCode=GOM&scope=region`
+* **Controller**: `MapScreenController` (`lib/features/map/controller/map_screen_controller.dart`)
+* **Widget**: `ZoneMapScreen` (`lib/features/map/screen/zone_map_screen.dart`)
+* **Functionality**:
+  - Calls the region reports API on startup to fetch all active catch reports.
+  - Groups and aggregates reports dynamically by `zoneId`.
+  - Calculates dynamic coordinates, species frequency (resolving `topSpecies`), average water depth (`avgDepth`), and report counts for each zone.
+  - Dynamically sets the `ActivityLevel` (high, medium, low) per zone based on the count of active reports.
+  - Populates Mapbox map grid cells reactively using a GetX worker listener (`ever`) in `ZoneMapScreen` to instantly trigger map redraws upon data fetch success.
+
+
