@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 
-import '../controller/main_screen_controller.dart';
+class CustomBottomNavBar extends StatelessWidget {
+  final int currentIndex;
+  final ValueChanged<int> onTap;
 
-class CustomBottomNavBar extends GetView<MainScreenController> {
-  const CustomBottomNavBar({super.key});
+  const CustomBottomNavBar({
+    super.key,
+    required this.currentIndex,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -40,35 +44,33 @@ class CustomBottomNavBar extends GetView<MainScreenController> {
   }
 
   Widget _navItem(int index, String icon, String label) {
-    return Obx(() {
-      bool isSelected = controller.currentIndex.value == index;
-      Color activeColor = AppColors.blue00F0FFColor;
-      Color inactiveColor = AppColors.grey8B95A5Color;
+    bool isSelected = currentIndex == index;
+    Color activeColor = AppColors.blue00F0FFColor;
+    Color inactiveColor = AppColors.grey8B95A5Color;
 
-      return GestureDetector(
-        onTap: () => controller.changeIndex(index),
-        behavior: HitTestBehavior.opaque,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(
-              icon,
-              height: 25.h,
-              width: 25.w,
+    return GestureDetector(
+      onTap: () => onTap(index),
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset(
+            icon,
+            height: 25.h,
+            width: 25.w,
+            color: isSelected ? activeColor : inactiveColor,
+          ),
+          SizedBox(height: 2.h),
+          Text(
+            label,
+            style: getTextStyle(
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
               color: isSelected ? activeColor : inactiveColor,
             ),
-            SizedBox(height: 2.h),
-            Text(
-              label,
-              style: getTextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? activeColor : inactiveColor,
-              ),
-            ),
-          ],
-        ),
-      );
-    });
+          ),
+        ],
+      ),
+    );
   }
 }

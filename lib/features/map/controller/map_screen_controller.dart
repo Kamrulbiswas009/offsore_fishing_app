@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
@@ -38,6 +37,18 @@ class MapScreenController extends GetxController {
   var selectedCellId = RxnString();
 
   var isLoading = false.obs;
+  bool isInitialFetch = true;
+
+  bool _isFetching = false;
+  double? _pendingSouth;
+  double? _pendingNorth;
+  double? _pendingWest;
+  double? _pendingEast;
+  mapbox.MapboxMap? _pendingMap;
+
+  // ── Debounce Workers & State ──────────────────────────────────────────
+  final _cameraBounds = Rxn<Map<String, dynamic>>();
+  Worker? _debounceWorker;
 
   @override
   void onInit() {
@@ -47,7 +58,37 @@ class MapScreenController extends GetxController {
       cellMiles: 8.0,
     );
     loadMockData();
-    fetchReportsAndPopulateMap();
+
+
+    _debounceWorker = debounce(
+      _cameraBounds,
+      (Map<String, dynamic>? bounds) {
+        if (bounds != null) {
+          fetchZones(
+            south: bounds['south'],
+            north: bounds['north'],
+            west: bounds['west'],
+            east: bounds['east'],
+            map: bounds['map'],
+          );
+        }
+      },
+      time: const Duration(seconds: 10), 
+    );
+
+    fetchZones(
+      south: 28.0,
+      north: 29.0,
+      west: -90.0,
+      east: -88.0,
+    );
+  }
+
+  @override
+  void onClose() {
+
+    _debounceWorker?.dispose();
+    super.onClose();
   }
 
   // ── Map layer setup (called once after style loads) ───────────────────
@@ -111,6 +152,49 @@ class MapScreenController extends GetxController {
         iconAllowOverlap:    true,
       ),
     );
+
+    // Mock user location source and layers (pulsing blue dot/puck at Gulf of Mexico)
+    await map.style.addSource(
+      mapbox.GeoJsonSource(
+        id: 'mock-user-location-source',
+        data: jsonEncode({
+          'type': 'FeatureCollection',
+          'features': [
+            {
+              'type': 'Feature',
+              'properties': <String, dynamic>{},
+              'geometry': {
+                'type': 'Point',
+                'coordinates': [-88.5, 28.5]
+              }
+            }
+          ]
+        }),
+      ),
+    );
+
+    // Outer cyan ring for the location puck
+    await map.style.addLayer(
+      mapbox.CircleLayer(
+        id: 'mock-user-location-puck-outer',
+        sourceId: 'mock-user-location-source',
+        circleColor: 0xFF00F0FF,
+        circleOpacity: 0.25,
+        circleRadius: 18.0,
+      ),
+    );
+
+    // Inner solid cyan dot with white stroke
+    await map.style.addLayer(
+      mapbox.CircleLayer(
+        id: 'mock-user-location-puck-inner',
+        sourceId: 'mock-user-location-source',
+        circleColor: 0xFF00F0FF,
+        circleRadius: 8.0,
+        circleStrokeColor: 0xFFFFFFFF,
+        circleStrokeWidth: 2.0,
+      ),
+    );
   }
 
   // ── Dynamic grid refresh (called on every camera change) ──────────────
@@ -121,34 +205,47 @@ class MapScreenController extends GetxController {
     LatLng sw,
     LatLng ne,
   ) async {
-    try {
-      final cells = gridHelper.cellsForBounds(sw, ne, buffer: 2);
-
-      final cellJson  = gridHelper.buildCellGeoJson(cells, activityMap);
-      final labelJson = gridHelper.buildLabelGeoJson(cells, activityMap);
-
-      final cellSrc =
-          await map.style.getSource(kGridCellSourceId) as mapbox.GeoJsonSource?;
-      cellSrc?.updateGeoJSON(jsonEncode(cellJson));
-
-      final labelSrc =
-          await map.style.getSource(kGridLabelSourceId) as mapbox.GeoJsonSource?;
-      labelSrc?.updateGeoJSON(jsonEncode(labelJson));
-    } catch (_) {
-      // Ignore errors during rapid camera transitions
+    if (isInitialFetch) {
+      isInitialFetch = false;
+      await fetchZones(
+        south: 28.0,
+        north: 29.0,
+        west: -90.0,
+        east: -88.0,
+        map: map,
+      );
+    } else {
+      // সরাসরি API কল না করে reactive variable-এ ডাটা পুশ করা হচ্ছে।
+      // এর ফলে ম্যাপ যতবারই স্ক্রোল হোক, ১০ সেকেন্ডের ডিবান্সার এটিকে লক করে রাখবে।
+      _cameraBounds.value = {
+        'south': sw.latitude,
+        'north': ne.latitude,
+        'west': sw.longitude,
+        'east': ne.longitude,
+        'map': map,
+      };
     }
   }
 
   // ── Tap → zone lookup ─────────────────────────────────────────────────
 
   MapZoneModel? zoneForCoordinate(double lat, double lng) {
-    final cell = gridHelper.cellForCoordinate(LatLng(lat, lng));
-    if (cell == null) return null;
-    selectedCellId.value = cell.id;
-
     for (final z in activeZones) {
-      final zCell = gridHelper.cellForCoordinate(z.location);
-      if (zCell?.id == cell.id) return z;
+      if (z.south != null && z.north != null && z.west != null && z.east != null) {
+        if (lat >= z.south! && lat <= z.north! && lng >= z.west! && lng <= z.east!) {
+          selectedCellId.value = z.id;
+          return z;
+        }
+      } else {
+        // Fallback to grid helper if bounds are not available
+        final cell = gridHelper.cellForCoordinate(LatLng(lat, lng));
+        if (cell == null) continue;
+        final zCell = gridHelper.cellForCoordinate(z.location);
+        if (zCell?.id == cell.id) {
+          selectedCellId.value = cell.id;
+          return z;
+        }
+      }
     }
     return null;
   }
@@ -219,7 +316,25 @@ class MapScreenController extends GetxController {
     }
   }
 
-  Future<void> fetchReportsAndPopulateMap() async {
+  // ── Zones API Fetch ───────────────────────────────────────────────────
+
+  Future<void> fetchZones({
+    double south = 28.0,
+    double north = 29.0,
+    double west = -90.0,
+    double east = -88.0,
+    mapbox.MapboxMap? map,
+  }) async {
+    if (_isFetching) {
+      _pendingSouth = south;
+      _pendingNorth = north;
+      _pendingWest = west;
+      _pendingEast = east;
+      _pendingMap = map;
+      return;
+    }
+
+    _isFetching = true;
     isLoading.value = true;
     try {
       final network = NetworkCaller();
@@ -228,121 +343,190 @@ class MapScreenController extends GetxController {
           ? 'Bearer $accessToken'
           : null;
 
+      final url = ApiConstants.getZonesApi(
+        south: south,
+        north: north,
+        west: west,
+        east: east,
+      );
+
       final response = await network.getRequest(
-        ApiConstants.getRegionReportsApi,
+        url,
         token: token,
       );
 
       if (response.isSuccess) {
         AppLoggerHelper.info(
-          "Successfully fetched map reports. API: ${ApiConstants.getRegionReportsApi}, Response: ${response.responseData}",
+          "Successfully fetched zones. API: $url, Response: ${response.responseData}",
         );
         final data = response.responseData['data'] as List?;
-        if (data != null && data.isNotEmpty) {
-          // Group reports by zoneId
-          final Map<String, List<Map<String, dynamic>>> zoneReportsMap = {};
+        if (data != null) {
+          final List<MapZoneModel> zonesList = [];
           for (var item in data) {
             if (item is Map<String, dynamic>) {
-              final zoneId = item['zoneId'] ?? item['zone']?['zoneId'];
-              if (zoneId != null) {
-                zoneReportsMap.putIfAbsent(zoneId, () => []).add(item);
+              final zoneId = item['zoneId'] ?? '';
+              final displayName = item['displayName'] ?? zoneId;
+              final centerLat = (item['centerLat'] as num?)?.toDouble() ?? 0.0;
+              final centerLng = (item['centerLng'] as num?)?.toDouble() ?? 0.0;
+              
+              final boundsMap = item['bounds'] as Map<String, dynamic>?;
+              final zNorth = (boundsMap?['north'] as num?)?.toDouble();
+              final zSouth = (boundsMap?['south'] as num?)?.toDouble();
+              final zEast = (boundsMap?['east'] as num?)?.toDouble();
+              final zWest = (boundsMap?['west'] as num?)?.toDouble();
+
+              final activityScore = (item['activityScore'] as num?)?.toDouble() ?? 0.0;
+              final trendDirectionStr = item['trendDirection'] as String? ?? 'STABLE';
+              final reportCount = (item['reportCount'] as num?)?.toInt() ?? 0;
+
+              // Map trend direction
+              TrendDirection trend = TrendDirection.stable;
+              if (trendDirectionStr == 'RISING') {
+                trend = TrendDirection.rising;
+              } else if (trendDirectionStr == 'FALLING') {
+                trend = TrendDirection.falling;
               }
+
+              // Determine activity level
+              ActivityLevel level = ActivityLevel.low;
+              if (reportCount >= 5 || activityScore >= 70.0) {
+                level = ActivityLevel.high;
+              } else if (reportCount >= 1 || activityScore >= 30.0) {
+                level = ActivityLevel.medium;
+              }
+
+              zonesList.add(MapZoneModel(
+                id: zoneId,
+                name: displayName,
+                location: LatLng(centerLat, centerLng),
+                count: reportCount,
+                level: level,
+                reports: reportCount,
+                activityScore: activityScore > 1.0 ? activityScore / 100.0 : activityScore,
+                trend: trend,
+                north: zNorth,
+                south: zSouth,
+                east: zEast,
+                west: zWest,
+              ));
             }
           }
 
-          final List<MapZoneModel> dynamicZones = [];
-          int zoneIndex = 1;
+          activeZones.assignAll(zonesList);
 
-          zoneReportsMap.forEach((zoneId, reportsList) {
-            // Calculate center coordinate
-            double sumLat = 0;
-            double sumLng = 0;
-            int coordCount = 0;
-
-            final Map<String, int> speciesCounts = {};
-            int totalDepth = 0;
-            int depthCount = 0;
-
-            for (var report in reportsList) {
-              final reportLat = report['reportLat'] ?? report['zone']?['centerLat'];
-              final reportLng = report['reportLng'] ?? report['zone']?['centerLng'];
-              if (reportLat != null && reportLng != null) {
-                sumLat += (reportLat as num).toDouble();
-                sumLng += (reportLng as num).toDouble();
-                coordCount++;
-              }
-
-              final speciesList = report['species'] as List?;
-              if (speciesList != null) {
-                for (var s in speciesList) {
-                  final name = s['speciesName'] ?? 'Unknown';
-                  final qty = s['quantity'] ?? 1;
-                  speciesCounts[name] = (speciesCounts[name] ?? 0) + (qty as int);
-                }
-              }
-
-              final depth = report['waterDepthFt'];
-              if (depth != null) {
-                totalDepth += (depth as num).toInt();
-                depthCount++;
-              }
-            }
-
-            final lat = coordCount > 0 ? sumLat / coordCount : 28.5;
-            final lng = coordCount > 0 ? sumLng / coordCount : -88.5;
-
-            String topSpecies = 'None';
-            int maxSpeciesCount = 0;
-            speciesCounts.forEach((speciesName, count) {
-              if (count > maxSpeciesCount) {
-                maxSpeciesCount = count;
-                topSpecies = speciesName;
-              }
-            });
-
-            final avgDepthVal = depthCount > 0 ? totalDepth ~/ depthCount : 120;
-            final count = reportsList.length;
-
-            ActivityLevel level = ActivityLevel.low;
-            if (count >= 5) {
-              level = ActivityLevel.high;
-            } else if (count >= 2) {
-              level = ActivityLevel.medium;
-            }
-
-            dynamicZones.add(MapZoneModel(
-              id: zoneIndex.toString(),
-              name: zoneId,
-              location: LatLng(lat, lng),
-              count: count,
-              level: level,
-              reports: count,
-              topSpecies: topSpecies,
-              avgDepth: "${avgDepthVal} ft",
-              activityScore: count / 10.0 > 1.0 ? 1.0 : count / 10.0,
-              trend: TrendDirection.stable,
-            ));
-            zoneIndex++;
-          });
-
-          activeZones.assignAll(dynamicZones);
-
-          activityMap.clear();
-          for (final z in activeZones) {
-            final cell = gridHelper.cellForCoordinate(z.location);
-            if (cell == null) continue;
-            activityMap[cell.id] = {'level': z.level.name, 'count': z.count};
+          // If map is provided, update the grid layers immediately
+          if (map != null) {
+            await _updateMapGridLayers(map, zonesList);
           }
         }
       } else {
         AppLoggerHelper.error(
-          "Failed to fetch map reports. StatusCode: ${response.statusCode}, Error: ${response.errorMessage}",
+          "Failed to fetch zones. StatusCode: ${response.statusCode}, Error: ${response.errorMessage}",
         );
       }
     } catch (e, stack) {
-      AppLoggerHelper.error("Exception fetching map reports: $e", stack);
+      AppLoggerHelper.error("Exception fetching zones: $e", stack);
     } finally {
-      isLoading.value = false;
+      _isFetching = false;
+      if (_pendingSouth != null) {
+        final pSouth = _pendingSouth!;
+        final pNorth = _pendingNorth!;
+        final pWest = _pendingWest!;
+        final pEast = _pendingEast!;
+        final pMap = _pendingMap;
+
+        _pendingSouth = null;
+        _pendingNorth = null;
+        _pendingWest = null;
+        _pendingEast = null;
+        _pendingMap = null;
+
+        await fetchZones(
+          south: pSouth,
+          north: pNorth,
+          west: pWest,
+          east: pEast,
+          map: pMap,
+        );
+      } else {
+        isLoading.value = false;
+      }
+    }
+  }
+
+  Map<String, dynamic> buildCellGeoJsonFromZones(List<MapZoneModel> zones) {
+    final features = zones.map((z) {
+      final swLng = z.west ?? (z.location.longitude - 0.125);
+      final swLat = z.south ?? (z.location.latitude - 0.125);
+      final neLng = z.east ?? (z.location.longitude + 0.125);
+      final neLat = z.north ?? (z.location.latitude + 0.125);
+
+      return {
+        'type': 'Feature',
+        'id': z.id,
+        'geometry': {
+          'type': 'Polygon',
+          'coordinates': [
+            [
+              [swLng, swLat],
+              [neLng, swLat],
+              [neLng, neLat],
+              [swLng, neLat],
+              [swLng, swLat],
+            ]
+          ],
+        },
+        'properties': {
+          'id': z.id,
+          'activityLevel': z.level.name,
+          'reportCount': z.count,
+          'label': z.count > 0 ? z.count.toString() : '',
+        },
+      };
+    }).toList();
+
+    return {
+      'type': 'FeatureCollection',
+      'features': features,
+    };
+  }
+
+  Map<String, dynamic> buildLabelGeoJsonFromZones(List<MapZoneModel> zones) {
+    final features = <Map<String, dynamic>>[];
+    for (final z in zones) {
+      if (z.count == 0) continue;
+      features.add({
+        'type': 'Feature',
+        'geometry': {
+          'type': 'Point',
+          'coordinates': [z.location.longitude, z.location.latitude],
+        },
+        'properties': {
+          'label': z.count.toString(),
+          'activityLevel': z.level.name,
+        },
+      });
+    }
+    return {
+      'type': 'FeatureCollection',
+      'features': features,
+    };
+  }
+
+  Future<void> _updateMapGridLayers(mapbox.MapboxMap map, List<MapZoneModel> zones) async {
+    try {
+      final cellJson = buildCellGeoJsonFromZones(zones);
+      final labelJson = buildLabelGeoJsonFromZones(zones);
+
+      final cellSrc =
+          await map.style.getSource(kGridCellSourceId) as mapbox.GeoJsonSource?;
+      cellSrc?.updateGeoJSON(jsonEncode(cellJson));
+
+      final labelSrc =
+          await map.style.getSource(kGridLabelSourceId) as mapbox.GeoJsonSource?;
+      labelSrc?.updateGeoJSON(jsonEncode(labelJson));
+    } catch (_) {
+      // Ignore errors during style transitions
     }
   }
 }

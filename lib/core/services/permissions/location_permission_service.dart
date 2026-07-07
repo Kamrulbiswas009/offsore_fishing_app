@@ -9,6 +9,23 @@ enum LocationPermissionResult {
 }
 
 class LocationPermissionService {
+  Future<bool> isLocationPermissionGranted() async {
+    try {
+      final currentStatus = await Permission.locationWhenInUse.status;
+      return currentStatus.isGranted || currentStatus.isLimited;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> openSettings() async {
+    try {
+      return await openAppSettings();
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<LocationPermissionResult> requestLocationWhenInUse() async {
     try {
       final currentStatus = await Permission.locationWhenInUse.status;

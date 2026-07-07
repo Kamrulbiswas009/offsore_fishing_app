@@ -54,5 +54,11 @@ class ApiConstants {
   static const String submitReportApi = "$baseUrl/reports";
   static const String getRegionReportsApi = "$baseUrl/zones/reports?regionCode=GOM&scope=region";
   static const String getZoneSummaryApi = "$baseUrl/zones/summary";
+  static String getZonesApi({
+    required double south,
+    required double north,
+    required double west,
+    required double east,
+  }) => "$baseUrl/zones?south=$south&north=$north&west=$west&east=$east";
 }
 
