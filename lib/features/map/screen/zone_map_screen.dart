@@ -76,6 +76,18 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
 
   Future<void> _onMapCreated(mapbox.MapboxMap map) async {
     _mapboxMap = map;
+    await map.gestures.updateSettings(
+      mapbox.GesturesSettings(
+        scrollEnabled: true,
+        pinchToZoomEnabled: true,
+        rotateEnabled: true,
+        pitchEnabled: true,
+        doubleTapToZoomInEnabled: true,
+        doubleTouchToZoomOutEnabled: true,
+        quickZoomEnabled: true,
+        pinchPanEnabled: true,
+      ),
+    );
   }
 
   Future<void> _onStyleLoaded(mapbox.StyleLoadedEventData _) async {
