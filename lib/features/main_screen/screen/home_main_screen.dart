@@ -37,8 +37,10 @@ class _MainScreenState extends State<MainScreen> {
             ),
 
             // Floating Bottom Navigation Bar
-            Align(
-              alignment: Alignment.bottomCenter,
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
               child: CustomBottomNavBar(
                 currentIndex: _currentIndex,
                 onTap: (index) {
