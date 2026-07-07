@@ -6,6 +6,7 @@ import 'package:paytonpieper/core/common/widgets/custom_back_button.dart';
 import 'package:paytonpieper/core/common/widgets/custom_button.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
+import 'package:paytonpieper/features/payment_service/controller/payment_service_controller.dart';
 import 'package:paytonpieper/features/profile_and_setting/controller/profile_main_screen_controller.dart';
 import 'package:paytonpieper/features/profile_and_setting/presentation/widget/profile_main_screen_widget/profile_info_card_widget.dart';
 import 'package:paytonpieper/features/profile_and_setting/presentation/widget/profile_main_screen_widget/profile_stat_card_widget.dart';
@@ -14,6 +15,9 @@ import 'package:paytonpieper/features/profile_and_setting/presentation/widget/pr
 class ProfileMainScreen extends StatelessWidget {
   final ProfileMainScreenController controller =
       Get.find<ProfileMainScreenController>();
+
+  final PaymentServiceController paymentServiceController =
+      Get.find<PaymentServiceController>();
 
   ProfileMainScreen({super.key});
 
@@ -114,7 +118,14 @@ class ProfileMainScreen extends StatelessWidget {
               //   onUpgradeTap: controller.onUpgradeToPro,
               // ),
               SizedBox(height: 8.h),
-              CustomButton(title: "Unlock Pro >", lineHeight: 14, fontSize: 16),
+              CustomButton(
+                ontap: () {
+                  paymentServiceController.openUnlockProFlow();
+                },
+                title: "Unlock Pro >",
+                lineHeight: 14,
+                fontSize: 16,
+              ),
               SizedBox(height: 4.h),
               Text(
                 "• Secure payments powered by Stripe. Your payment information is never stored by us.",

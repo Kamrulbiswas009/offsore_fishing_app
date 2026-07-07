@@ -14,7 +14,6 @@ import 'package:paytonpieper/features/groups/model/group_model.dart';
 import 'package:paytonpieper/core/common/widgets/common_message.dart';
 import 'package:paytonpieper/features/groups/controller/group_main_screen_controller.dart';
 
-
 enum GroupDetailsTab { reports, chat, members }
 
 enum GroupInviteMethod { friends, code, email }
@@ -31,9 +30,13 @@ class GroupDetailsScreenController extends GetxController {
   final RxnString selectedReportDepth = RxnString();
   final RxnString selectedReportMethod = RxnString();
   final RxnString selectedReportTime = RxnString();
+  final RxBool isReportsLoading = false.obs;
+  final RxString reportsErrorMessage = ''.obs;
+  String? _lastReportFetchKey;
 
   final TextEditingController groupNameTEController = TextEditingController();
-  final TextEditingController groupDescriptionTEController = TextEditingController();
+  final TextEditingController groupDescriptionTEController =
+      TextEditingController();
   final TextEditingController searchUserTEController = TextEditingController();
 
   // ── API state ───────────────────────────────────────────────────────
@@ -72,43 +75,44 @@ class GroupDetailsScreenController extends GetxController {
 
   final GroupReportFilterOption speciesFilter = const GroupReportFilterOption(
     label: 'Species',
-    options: ['Tuna', 'Snapper', 'Grouper', 'Mahi', 'Wahoo', 'Marlin'],
+    options: [
+      'All Species',
+      'Tuna',
+      'Snapper',
+      'Grouper',
+      'Mahi',
+      'Wahoo',
+      'Marlin',
+    ],
   );
   final GroupReportFilterOption depthFilter = const GroupReportFilterOption(
     label: 'Depth',
-    options: ['0-125ft', '0-250ft', '0-375ft', '0-500ft', '0-625ft'],
+    options: [
+      'All Depths',
+      '0-125ft',
+      '0-250ft',
+      '0-375ft',
+      '0-500ft',
+      '0-625ft',
+    ],
   );
   final GroupReportFilterOption methodFilter = const GroupReportFilterOption(
     label: 'Method',
-    options: ['Trolling', 'Bottom', 'Jigging', 'Live Bait'],
+    options: [
+      'All Methods',
+      'Trolling',
+      'Bottom Fishing',
+      'Jigging',
+      'Live Bait',
+      'Chunking',
+    ],
   );
   final GroupReportFilterOption timeFilter = const GroupReportFilterOption(
     label: 'Time',
-    options: ['6h', '24h', '3d', '7d'],
+    options: ['All Time', '6h', '24h', '3d', '7d'],
   );
 
-  final RxList<GroupReportItem> reports = <GroupReportItem>[
-    const GroupReportItem(
-      title: 'Mahi Mahi',
-      author: 'Captain Mike',
-      timeAgo: 'about 2 hours ago',
-      depth: '120ft',
-      technique: 'Trolling',
-      note: 'Strong bite around the weedline',
-      confirmations: 3,
-      zone: 'Zone Z1',
-    ),
-    const GroupReportItem(
-      title: 'Wahoo',
-      author: 'Captain Mike',
-      timeAgo: 'about 2 hours ago',
-      depth: '200ft',
-      technique: 'Trolling',
-      note: 'Strong bite around the weedline',
-      confirmations: 3,
-      zone: 'Zone Z1',
-    ),
-  ].obs;
+  final RxList<GroupReportItem> reports = <GroupReportItem>[].obs;
 
   final RxList<GroupChatMessage> messages = <GroupChatMessage>[
     const GroupChatMessage(
@@ -186,7 +190,8 @@ class GroupDetailsScreenController extends GetxController {
   final RxList<PendingGroupInviteItem> pendingGroupInvites =
       <PendingGroupInviteItem>[].obs;
 
-  final RxList<InvitableFriendItem> invitableFriends = <InvitableFriendItem>[].obs;
+  final RxList<InvitableFriendItem> invitableFriends =
+      <InvitableFriendItem>[].obs;
   final ScrollController inviteFriendsScrollController = ScrollController();
   int _currentPage = 1;
   bool _hasMore = true;
@@ -248,7 +253,9 @@ class GroupDetailsScreenController extends GetxController {
 
     final id = _groupId ?? groupDetail.value?.groupId;
     if (id == null || id.isEmpty) {
-      AppLoggerHelper.error('[GroupDetails] fetchUserForInvitation failed: Group ID is missing');
+      AppLoggerHelper.error(
+        '[GroupDetails] fetchUserForInvitation failed: Group ID is missing',
+      );
       _isPaginationLoading = false;
       isPaginationLoading.value = false;
       if (isRefresh) {
@@ -287,7 +294,11 @@ class GroupDetailsScreenController extends GetxController {
         List<InvitableFriendItem> newUsers = [];
         if (rawData is List) {
           newUsers = rawData
-              .map((e) => InvitableFriendItem.fromJson(Map<String, dynamic>.from(e as Map)))
+              .map(
+                (e) => InvitableFriendItem.fromJson(
+                  Map<String, dynamic>.from(e as Map),
+                ),
+              )
               .toList();
         }
 
@@ -299,7 +310,8 @@ class GroupDetailsScreenController extends GetxController {
 
         if (rawMeta is Map) {
           final totalPages = (rawMeta['totalPages'] as num?)?.toInt() ?? 1;
-          final currentPageMeta = (rawMeta['page'] as num?)?.toInt() ?? _currentPage;
+          final currentPageMeta =
+              (rawMeta['page'] as num?)?.toInt() ?? _currentPage;
           _currentPage = currentPageMeta + 1;
           _hasMore = currentPageMeta < totalPages;
         } else {
@@ -317,7 +329,10 @@ class GroupDetailsScreenController extends GetxController {
         );
       }
     } catch (e) {
-      AppLoggerHelper.error('[GroupDetails] fetchUserForInvitation exception', e);
+      AppLoggerHelper.error(
+        '[GroupDetails] fetchUserForInvitation exception',
+        e,
+      );
     } finally {
       _isPaginationLoading = false;
       isPaginationLoading.value = false;
@@ -330,7 +345,8 @@ class GroupDetailsScreenController extends GetxController {
   // ── Fetch single group details ──────────────────────────────────────
   Future<void> fetchGroupDetails(String groupId, {bool showHUD = true}) async {
     _groupId = groupId;
-    groupDetail.value = null; // Clear previous details to avoid leaking old data
+    groupDetail.value =
+        null; // Clear previous details to avoid leaking old data
     groupName = '';
     groupMembers = '';
     groupCreatedBy = '';
@@ -343,10 +359,9 @@ class GroupDetailsScreenController extends GetxController {
 
     try {
       final accessToken = StorageService.token;
-      final token =
-          (accessToken != null && accessToken.isNotEmpty)
-              ? 'Bearer $accessToken'
-              : null;
+      final token = (accessToken != null && accessToken.isNotEmpty)
+          ? 'Bearer $accessToken'
+          : null;
 
       final response = await _networkCaller.getRequest(
         ApiConstants.featchSingleGroupDetailsApi(groupId),
@@ -370,8 +385,11 @@ class GroupDetailsScreenController extends GetxController {
 
           // Update legacy variables with server data to ensure consistency across pages
           groupName = detail.name;
-          groupMembers = '${detail.members.length} member${detail.members.length == 1 ? '' : 's'}';
-          groupCreatedBy = detail.ownerName.isNotEmpty ? 'Created by ${detail.ownerName}' : '';
+          groupMembers =
+              '${detail.members.length} member${detail.members.length == 1 ? '' : 's'}';
+          groupCreatedBy = detail.ownerName.isNotEmpty
+              ? 'Created by ${detail.ownerName}'
+              : '';
           groupDescription = detail.description;
           groupImage = detail.photoUrl;
 
@@ -400,13 +418,94 @@ class GroupDetailsScreenController extends GetxController {
     }
   }
 
+  void ensureReportForGroupLoaded(String? groupId) {
+    final id = groupId ?? _groupId ?? groupDetail.value?.groupId;
+    if (id == null || id.isEmpty) return;
+
+    final fetchKey = _buildReportFetchKey(id);
+    if (_lastReportFetchKey == fetchKey || isReportsLoading.value) return;
+    fetchReportForGroup(groupId: id);
+  }
+
+  Future<void> fetchReportForGroup({String? groupId}) async {
+    final id = groupId ?? _groupId ?? groupDetail.value?.groupId;
+    if (id == null || id.isEmpty) {
+      AppLoggerHelper.error(
+        '[GroupDetails] fetchReportForGroup failed: Group ID is missing',
+      );
+      return;
+    }
+
+    final fetchKey = _buildReportFetchKey(id);
+    _lastReportFetchKey = fetchKey;
+    isReportsLoading.value = true;
+    reportsErrorMessage.value = '';
+
+    try {
+      final accessToken = StorageService.token;
+      final token = (accessToken != null && accessToken.isNotEmpty)
+          ? 'Bearer $accessToken'
+          : null;
+
+      final url = ApiConstants.getReportForGroupApi(
+        groupId: id,
+        species: _selectedSpeciesQuery,
+        timeframe: _selectedTimeQuery,
+        fishingMethod: _selectedMethodQuery,
+        depthMinFt: _selectedDepthRange?[0],
+        depthMaxFt: _selectedDepthRange?[1],
+      );
+
+      final response = await _networkCaller.getRequest(url, token: token);
+
+      if (response.isSuccess) {
+        final body = response.responseData;
+        AppLoggerHelper.info(
+          '[GroupDetails] fetchReportForGroup success | '
+          'statusCode: ${response.statusCode} | '
+          'body: $body',
+        );
+
+        final rawData = body is Map ? body['data'] : null;
+        if (rawData is List) {
+          final fetchedReports = rawData
+              .whereType<Map>()
+              .map(
+                (item) =>
+                    GroupReportItem.fromJson(Map<String, dynamic>.from(item)),
+              )
+              .toList();
+          reports.assignAll(fetchedReports);
+        } else {
+          reports.clear();
+        }
+      } else {
+        reportsErrorMessage.value = response.errorMessage;
+        reports.clear();
+        AppLoggerHelper.error(
+          '[GroupDetails] fetchReportForGroup failed | '
+          'statusCode: ${response.statusCode} | '
+          'error: ${response.errorMessage}',
+        );
+      }
+    } catch (e) {
+      reportsErrorMessage.value = 'Something went wrong. Please try again.';
+      reports.clear();
+      AppLoggerHelper.error('[GroupDetails] fetchReportForGroup exception', e);
+    } finally {
+      isReportsLoading.value = false;
+    }
+  }
+
   // ── Update group details ────────────────────────────────────────────
   Future<void> updateGroup() async {
     FocusManager.instance.primaryFocus?.unfocus();
 
     final id = _groupId ?? groupDetail.value?.groupId;
     if (id == null || id.isEmpty) {
-      AppLoggerHelper.error('[GroupDetails] updateGroup failed: Group ID is missing');
+      AppLoggerHelper.error(
+        '[GroupDetails] updateGroup failed: Group ID is missing',
+      );
       CommonMessage.showMessage(
         title: 'Error',
         message: 'Group ID is missing. Please reload the group.',
@@ -497,7 +596,9 @@ class GroupDetailsScreenController extends GetxController {
   Future<void> leaveGroup() async {
     final id = _groupId ?? groupDetail.value?.groupId;
     if (id == null || id.isEmpty) {
-      AppLoggerHelper.error('[GroupDetails] leaveGroup failed: Group ID is missing');
+      AppLoggerHelper.error(
+        '[GroupDetails] leaveGroup failed: Group ID is missing',
+      );
       CommonMessage.showMessage(
         title: 'Error',
         message: 'Group ID is missing. Please reload the group.',
@@ -582,7 +683,8 @@ class GroupDetailsScreenController extends GetxController {
             : '');
     groupCreatedBy =
         args['groupCreatedBy'] as String? ??
-        (groupDetail.value?.ownerName != null && groupDetail.value!.ownerName.isNotEmpty
+        (groupDetail.value?.ownerName != null &&
+                groupDetail.value!.ownerName.isNotEmpty
             ? 'Created by ${groupDetail.value!.ownerName}'
             : '');
     groupDescription =
@@ -619,20 +721,66 @@ class GroupDetailsScreenController extends GetxController {
     return detail.createdBy == currentUserId;
   }
 
+  String _buildReportFetchKey(String groupId) {
+    return [
+      groupId,
+      _selectedSpeciesQuery ?? '',
+      _selectedTimeQuery ?? '',
+      _selectedMethodQuery ?? '',
+      _selectedDepthRange?.join('-') ?? '',
+    ].join('|');
+  }
+
+  String? get _selectedSpeciesQuery {
+    final value = selectedReportSpecies.value;
+    if (value == null || value == 'All Species') return null;
+    return value;
+  }
+
+  String? get _selectedTimeQuery {
+    final value = selectedReportTime.value;
+    if (value == null || value == 'All Time') return null;
+    return value;
+  }
+
+  String? get _selectedMethodQuery {
+    final value = selectedReportMethod.value;
+    if (value == null || value == 'All Methods') return null;
+    return value.trim().toUpperCase().replaceAll(' ', '_');
+  }
+
+  List<int>? get _selectedDepthRange {
+    final value = selectedReportDepth.value;
+    if (value == null || value == 'All Depths') return null;
+    final match = RegExp(r'^(\d+)-(\d+)ft$').firstMatch(value);
+    if (match == null) return null;
+    return [int.parse(match.group(1)!), int.parse(match.group(2)!)];
+  }
+
   void selectReportSpecies(String species) {
-    selectedReportSpecies.value = species;
+    selectedReportSpecies.value = species == 'All Species' ? null : species;
+    _refetchReportsForCurrentGroup();
   }
 
   void selectReportDepth(String depth) {
-    selectedReportDepth.value = depth;
+    selectedReportDepth.value = depth == 'All Depths' ? null : depth;
+    _refetchReportsForCurrentGroup();
   }
 
   void selectReportMethod(String method) {
-    selectedReportMethod.value = method;
+    selectedReportMethod.value = method == 'All Methods' ? null : method;
+    _refetchReportsForCurrentGroup();
   }
 
   void selectReportTime(String time) {
-    selectedReportTime.value = time;
+    selectedReportTime.value = time == 'All Time' ? null : time;
+    _refetchReportsForCurrentGroup();
+  }
+
+  void _refetchReportsForCurrentGroup() {
+    final id = _groupId ?? groupDetail.value?.groupId;
+    if (id == null || id.isEmpty) return;
+    fetchReportForGroup(groupId: id);
   }
 
   void resetReportFilters() {
@@ -640,6 +788,7 @@ class GroupDetailsScreenController extends GetxController {
     selectedReportDepth.value = null;
     selectedReportMethod.value = null;
     selectedReportTime.value = null;
+    _lastReportFetchKey = null;
   }
 
   void selectInviteMethod(GroupInviteMethod method) {
@@ -663,7 +812,9 @@ class GroupDetailsScreenController extends GetxController {
 
     final id = _groupId ?? groupDetail.value?.groupId;
     if (id == null || id.isEmpty) {
-      AppLoggerHelper.error('[GroupDetails] inviteSelectedFriends failed: Group ID is missing');
+      AppLoggerHelper.error(
+        '[GroupDetails] inviteSelectedFriends failed: Group ID is missing',
+      );
       CommonMessage.showMessage(
         title: 'Error',
         message: 'Group ID is missing. Please reload the group.',
@@ -681,10 +832,7 @@ class GroupDetailsScreenController extends GetxController {
 
       final response = await _networkCaller.postRequest(
         ApiConstants.generateGroupInvitationCodeApi(id),
-        body: {
-          'type': 'USER',
-          'inviteeUserIds': selectedFriendIds.toList(),
-        },
+        body: {'type': 'USER', 'inviteeUserIds': selectedFriendIds.toList()},
         token: token,
       );
 
@@ -699,7 +847,9 @@ class GroupDetailsScreenController extends GetxController {
         final int invitedCount = selectedFriendIds.length;
         closeInviteMembersSheet();
         _showInviteFeedback(
-          invitedCount == 1 ? '1 friend invited' : '$invitedCount friends invited',
+          invitedCount == 1
+              ? '1 friend invited'
+              : '$invitedCount friends invited',
         );
 
         if (_isCurrentUserGroupOwner()) {
@@ -717,7 +867,10 @@ class GroupDetailsScreenController extends GetxController {
         );
       }
     } catch (e) {
-      AppLoggerHelper.error('[GroupDetails] inviteSelectedFriends exception', e);
+      AppLoggerHelper.error(
+        '[GroupDetails] inviteSelectedFriends exception',
+        e,
+      );
       CommonMessage.showMessage(
         title: 'Error',
         message: 'Something went wrong. Please try again.',
@@ -737,7 +890,9 @@ class GroupDetailsScreenController extends GetxController {
   Future<void> inviteWithCode() async {
     final id = _groupId ?? groupDetail.value?.groupId;
     if (id == null || id.isEmpty) {
-      AppLoggerHelper.error('[GroupDetails] inviteWithCode failed: Group ID is missing');
+      AppLoggerHelper.error(
+        '[GroupDetails] inviteWithCode failed: Group ID is missing',
+      );
       CommonMessage.showMessage(
         title: 'Error',
         message: 'Group ID is missing. Please reload the group.',
@@ -755,9 +910,7 @@ class GroupDetailsScreenController extends GetxController {
 
       final response = await _networkCaller.postRequest(
         ApiConstants.generateGroupInvitationCodeApi(id),
-        body: {
-          'type': 'CODE',
-        },
+        body: {'type': 'CODE'},
         token: token,
       );
 
@@ -775,7 +928,9 @@ class GroupDetailsScreenController extends GetxController {
           if (code != null && code.isNotEmpty) {
             inviteCode.value = code;
           } else {
-            AppLoggerHelper.error('[GroupDetails] inviteCode not found in response data');
+            AppLoggerHelper.error(
+              '[GroupDetails] inviteCode not found in response data',
+            );
           }
         }
       } else {
@@ -800,16 +955,78 @@ class GroupDetailsScreenController extends GetxController {
     }
   }
 
-  void sendEmailInvites() {
-    final int emailCount = parsedInviteEmails.length;
-    if (emailCount == 0) return;
+  Future<void> sendEmailInvites() async {
+    final emails = parsedInviteEmails;
+    if (emails.isEmpty) return;
 
-    closeInviteMembersSheet();
-    _showInviteFeedback(
-      emailCount == 1
-          ? 'Invite sent to 1 email'
-          : 'Invites sent to $emailCount emails',
-    );
+    final id = _groupId ?? groupDetail.value?.groupId;
+    if (id == null || id.isEmpty) {
+      AppLoggerHelper.error(
+        '[GroupDetails] sendEmailInvites failed: Group ID is missing',
+      );
+      CommonMessage.showMessage(
+        title: 'Error',
+        message: 'Group ID is missing. Please reload the group.',
+      );
+      return;
+    }
+
+    await EasyLoading.show(status: 'Sending invitations...');
+
+    try {
+      final accessToken = StorageService.token;
+      final token = (accessToken != null && accessToken.isNotEmpty)
+          ? 'Bearer $accessToken'
+          : null;
+
+      for (final email in emails) {
+        final response = await _networkCaller.postRequest(
+          ApiConstants.generateGroupInvitationCodeApi(id),
+          body: {'type': 'EMAIL', 'inviteeEmail': email},
+          token: token,
+        );
+
+        if (!response.isSuccess) {
+          AppLoggerHelper.error(
+            '[GroupDetails] sendEmailInvites failed | '
+            'email: $email | '
+            'statusCode: ${response.statusCode} | '
+            'error: ${response.errorMessage}',
+          );
+          CommonMessage.showMessage(
+            title: 'Failed',
+            message: response.errorMessage,
+          );
+          return;
+        }
+
+        AppLoggerHelper.info(
+          '[GroupDetails] sendEmailInvites success | '
+          'email: $email | '
+          'statusCode: ${response.statusCode} | '
+          'body: ${response.responseData}',
+        );
+      }
+
+      closeInviteMembersSheet();
+      _showInviteFeedback(
+        emails.length == 1
+            ? 'Invite sent to 1 email'
+            : 'Invites sent to ${emails.length} emails',
+      );
+
+      if (_isCurrentUserGroupOwner()) {
+        fetchPendingGroupInvites(showHUD: false);
+      }
+    } catch (e) {
+      AppLoggerHelper.error('[GroupDetails] sendEmailInvites exception', e);
+      CommonMessage.showMessage(
+        title: 'Error',
+        message: 'Something went wrong. Please try again.',
+      );
+    } finally {
+      await EasyLoading.dismiss();
+    }
   }
 
   void closeInviteMembersSheet([BuildContext? context]) {
@@ -943,10 +1160,7 @@ class GroupDetailsScreenController extends GetxController {
         );
       }
     } catch (e) {
-      AppLoggerHelper.error(
-        '[GroupDetails] revokeGroupInvite exception',
-        e,
-      );
+      AppLoggerHelper.error('[GroupDetails] revokeGroupInvite exception', e);
       CommonMessage.showMessage(
         title: 'Error',
         message: 'Something went wrong. Please try again.',
@@ -960,7 +1174,9 @@ class GroupDetailsScreenController extends GetxController {
   Future<void> removeMember(GroupDetailMember member) async {
     final groupId = _groupId ?? groupDetail.value?.groupId;
     if (groupId == null || groupId.isEmpty) {
-      AppLoggerHelper.error('[GroupDetails] removeMember failed: Group ID is missing');
+      AppLoggerHelper.error(
+        '[GroupDetails] removeMember failed: Group ID is missing',
+      );
       CommonMessage.showMessage(
         title: 'Error',
         message: 'Group ID is missing. Please reload the group.',

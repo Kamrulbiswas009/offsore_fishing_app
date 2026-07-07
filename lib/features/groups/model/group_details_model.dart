@@ -14,6 +14,7 @@ class GroupReportItem {
   final String note;
   final int confirmations;
   final String zone;
+  final String createdBy;
 
   const GroupReportItem({
     required this.title,
@@ -24,7 +25,91 @@ class GroupReportItem {
     required this.note,
     required this.confirmations,
     required this.zone,
+    this.createdBy = '',
   });
+
+  factory GroupReportItem.fromJson(Map<String, dynamic> json) {
+    final speciesList = json['species'] as List?;
+    final speciesNames = speciesList
+        ?.map((item) {
+          if (item is! Map) return null;
+          return item['speciesName']?.toString();
+        })
+        .whereType<String>()
+        .where((name) => name.trim().isNotEmpty)
+        .join(', ');
+
+    return GroupReportItem(
+      title: speciesNames == null || speciesNames.isEmpty
+          ? 'Unknown species'
+          : speciesNames,
+      author: _readCreatedBy(json),
+      timeAgo: _formatTimeAgo(json['submittedAt']?.toString()),
+      depth: '${json['waterDepthFt'] ?? 0}ft',
+      technique: _formatBackendLabel(json['fishingMethod']?.toString()),
+      note: json['notes']?.toString() ?? '',
+      confirmations: _readConfirmations(json),
+      zone:
+          json['zoneId']?.toString() ??
+          ((json['zone'] is Map) ? json['zone']['zoneId']?.toString() : null) ??
+          'Unknown',
+      createdBy: _readCreatedBy(json),
+    );
+  }
+
+  static int _readConfirmations(Map<String, dynamic> json) {
+    final biteConfirmations = json['biteConfirmations'];
+    if (biteConfirmations is Map) {
+      return (biteConfirmations['confirmed'] as num?)?.toInt() ?? 0;
+    }
+    return 0;
+  }
+
+  static String _readCreatedBy(Map<String, dynamic> json) {
+    final createdBy = json['createdBy']?.toString();
+    if (createdBy != null && createdBy.isNotEmpty) return createdBy;
+
+    final user = json['user'];
+    if (user is Map) {
+      final name = user['name']?.toString();
+      if (name != null && name.isNotEmpty) return name;
+    }
+
+    return 'Unknown';
+  }
+
+  static String _formatTimeAgo(String? timestamp) {
+    if (timestamp == null || timestamp.isEmpty) return 'Unknown time';
+    try {
+      final dateTime = DateTime.parse(timestamp).toLocal();
+      final difference = DateTime.now().difference(dateTime);
+
+      if (difference.isNegative || difference.inSeconds < 60) {
+        return 'just now';
+      }
+      if (difference.inMinutes < 60) {
+        return '${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago';
+      }
+      if (difference.inHours < 24) {
+        return '${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago';
+      }
+      return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
+    } catch (_) {
+      return 'Unknown time';
+    }
+  }
+
+  static String _formatBackendLabel(String? value) {
+    if (value == null || value.isEmpty) return 'Unknown';
+    return value
+        .split('_')
+        .where((word) => word.isNotEmpty)
+        .map(
+          (word) =>
+              '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}',
+        )
+        .join(' ');
+  }
 }
 
 class GroupChatMessage {
@@ -128,10 +213,7 @@ class PendingGroupInviteInvitee {
   final String name;
   final String email;
 
-  const PendingGroupInviteInvitee({
-    required this.name,
-    required this.email,
-  });
+  const PendingGroupInviteInvitee({required this.name, required this.email});
 
   factory PendingGroupInviteInvitee.fromJson(Map<String, dynamic> json) {
     return PendingGroupInviteInvitee(
@@ -156,11 +238,14 @@ class PendingGroupInviteItem {
 
   factory PendingGroupInviteItem.fromJson(Map<String, dynamic> json) {
     final rawInvitee = json['invitee'] as Map<String, dynamic>? ?? {};
+    final inviteeJson = Map<String, dynamic>.from(rawInvitee);
+    inviteeJson['email'] ??= json['inviteeEmail'];
+
     return PendingGroupInviteItem(
       id: (json['id'] as String?) ?? '',
       groupId: (json['groupId'] as String?) ?? '',
       status: (json['status'] as String?) ?? '',
-      invitee: PendingGroupInviteInvitee.fromJson(rawInvitee),
+      invitee: PendingGroupInviteInvitee.fromJson(inviteeJson),
     );
   }
 }

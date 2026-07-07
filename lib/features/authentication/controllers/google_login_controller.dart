@@ -68,7 +68,7 @@ class GoogleLoginController extends GetxController {
         'Firebase Google auth success: uid=${userCredential.user?.uid}',
       );
       AppLoggerHelper.info('Firebase idToken: ${firebaseIdToken ?? 'null'}');
-      Get.offAll(() => const MainScreen());
+      Get.offAll(() =>  MainScreen());
     } on GoogleSignInException catch (error) {
       if (error.code == GoogleSignInExceptionCode.canceled) {
         AppLoggerHelper.info('Google Sign-In cancelled by user.');

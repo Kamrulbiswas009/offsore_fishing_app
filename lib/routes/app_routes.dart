@@ -156,7 +156,7 @@ class AppRoute {
     ),
     GetPage(
       name: homeMainScreen,
-      page: () => const MainScreen(),
+      page: () =>  MainScreen(),
       transition: Transition.leftToRight,
     ),
     GetPage(

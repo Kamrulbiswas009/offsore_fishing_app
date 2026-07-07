@@ -99,7 +99,7 @@ class LoginController extends GetxController {
     }
 
     await _requestLocationPermission();
-    Get.offAll(() => const MainScreen());
+    Get.offAll(() =>  MainScreen());
   }
 
   Future<void> _requestLocationPermission() async {
