@@ -8,6 +8,7 @@ import 'package:paytonpieper/core/services/network_caller.dart';
 import 'package:paytonpieper/core/services/storage_service.dart';
 import 'package:paytonpieper/core/utils/constants/api_constants.dart';
 import 'package:paytonpieper/core/utils/logging/logger.dart';
+import 'package:paytonpieper/core/models/species_node.dart';
 
 
 class SummaryController extends GetxController {
@@ -137,14 +138,7 @@ class SummaryController extends GetxController {
     selectedReportType.value = "";
   }
 
-  final List<String> speciesList = [
-    "Tuna",
-    "Marlin",
-    "Mahi",
-    "Snapper",
-    "Grouper",
-    "Wahoo",
-  ];
+  final List<String> speciesList = speciesHierarchy.expand((node) => node.allSelectableLeafNames).toList();
   final List<String> depthList = [
     "0-50 ft",
     "50-100 ft",

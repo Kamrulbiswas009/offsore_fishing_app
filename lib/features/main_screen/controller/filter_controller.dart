@@ -1,9 +1,10 @@
 import 'package:get/get.dart';
+import 'package:paytonpieper/core/models/species_node.dart';
 
 class FilterController extends GetxController {
   // Species Selection
   var selectedSpecies = <String>[].obs;
-  final List<String> speciesList = ["Tuna", "Snapper", "Grouper", "Mahi", "Wahoo", "Marlin"];
+  final List<String> speciesList = speciesHierarchy.expand((node) => node.allSelectableLeafNames).toList();
 
   // Depth Range
   var depthValue = 250.0.obs;

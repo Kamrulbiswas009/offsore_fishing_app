@@ -7,6 +7,7 @@ import 'package:paytonpieper/features/report_main/report_catch2/controller/repor
 import 'package:paytonpieper/core/common/widgets/custom_button.dart';
 import '../../../../core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/services/sync_service.dart';
+import 'package:paytonpieper/features/report_main/report_catch2/screen/species_drill_down_bottom_sheet.dart';
 
 class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
   /// Optional coordinates passed from manual map location picker.
@@ -395,16 +396,37 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
             ),
           ),
           SizedBox(height: 15.h),
-          Obx(
-            () => _customDropdown(
-              items: controller.speciesOptions,
-              selectedValue: "Select Species", // Constant hint value
-              hint: "Select Species",
-              onChanged: (val) {
-                if (val != null && val != "Select Species") {
-                  controller.addSpecies(val);
-                }
-              },
+          GestureDetector(
+            onTap: () {
+              showModalBottomSheet(
+                context: Get.context!,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => SpeciesDrillDownBottomSheet(
+                  onSpeciesSelected: (speciesName) {
+                    controller.addSpecies(speciesName);
+                    Navigator.pop(context);
+                  },
+                ),
+              );
+            },
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
+              decoration: BoxDecoration(
+                color: AppColors.blue1B2134Color,
+                borderRadius: BorderRadius.circular(8.r),
+                border: Border.all(color: AppColors.blue153A56Color),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Select Species",
+                    style: getTextStyle(color: AppColors.greyC8D0DBColor),
+                  ),
+                  const Icon(Icons.keyboard_arrow_down, color: Colors.white),
+                ],
+              ),
             ),
           ),
           Obx(

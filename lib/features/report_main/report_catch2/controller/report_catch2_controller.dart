@@ -7,6 +7,7 @@ import 'package:paytonpieper/features/report_main/offline_report/screen/offline_
 import 'package:paytonpieper/features/submit_report/screen/submit_report_screen.dart';
 import 'package:paytonpieper/core/services/sync_service.dart';
 import 'package:paytonpieper/features/report_main/report_catch/controller/report_catch_step1_screen.dart';
+import 'package:paytonpieper/core/models/species_node.dart';
 
 class ReportCatch2Controller extends GetxController {
   @override
@@ -30,14 +31,7 @@ class ReportCatch2Controller extends GetxController {
   var isNothingCaught = false.obs;
 
   // Species Selection options
-  var speciesOptions = [
-    "Tuna",
-    "Snapper",
-    "Marlin",
-    "Grouper",
-    "Wahoo",
-    "Mahi",
-  ].obs;
+  var speciesOptions = speciesHierarchy.expand((node) => node.allSelectableLeafNames).toList().obs;
   var selectedSpeciesList = <String>[].obs;
 
   // Fishing Details (Dynamic Quantities)
@@ -226,22 +220,12 @@ class ReportCatch2Controller extends GetxController {
     return "MID_COLUMN";
   }
 
-  String _mapSpeciesToLeaf(String name) {
-    final clean = name.trim().toUpperCase();
-    if (clean == "TUNA") return "Yellowfin Tuna";
-    if (clean == "SNAPPER") return "Red Snapper";
-    if (clean == "MARLIN") return "Blue Marlin";
-    if (clean == "GROUPER") return "Red Grouper";
-    if (clean == "MAHI MAHI") return "Mahi";
-    return name;
-  }
-
   Map<String, dynamic> buildReportPayload({required String visibility, String? groupId}) {
     final speciesList = <Map<String, dynamic>>[];
     if (!isNothingCaught.value) {
       for (var name in selectedSpeciesList) {
         speciesList.add({
-          "speciesName": _mapSpeciesToLeaf(name),
+          "speciesName": name,
           "quantity": quantities[name] ?? 1,
         });
       }

@@ -12,6 +12,7 @@ import 'package:paytonpieper/core/utils/logging/logger.dart';
 import 'package:paytonpieper/features/groups/model/group_details_model.dart';
 import 'package:paytonpieper/features/groups/model/group_model.dart';
 import 'package:paytonpieper/core/common/widgets/common_message.dart';
+import 'package:paytonpieper/core/models/species_node.dart';
 import 'package:paytonpieper/features/groups/controller/group_main_screen_controller.dart';
 
 
@@ -70,9 +71,9 @@ class GroupDetailsScreenController extends GetxController {
   String groupImage = '';
   final RxString inviteCode = ''.obs;
 
-  final GroupReportFilterOption speciesFilter = const GroupReportFilterOption(
+  final GroupReportFilterOption speciesFilter = GroupReportFilterOption(
     label: 'Species',
-    options: ['Tuna', 'Snapper', 'Grouper', 'Mahi', 'Wahoo', 'Marlin'],
+    options: speciesHierarchy.expand((node) => node.allSelectableLeafNames).toList(),
   );
   final GroupReportFilterOption depthFilter = const GroupReportFilterOption(
     label: 'Depth',
