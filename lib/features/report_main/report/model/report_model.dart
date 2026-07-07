@@ -1,4 +1,5 @@
 class FishingReport {
+  final String? id;
   final String title;
   final String timeAgo;
   final String depth;
@@ -11,6 +12,7 @@ class FishingReport {
   final String type;
 
   FishingReport({
+    this.id,
     required this.title,
     required this.timeAgo,
     required this.depth,
