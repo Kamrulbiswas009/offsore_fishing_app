@@ -600,7 +600,7 @@ class SummaryController extends GetxController {
       final lat = selectedZone.value?.location.latitude ?? 28.375;
       final lng = selectedZone.value?.location.longitude ?? -89.125;
 
-      final url = "https://api.stormglass.io/v2/weather/point?lat=$lat&lng=$lng&params=windSpeed,windDirection,waveHeight,waterTemperature,airTemperature,cloudCover";
+      final url = "https://api.stormglass.io/v2/weather/point?lat=$lat&lng=$lng&params=windSpeed,windDirection,waveHeight,waterTemperature,airTemperature,cloudCover,swellDirection,swellPeriod";
 
       final response = await network.getRequest(
         url,
@@ -757,6 +757,59 @@ class SummaryController extends GetxController {
     final val = extractSgValue(data['cloudCover']);
     if (val == null) return "25%";
     return "${val.toInt()}%";
+  }
+
+  String get marineWindSpeed {
+    final data = selectedDayNowEntry;
+    if (data == null) return "12";
+    final val = extractSgValue(data['windSpeed']);
+    if (val == null) return "12";
+    final mph = val * 2.237;
+    return mph.toStringAsFixed(0);
+  }
+
+  String get marineWindDirection => currentWindDirection;
+
+  String get marineWaveHeight {
+    final data = selectedDayNowEntry;
+    if (data == null) return "2.5";
+    final val = extractSgValue(data['waveHeight']);
+    if (val == null) return "2.5";
+    final feet = val * 3.281;
+    return feet.toStringAsFixed(1);
+  }
+
+  String get marineWaterTemp {
+    final data = selectedDayNowEntry;
+    if (data == null) return "78°";
+    final val = extractSgValue(data['waterTemperature']);
+    if (val == null) return "78°";
+    final f = (val * 9 / 5) + 32;
+    return "${f.toStringAsFixed(0)}°";
+  }
+
+  String get currentSwellDirection {
+    final data = selectedDayNowEntry;
+    if (data == null) return "SE";
+    final val = extractSgValue(data['swellDirection']);
+    if (val == null) return "SE";
+    return degreesToCardinal(val);
+  }
+
+  String get currentSwellPeriod {
+    final data = selectedDayNowEntry;
+    if (data == null) return "9–12s";
+    final val = extractSgValue(data['swellPeriod']);
+    if (val == null) return "9–12s";
+    return "${val.toStringAsFixed(0)}s";
+  }
+
+  String get currentSwellPeriodSeconds {
+    final data = selectedDayNowEntry;
+    if (data == null) return "8 seconds";
+    final val = extractSgValue(data['swellPeriod']);
+    if (val == null) return "8 seconds";
+    return "${val.toStringAsFixed(0)} seconds";
   }
 
   double? extractSgValue(dynamic field) {
