@@ -54,7 +54,7 @@ class NetworkCaller {
     String? token,
   }) async {
     log('POST Request: $url');
-    log('Request Body: ${jsonEncode(_redactSensitiveData(body))}');
+    log('Request Body: ${body != null ? jsonEncode(_redactSensitiveData(body)) : 'EMPTY'}');
 
     try {
       final Response response = await post(
@@ -63,7 +63,7 @@ class NetworkCaller {
           'Content-type': 'application/json',
           if (token != null && token.isNotEmpty) 'Authorization': token,
         },
-        body: jsonEncode(body),
+        body: body != null ? jsonEncode(body) : null,
       ).timeout(Duration(seconds: timeoutDuration));
       return _handleResponse(response);
     } catch (e) {
@@ -78,7 +78,7 @@ class NetworkCaller {
     String? token,
   }) async {
     log('PATCH Request: $url');
-    log('Request Body: ${jsonEncode(_redactSensitiveData(body))}');
+    log('Request Body: ${body != null ? jsonEncode(_redactSensitiveData(body)) : 'EMPTY'}');
 
     try {
       final Response response = await patch(
@@ -87,7 +87,7 @@ class NetworkCaller {
           'Content-type': 'application/json',
           if (token != null && token.isNotEmpty) 'Authorization': token,
         },
-        body: jsonEncode(body),
+        body: body != null ? jsonEncode(body) : null,
       ).timeout(Duration(seconds: timeoutDuration));
       return _handleResponse(response);
     } catch (e) {

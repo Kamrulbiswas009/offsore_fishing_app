@@ -4,6 +4,16 @@ This document provides a comprehensive analysis of the **PaytonPieper** project,
 
 ---
 
+## Recent Feature Progress & Accomplishments
+
+The project has recently achieved several critical milestones:
+- **Hierarchical Species Drill-Down Selector**: Designed a nested tree taxonomy ([SpeciesNode](file:///Users/betopia/kamrul's Project/paytonpieper/lib/core/models/species_node.dart)) and built an interactive bottom-sheet selector ([SpeciesDrillDownBottomSheet](file:///Users/betopia/kamrul's Project/paytonpieper/lib/features/report_main/report_catch2/screen/species_drill_down_bottom_sheet.dart)), enabling clean categories (e.g., Pelagic > Marlin > Blue Marlin) and restricting selection to leaf species.
+- **StormGlass API Weather Integration**: Integrated the weather forecast endpoint in [SummaryController](file:///Users/betopia/kamrul's Project/paytonpieper/lib/features/report_main/summary/controller/summary_details_controller.dart), converting metric parameters to imperial values (wind speed, cardinal wind direction mapping, wave height, water temperature, swell direction/period) and rendering them dynamically in [SummaryTabWidget](file:///Users/betopia/kamrul's Project/paytonpieper/lib/features/report_main/summary/widgets/summary_tab_widget.dart).
+- **API Optimization & Rate-Limit Protections**: Implemented a 10-second request debounce worker (`_debounceWorker`) in [MapScreenController](file:///Users/betopia/kamrul's Project/paytonpieper/lib/features/map/controller/map_screen_controller.dart) for active zone queries, and a gesture debounce timer (`_gridDebounce`) in [ZoneMapScreen](file:///Users/betopia/kamrul's Project/paytonpieper/lib/features/map/screen/zone_map_screen.dart) to prevent duplicate API requests and unnecessary GeoJSON redraws.
+- **Zone Summary API Integration**: Connected [SummaryController](file:///Users/betopia/kamrul's Project/paytonpieper/lib/features/report_main/summary/controller/summary_details_controller.dart) to `/api/v1/zones/summary` to fetch and render zone activity logs, top caught species, hourly timing statistics, and AI-powered pattern intelligence.
+
+---
+
 ## 1. Map Screen Architecture & Features Deep Dive
 
 The **Map Screen** (`ZoneMapScreen` / `MapScreenController`) provides interactive, real-time offshore intelligence in the Gulf of Mexico (GOM). It displays fishing activity using a custom data-driven geo-grid layer overlaid on Mapbox satellite imagery.
@@ -140,6 +150,8 @@ This table details the implementation status of all endpoints defined in `ApiCon
 | `submitReportApi` | `/reports` | **POST** | `VisibilitySharingController` | **COMPLETED** | Submits a report. If offline, triggers local SQLite cache insertion. |
 | `getRegionReportsApi` | `/zones/reports?regionCode=GOM&scope=region`| **GET** | `SummaryController` & `MapScreenController` | **COMPLETED** | Fetches historical reports in the GOM region to populate feeds and map grids. |
 | `getZoneSummaryApi` | `/zones/summary` | **GET** | `SummaryController` | **COMPLETED** | Fetches metrics (Top Species, AI summaries, Hit Rate, Hourly Histograms). |
+| `confirmReportApi` | `/reports/{reportId}/confirm`| **POST** | `SummaryController` | **COMPLETED** | Submits a bite confirmation request to update a report's confirm count. |
+| `rejectReportApi` | `/reports/{reportId}/reject`| **POST** | `SummaryController` | **COMPLETED** | Submits a bite rejection request to decrease/reject a report's confirm count. |
 
 ---
 
@@ -162,3 +174,41 @@ The offline repository uses a single SQLite table database `offline_sync.db` to 
   * `payload`: `TEXT` (JSON serialized report body)
   * `createdAt`: `TEXT` (Timestamp)
   * `queueStatus`: `TEXT` (Status, defaults to `PENDING`)
+
+### 4.3 Hierarchical Species Selector
+To prevent cluttered, flat species lists and structured reporting errors, a custom hierarchical taxonomy is modeled.
+* **Model Class**: [SpeciesNode](file:///Users/betopia/kamrul's Project/paytonpieper/lib/core/models/species_node.dart) (stores `name`, `isSelectable`, and child list `children`)
+* **Hierarchical Tree**: Starts from broad groups (e.g. `Pelagic`) and drills down through intermediate categories (e.g. `Tuna`, `Marlin`) into leaf nodes (`Yellowfin Tuna`, `Blue Marlin`).
+* **UX Implementation**: [SpeciesDrillDownBottomSheet](file:///Users/betopia/kamrul's Project/paytonpieper/lib/features/report_main/report_catch2/screen/species_drill_down_bottom_sheet.dart) manages an internal navigation path stack (`_nodeHistory`), rendering lists dynamically. Sub-directories display a chevron icon (`>`), while selectable leaf nodes display an orange add-circle icon.
+* **Selectability Rules**: Anglers can only choose valid leaf nodes (`isSelectable: true`), preventing incorrect submissions of general categories like "Tuna" or "Billfish".
+
+---
+
+## 5. Incomplete Features & Future Enhancements
+
+Although the core API integrations and workflows are fully operational, several components currently utilize fallback stubs or mock mechanisms:
+
+### 5.1 Dynamic Sharing Group Fetching
+* **Subsystem**: Submission Sharing Dialog
+* **Controller**: [VisibilitySharingController](file:///Users/betopia/kamrul's Project/paytonpieper/lib/features/submit_report/controller/submit_report_controller.dart)
+* **Current Status**: Uses a static mock array `privateGroups` to present selection targets (e.g., "Miami Offshore Crew", "Keys Anglers").
+* **Requirement**: Integrate a dynamic GET call to `ApiConstants.featchGroupListApi` inside the controller to fetch and display the user's actual group memberships.
+
+### 5.2 Offline Report Feed Static Merging
+* **Subsystem**: Offline Reports Feed
+* **Controller**: [OfflineReportsTabController](file:///Users/betopia/kamrul's Project/paytonpieper/lib/features/report_main/offline_report/controller/offline_report_controller.dart)
+* **Current Status**: Merges pending offline reports stored in SQLite with three static mock reports in `loadReports()` to populate the UI list.
+* **Requirement**: Transition the list logic to fetch and display actual user-submitted records from the server once online, or restrict the offline screen purely to local SQLite pending items.
+
+### 5.3 Weather API Error/Missing Slot Fallbacks
+* **Subsystem**: Summary Details Weather Tab
+* **Widget**: [WeatherTabWidget](file:///Users/betopia/kamrul's Project/paytonpieper/lib/features/report_main/summary/widgets/weather_tab_widget.dart)
+* **Current Status**: Falls back to static forecast slots (`_mockForecastDataFor`) if the StormGlass API response does not populate specific hourly forecast entries for the requested day.
+* **Requirement**: Design a more robust interpolation routine to fill missing values using neighboring hourly slots or utilize a secondary weather provider API (e.g., OpenWeatherMap) as a hot fallback.
+
+### 5.4 Report Details Dynamic Deep-Linking
+* **Subsystem**: Report Detail View
+* **Screen**: [ReportDetailsScreen](file:///Users/betopia/kamrul's Project/paytonpieper/lib/features/success_submit_report/screen/report_details_screen.dart)
+* **Current Status**: Reads arguments passed during screen navigation; if arguments are absent, it populates widgets with hardcoded mockup parameters.
+* **Requirement**: Implement a dynamic lookup endpoint (e.g., `GET /reports/{reportId}`) to fetch complete report metadata directly from the server when deep-linking.
+

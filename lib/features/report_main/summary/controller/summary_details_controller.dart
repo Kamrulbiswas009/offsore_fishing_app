@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:paytonpieper/features/map/model/map_zone_model.dart';
 import 'package:paytonpieper/features/report_main/report/model/report_model.dart';
 import 'package:paytonpieper/features/report_main/report_catch/screen/report_catch_screen.dart';
@@ -231,8 +232,10 @@ class SummaryController extends GetxController {
               final confirms = item['biteConfirmations']?['confirmed'] ?? 0;
               final author = item['user']?['name'];
               final type = item['visibility']?.toString().toLowerCase() ?? 'public';
+              final id = item['id']?.toString() ?? item['reportId']?.toString() ?? item['_id']?.toString();
 
               fetchedList.add(FishingReport(
+                id: id,
                 title: title,
                 timeAgo: timeAgo,
                 depth: depth,
@@ -411,23 +414,103 @@ class SummaryController extends GetxController {
   }
 
   void confirmBite(int index) {
-    Get.snackbar(
-      "Confirmed",
-      "You confirmed this bite!",
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: const Color(0xFF10B981),
-      colorText: Colors.white,
-    );
+    if (index < 0 || index >= filteredReports.length) return;
+    final report = filteredReports[index];
+    final reportId = report.id;
+
+    if (reportId == null || reportId.isEmpty) {
+      EasyLoading.showError("This report does not have a valid ID.");
+      return;
+    }
+
+    EasyLoading.show(status: 'Confirming bite...');
+    _confirmBiteAsync(reportId);
+  }
+
+  Future<void> _confirmBiteAsync(String reportId) async {
+    try {
+      final network = NetworkCaller();
+      final accessToken = StorageService.token;
+      final token = (accessToken != null && accessToken.isNotEmpty)
+          ? 'Bearer $accessToken'
+          : null;
+
+      final response = await network.postRequest(
+        ApiConstants.confirmReportApi(reportId),
+        token: token,
+      );
+
+      EasyLoading.dismiss();
+
+      if (response.isSuccess) {
+        AppLoggerHelper.info("Bite confirmed successfully for report ID: $reportId");
+        EasyLoading.showSuccess("Bite confirmed successfully!");
+        fetchReports();
+      } else {
+        AppLoggerHelper.error(
+          "Failed to confirm bite for report ID: $reportId. StatusCode: ${response.statusCode}, Error: ${response.errorMessage}",
+        );
+        EasyLoading.showError(
+          response.errorMessage.isNotEmpty
+              ? response.errorMessage
+              : "Failed to confirm bite.",
+        );
+      }
+    } catch (e) {
+      EasyLoading.dismiss();
+      AppLoggerHelper.error("Error confirming bite for report ID: $reportId", e);
+      EasyLoading.showError("An unexpected error occurred.");
+    }
   }
 
   void rejectBite(int index) {
-    Get.snackbar(
-      "Rejected",
-      "You rejected this bite!",
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: const Color(0xFFEF4444),
-      colorText: Colors.white,
-    );
+    if (index < 0 || index >= filteredReports.length) return;
+    final report = filteredReports[index];
+    final reportId = report.id;
+
+    if (reportId == null || reportId.isEmpty) {
+      EasyLoading.showError("This report does not have a valid ID.");
+      return;
+    }
+
+    EasyLoading.show(status: 'Rejecting bite...');
+    _rejectBiteAsync(reportId);
+  }
+
+  Future<void> _rejectBiteAsync(String reportId) async {
+    try {
+      final network = NetworkCaller();
+      final accessToken = StorageService.token;
+      final token = (accessToken != null && accessToken.isNotEmpty)
+          ? 'Bearer $accessToken'
+          : null;
+
+      final response = await network.postRequest(
+        ApiConstants.rejectReportApi(reportId),
+        token: token,
+      );
+
+      EasyLoading.dismiss();
+
+      if (response.isSuccess) {
+        AppLoggerHelper.info("Bite rejected successfully for report ID: $reportId");
+        EasyLoading.showSuccess("Bite rejected successfully!");
+        fetchReports();
+      } else {
+        AppLoggerHelper.error(
+          "Failed to reject bite for report ID: $reportId. StatusCode: ${response.statusCode}, Error: ${response.errorMessage}",
+        );
+        EasyLoading.showError(
+          response.errorMessage.isNotEmpty
+              ? response.errorMessage
+              : "Failed to reject bite.",
+        );
+      }
+    } catch (e) {
+      EasyLoading.dismiss();
+      AppLoggerHelper.error("Error rejecting bite for report ID: $reportId", e);
+      EasyLoading.showError("An unexpected error occurred.");
+    }
   }
   // Main Tab (Summary, Reports, Weather)
 
