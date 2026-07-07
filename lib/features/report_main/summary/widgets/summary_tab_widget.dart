@@ -889,7 +889,7 @@ class SummaryTabWidget extends StatelessWidget {
       final leftColor = colors[i % colors.length];
       final leftPct = "${(leftItem['percentage'] as num?)?.toInt() ?? 0}%";
 
-      Widget rightWidget = const Spacer();
+      Widget rightWidget = const SizedBox.shrink();
       if (i + 1 < dist.length) {
         final rightItem = dist[i + 1];
         final rightColor = colors[(i + 1) % colors.length];
@@ -911,7 +911,7 @@ class SummaryTabWidget extends StatelessWidget {
                 leftPct,
               ),
             ),
-            const Spacer(),
+            SizedBox(width: 16.w),
             Expanded(child: rightWidget),
           ],
         ),
@@ -934,8 +934,15 @@ class SummaryTabWidget extends StatelessWidget {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         SizedBox(width: 8.w),
-        Text(label, style: getTextStyle(fontSize: 12, color: Colors.white70)),
-        SizedBox(width: 25.w),
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: getTextStyle(fontSize: 12, color: Colors.white70),
+          ),
+        ),
+        SizedBox(width: 8.w),
         Text(
           percentage,
           style: getTextStyle(fontSize: 12, color: Colors.white),

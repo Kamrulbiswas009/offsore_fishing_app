@@ -77,6 +77,26 @@ class SummaryController extends GetxController {
     fetchWeather();
   }
 
+  void setZoneAndFetch(dynamic argument) {
+    if (argument is MapZoneModel) {
+      if (selectedZone.value?.id != argument.id) {
+        selectedZone.value = argument;
+        fetchReports();
+        fetchSummary();
+        fetchWeather();
+      }
+    }
+  }
+
+  void clearZoneAndFetch() {
+    if (selectedZone.value != null) {
+      selectedZone.value = null;
+      fetchReports();
+      fetchSummary();
+      fetchWeather();
+    }
+  }
+
   List<BarChartGroupData> get activityData {
     if (hourlyHistogram.isEmpty) {
       return List.generate(12, (index) => _makeGroupData(index, 0.0));
@@ -439,8 +459,12 @@ class SummaryController extends GetxController {
       }
       final token = 'Bearer $accessToken';
 
-      final zoneIdPart = selectedZone.value != null ? "&zoneId=${selectedZone.value!.name}" : "";
-      final url = "${ApiConstants.getZoneSummaryApi}?regionCode=GOM$zoneIdPart&page=1&limit=20";
+      final String url;
+      if (selectedZone.value != null) {
+        url = "${ApiConstants.getZoneSummaryApi}?zoneId=${selectedZone.value!.name}&page=1&limit=20";
+      } else {
+        url = "${ApiConstants.getZoneSummaryApi}?regionCode=GOM&page=1&limit=20";
+      }
 
       final response = await network.getRequest(
         url,
@@ -460,6 +484,45 @@ class SummaryController extends GetxController {
             summaryHitRate.value = "${overview['hitRate'] ?? 0}%";
             summaryNetworksCount.value = overview['networks'] ?? 0;
             summaryHotZonesCount.value = overview['hotZonesCount'] ?? 0;
+          }
+
+          // Update selectedZone dynamically with backend details if available
+          final singleZone = data['singleZoneDetails'];
+          if (singleZone != null && singleZone is Map<String, dynamic> && selectedZone.value != null) {
+            final current = selectedZone.value!;
+            double scoreVal = (singleZone['activityScore'] as num?)?.toDouble() ?? (current.activityScore * 100);
+            if (scoreVal > 1.0) {
+              scoreVal = scoreVal / 100.0;
+            }
+            final trendStr = singleZone['trendDirection'] as String?;
+            TrendDirection trendDir = TrendDirection.stable;
+            if (trendStr != null) {
+              if (trendStr.toUpperCase() == "RISING" || trendStr.toUpperCase() == "UP") {
+                trendDir = TrendDirection.rising;
+              } else if (trendStr.toUpperCase() == "FALLING" || trendStr.toUpperCase() == "DOWN") {
+                trendDir = TrendDirection.falling;
+              }
+            }
+
+            final reportsCount = overview?['reportsCount'] as int? ?? current.reports;
+
+            selectedZone.value = MapZoneModel(
+              id: current.id,
+              name: current.name,
+              location: current.location,
+              count: current.count,
+              level: scoreVal >= 0.7 ? ActivityLevel.high : (scoreVal >= 0.4 ? ActivityLevel.medium : ActivityLevel.low),
+              reports: reportsCount,
+              lastUpdated: current.lastUpdated,
+              activityScore: scoreVal,
+              topSpecies: current.topSpecies,
+              avgDepth: current.avgDepth,
+              trend: trendDir,
+              north: current.north,
+              south: current.south,
+              east: current.east,
+              west: current.west,
+            );
           }
 
           // 2. Top Species

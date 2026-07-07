@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/common/widgets/global_map_box.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
+import 'package:paytonpieper/features/map/model/map_zone_model.dart';
 
 import '../controller/summary_details_controller.dart';
 import '../widgets/report_tab_widget.dart';
@@ -17,6 +18,13 @@ class SummaryScreen extends GetView<SummaryController> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (isReportMainScreen) {
+        controller.clearZoneAndFetch();
+      } else if (Get.arguments is MapZoneModel) {
+        controller.setZoneAndFetch(Get.arguments);
+      }
+    });
     return Scaffold(
       backgroundColor: AppColors.backgroundDarkColor,
       body: SafeArea(
