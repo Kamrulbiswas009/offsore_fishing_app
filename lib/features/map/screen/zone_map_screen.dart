@@ -109,7 +109,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
               controller.mapCenter.latitude,
             ),
           ),
-          zoom: 12.0,
+          zoom: 10.0,
         ),
         mapbox.MapAnimationOptions(duration: 1000),
       );
@@ -211,7 +211,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
                   controller.mapCenter.latitude,
                 ),
               ),
-              zoom: 9.5,
+              zoom: 8.0,
             ),
             onMapCreated: _onMapCreated,
             onStyleLoadedListener: _onStyleLoaded,
