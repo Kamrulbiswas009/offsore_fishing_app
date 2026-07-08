@@ -43,18 +43,26 @@ class ApiConstants {
       "$baseUrl/user/all-user?search=$search&page=$page&limit=$limit&groupId=$groupId";
 
   static const String seeMyInvitationApi = "$baseUrl/invites/my-pending";
-  static String approveInvitationApi(String inviteId) => "$baseUrl/invites/$inviteId/accept";
-  static String rejectInvitationApi(String inviteId) => "$baseUrl/invites/$inviteId/decline";
-  static String showAllPendingInvitationOfAGroupApi(String groupId)=> "$baseUrl/invites/groups/$groupId";
-  static String revokeInvitationUserApi(String inviteId) => "$baseUrl/invites/$inviteId/revoke";
-  static String removeMemberFromGroupByOwnerApi(String groupId, String userId)=> 
-  "$baseUrl/groups/$groupId/members/$userId";
+  static String approveInvitationApi(String inviteId) =>
+      "$baseUrl/invites/$inviteId/accept";
+  static String rejectInvitationApi(String inviteId) =>
+      "$baseUrl/invites/$inviteId/decline";
+  static String showAllPendingInvitationOfAGroupApi(String groupId) =>
+      "$baseUrl/invites/groups/$groupId";
+  static String revokeInvitationUserApi(String inviteId) =>
+      "$baseUrl/invites/$inviteId/revoke";
+  static String removeMemberFromGroupByOwnerApi(
+    String groupId,
+    String userId,
+  ) => "$baseUrl/groups/$groupId/members/$userId";
 
   //Reports Flow ->
   static const String submitReportApi = "$baseUrl/reports";
-  static const String getRegionReportsApi = "$baseUrl/zones/reports?regionCode=GOM&scope=region";
+  static const String getRegionReportsApi =
+      "$baseUrl/zones/reports?regionCode=GOM&scope=region";
   static const String getZoneSummaryApi = "$baseUrl/zones/summary";
-  static String confirmReportApi(String reportId) => "$baseUrl/reports/$reportId/confirm";
+  
+ static String confirmReportApi(String reportId) => "$baseUrl/reports/$reportId/confirm";
   static String rejectReportApi(String reportId) => "$baseUrl/reports/$reportId/reject";
   static String getZonesApi({
     required double south,
@@ -64,3 +72,37 @@ class ApiConstants {
   }) => "$baseUrl/zones?south=$south&north=$north&west=$west&east=$east";
 }
 
+
+  //payment flow-
+  static const String getPaymentPlanApi = "$baseUrl/subscriptions/plans";
+  static const String createPaymentIntentPlanApi =
+      "$baseUrl/subscriptions/intent";
+
+  //report-get-for-group
+  static String getReportForGroupApi({
+    required String groupId,
+    String? species,
+    String? timeframe,
+    String? fishingMethod,
+    int? depthMinFt,
+    int? depthMaxFt,
+    int page = 1,
+    int limit = 20,
+  }) {
+    final queryParameters = <String, String>{
+      'groupId': groupId,
+      if (species != null && species.isNotEmpty) 'species': species,
+      if (timeframe != null && timeframe.isNotEmpty) 'timeframe': timeframe,
+      if (fishingMethod != null && fishingMethod.isNotEmpty)
+        'fishingMethod': fishingMethod,
+      if (depthMinFt != null) 'depthMinFt': depthMinFt.toString(),
+      if (depthMaxFt != null) 'depthMaxFt': depthMaxFt.toString(),
+      'page': page.toString(),
+      'limit': limit.toString(),
+    };
+
+    return Uri.parse(
+      "$baseUrl/reports",
+    ).replace(queryParameters: queryParameters).toString();
+  }
+}

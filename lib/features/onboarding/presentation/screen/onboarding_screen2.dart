@@ -19,7 +19,7 @@ class OnboardingScreen2 extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.blackColor,
       body: SafeArea(
-        top: true,
+        //top: true,
         bottom: true,
         child: Container(
           width: double.infinity,

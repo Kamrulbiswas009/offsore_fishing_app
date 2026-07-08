@@ -74,7 +74,61 @@ class GroupDetailsReportsTab extends GetView<GroupDetailsScreenController> {
           ),
         ),
         SizedBox(height: 18.h),
-        ...controller.reports.map((report) => _ReportCard(report: report)),
+        Obx(() {
+          if (controller.isReportsLoading.value) {
+            return Padding(
+              padding: EdgeInsets.symmetric(vertical: 40.h),
+              child: const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    AppColors.orangeFF6B35Color,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          if (controller.reportsErrorMessage.value.isNotEmpty) {
+            return Padding(
+              padding: EdgeInsets.symmetric(vertical: 40.h),
+              child: Center(
+                child: Text(
+                  controller.reportsErrorMessage.value,
+                  textAlign: TextAlign.center,
+                  style: getTextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.grey8B95A5Color,
+                    lineHeight: 10,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          if (controller.reports.isEmpty) {
+            return Padding(
+              padding: EdgeInsets.symmetric(vertical: 40.h),
+              child: Center(
+                child: Text(
+                  'No reports found.',
+                  style: getTextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.grey8B95A5Color,
+                    lineHeight: 10,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return Column(
+            children: controller.reports
+                .map((report) => _ReportCard(report: report))
+                .toList(),
+          );
+        }),
       ],
     );
   }
@@ -207,7 +261,7 @@ class _ReportCard extends StatelessWidget {
           ),
           SizedBox(height: 6.h),
           Text(
-            'by ${report.author} · ${report.timeAgo}',
+            'by ${report.createdBy.isNotEmpty ? report.createdBy : report.author} · ${report.timeAgo}',
             style: getTextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w400,
@@ -224,16 +278,17 @@ class _ReportCard extends StatelessWidget {
             ],
           ),
           SizedBox(height: 8.h),
-          Text(
-            '"${report.note}"',
-            style: getTextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: AppColors.grey8B95A5Color,
-              lineHeight: 10,
+          if (report.note.isNotEmpty)
+            Text(
+              '"${report.note}"',
+              style: getTextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: AppColors.grey8B95A5Color,
+                lineHeight: 10,
+              ),
             ),
-          ),
-          SizedBox(height: 12.h),
+          if (report.note.isNotEmpty) SizedBox(height: 12.h),
           Row(
             children: [
               Container(
@@ -252,7 +307,7 @@ class _ReportCard extends StatelessWidget {
 
                     SizedBox(width: 4.w),
                     Text(
-                      'Landed Fish',
+                      '${report.confirmations} Confirmation${report.confirmations == 1 ? '' : 's'}',
                       style: getTextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
@@ -263,16 +318,16 @@ class _ReportCard extends StatelessWidget {
                   ],
                 ),
               ),
-              SizedBox(width: 8.w),
-              Text(
-                '${report.confirmations} confirmations',
-                style: getTextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.grey8B95A5Color,
-                  lineHeight: 9,
-                ),
-              ),
+              // SizedBox(width: 8.w),
+              // Text(
+              //   '${report.confirmations} confirmations',
+              //   style: getTextStyle(
+              //     fontSize: 12,
+              //     fontWeight: FontWeight.w400,
+              //     color: AppColors.grey8B95A5Color,
+              //     lineHeight: 9,
+              //   ),
+              // ),
             ],
           ),
         ],

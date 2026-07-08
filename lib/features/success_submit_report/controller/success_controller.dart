@@ -37,6 +37,6 @@ class ReportSuccessController extends GetxController {
   }
 
   void close() {
-    Get.offAll(() => const MainScreen());
+    Get.offAll(() =>  MainScreen());
   }
 }

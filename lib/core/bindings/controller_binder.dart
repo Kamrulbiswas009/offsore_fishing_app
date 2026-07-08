@@ -12,6 +12,7 @@ import 'package:paytonpieper/features/groups/controller/group_main_screen_contro
 import 'package:paytonpieper/features/map/controller/map_screen_controller.dart';
 import 'package:paytonpieper/features/notification/controller/notification_screen_controller.dart';
 import 'package:paytonpieper/features/onboarding/controller/onboarding_screen_controller.dart';
+import 'package:paytonpieper/features/payment_service/controller/payment_service_controller.dart';
 import 'package:paytonpieper/features/profile_and_setting/controller/profile_main_screen_controller.dart';
 import 'package:paytonpieper/features/profile_and_setting/controller/settings_screen_controller.dart';
 import 'package:paytonpieper/features/report_main/offline_report/controller/offline_report_controller.dart';
@@ -77,9 +78,25 @@ class ControllerBinder extends Bindings {
       () => OfflineReportsTabController(),
       fenix: true,
     );
-    Get.lazyPut<SeeMyInvitationController>(()=>SeeMyInvitationController(),fenix: true);
-    Get.lazyPut<GoogleLoginController>(() => GoogleLoginController(), fenix: true);
-    Get.lazyPut<AppleLoginController>(() => AppleLoginController(), fenix: true);
-    Get.lazyPut<MessageServiceController>(() => MessageServiceController(), fenix: true);
+    Get.lazyPut<SeeMyInvitationController>(
+      () => SeeMyInvitationController(),
+      fenix: true,
+    );
+    Get.lazyPut<GoogleLoginController>(
+      () => GoogleLoginController(),
+      fenix: true,
+    );
+    Get.lazyPut<AppleLoginController>(
+      () => AppleLoginController(),
+      fenix: true,
+    );
+    Get.lazyPut<MessageServiceController>(
+      () => MessageServiceController(),
+      fenix: true,
+    );
+    Get.lazyPut<PaymentServiceController>(
+      () => PaymentServiceController(),
+      fenix: true,
+    );
   }
 }

@@ -28,6 +28,8 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>We request your location so we can enable location-based map features in a future update.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Allow camera access to scan payment cards securely.</string>
 	
 	<key>CFBundleURLTypes</key>
 	<array>

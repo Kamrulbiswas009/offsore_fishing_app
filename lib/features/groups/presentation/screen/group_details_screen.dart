@@ -56,6 +56,7 @@ class GroupDetailsScreen extends StatelessWidget {
   Widget _buildTabBody(GroupDetailsTab tab, String? groupId) {
     switch (tab) {
       case GroupDetailsTab.reports:
+        controller.ensureReportForGroupLoaded(groupId);
         return const GroupDetailsReportsTab();
       case GroupDetailsTab.chat:
         messageServiceController.openGroup(groupId);

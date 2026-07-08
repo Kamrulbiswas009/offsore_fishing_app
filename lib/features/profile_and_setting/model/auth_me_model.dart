@@ -15,6 +15,7 @@ class AuthMeModel {
   final DateTime? lastActive;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final UserSubscriptionModel? subscription;
 
   const AuthMeModel({
     required this.userId,
@@ -33,6 +34,7 @@ class AuthMeModel {
     required this.lastActive,
     required this.createdAt,
     required this.updatedAt,
+    required this.subscription,
   });
 
   factory AuthMeModel.fromJson(Map<String, dynamic> json) {
@@ -53,10 +55,50 @@ class AuthMeModel {
       lastActive: _parseDate(json['lastActive']),
       createdAt: _parseDate(json['createdAt']),
       updatedAt: _parseDate(json['updatedAt']),
+      subscription: json['subscription'] is Map
+          ? UserSubscriptionModel.fromJson(
+              Map<String, dynamic>.from(json['subscription'] as Map),
+            )
+          : null,
     );
   }
 
   static DateTime? _parseDate(dynamic value) {
     return value is String ? DateTime.tryParse(value) : null;
+  }
+}
+
+class UserSubscriptionModel {
+  final String id;
+  final String userId;
+  final String stripeCustomerId;
+  final String stripeSubscriptionId;
+  final String stripePriceId;
+  final String plan;
+  final String status;
+  final bool cancelAtPeriodEnd;
+
+  const UserSubscriptionModel({
+    required this.id,
+    required this.userId,
+    required this.stripeCustomerId,
+    required this.stripeSubscriptionId,
+    required this.stripePriceId,
+    required this.plan,
+    required this.status,
+    required this.cancelAtPeriodEnd,
+  });
+
+  factory UserSubscriptionModel.fromJson(Map<String, dynamic> json) {
+    return UserSubscriptionModel(
+      id: json['id'] as String? ?? '',
+      userId: json['userId'] as String? ?? '',
+      stripeCustomerId: json['stripeCustomerId'] as String? ?? '',
+      stripeSubscriptionId: json['stripeSubscriptionId'] as String? ?? '',
+      stripePriceId: json['stripePriceId'] as String? ?? '',
+      plan: json['plan'] as String? ?? '',
+      status: json['status'] as String? ?? '',
+      cancelAtPeriodEnd: json['cancelAtPeriodEnd'] as bool? ?? false,
+    );
   }
 }
