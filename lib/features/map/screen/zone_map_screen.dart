@@ -8,7 +8,6 @@ import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
-import 'package:paytonpieper/core/services/permissions/location_permission_service.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/main_screen/widgets/filter_dialog.dart';
@@ -38,7 +37,6 @@ class ZoneMapScreen extends StatefulWidget {
 class _ZoneMapScreenState extends State<ZoneMapScreen>
     with SingleTickerProviderStateMixin {
   final controller = Get.find<MapScreenController>();
-  final _locationService = LocationPermissionService();
 
   late final AnimationController _panelAnim;
   late final Animation<Offset> _slideAnim;
@@ -78,39 +76,29 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
 
   Future<void> _onMapCreated(mapbox.MapboxMap map) async {
     _mapboxMap = map;
+    await map.gestures.updateSettings(
+      mapbox.GesturesSettings(
+        scrollEnabled: true,
+        pinchToZoomEnabled: true,
+        rotateEnabled: true,
+        pitchEnabled: true,
+        doubleTapToZoomInEnabled: true,
+        doubleTouchToZoomOutEnabled: true,
+        quickZoomEnabled: true,
+        pinchPanEnabled: true,
+      ),
+    );
   }
 
   Future<void> _onStyleLoaded(mapbox.StyleLoadedEventData _) async {
     if (_layersReady) return;
     _layersReady = true;
     await controller.setupMapLayers(_mapboxMap!);
-    // Enable native Mapbox location puck (blue pulsing dot)
-    await _enableLocationComponent();
     // Populate grid for the initial camera position
     await _updateGridForViewport();
   }
 
-  // ── Location component (native Mapbox puck) ──────────────────────────────
 
-  Future<void> _enableLocationComponent() async {
-    final map = _mapboxMap;
-    if (map == null) return;
-    try {
-      await map.location.updateSettings(
-        mapbox.LocationComponentSettings(
-          enabled: true,
-          pulsingEnabled: true,
-          pulsingColor: const Color(0xFF00F0FF).value, // cyan pulsing ring
-          pulsingMaxRadius: 60.0,
-          showAccuracyRing: true,
-          accuracyRingColor: const Color(0x2200F0FF).value,
-          accuracyRingBorderColor: const Color(0x8800F0FF).value,
-        ),
-      );
-    } catch (_) {
-      // Location component unavailable (e.g. simulator without location)
-    }
-  }
 
   /// Requests permission then flies camera to the device position.
   Future<void> _goToMyLocation() async {
@@ -118,105 +106,31 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
     setState(() => _isLocating = true);
 
     try {
-      final result = await _locationService.requestLocationWhenInUse();
-
-      if (result != LocationPermissionResult.granted) {
-        Get.snackbar(
-          'Location Access',
-          result == LocationPermissionResult.permanentlyDenied
-              ? 'Location permission denied. Enable it in Settings.'
-              : 'Location permission is required to find your position.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: AppColors.blue0D2B43Color,
-          colorText: Colors.white,
-          margin: EdgeInsets.all(16.w),
-          borderRadius: 14.r,
-          duration: const Duration(seconds: 3),
-          icon: Icon(Icons.location_off, color: AppColors.blue00F0FFColor),
-        );
-        return;
-      }
-
       final map = _mapboxMap;
       if (map == null) return;
 
-      // Get current position via Mapbox's location provider
       final style = await map.style.isStyleLoaded();
       if (!style) return;
 
-      // Enable location component (ensure it's on)
-      await _enableLocationComponent();
-      // Fly to current position using Mapbox location manager
-      // We use setCamera because LocationComponent keeps the puck position internally
-      await map.location.updateSettings(
-        mapbox.LocationComponentSettings(
-          enabled: true,
-          pulsingEnabled: true,
-          pulsingColor: const Color(0xFF00F0FF).value,
-          pulsingMaxRadius: 60.0,
-          showAccuracyRing: true,
-          accuracyRingColor: const Color(0x2200F0FF).value,
-          accuracyRingBorderColor: const Color(0x8800F0FF).value,
+      // Animate camera to the Gulf of Mexico offshore (mock device location)
+      await map.easeTo(
+        mapbox.CameraOptions(
+          center: mapbox.Point(
+            coordinates: mapbox.Position(
+              controller.mapCenter.longitude,
+              controller.mapCenter.latitude,
+            ),
+          ),
+          zoom: 10.0,
         ),
+        mapbox.MapAnimationOptions(duration: 1000),
       );
-
-      // Use permission_handler to get coordinates, then fly camera
-      await _flyToDeviceLocation(map);
     } finally {
       if (mounted) setState(() => _isLocating = false);
     }
   }
 
-  /// Uses the platform location API (via permission_handler ecosystem) to
-  /// retrieve current coordinates and animate the camera there.
-  Future<void> _flyToDeviceLocation(mapbox.MapboxMap map) async {
-    try {
-      // Mapbox LocationComponent stores position internally;
-      // we animate camera by enabling tracking mode via StyleManager.
-      // As a cross-platform alternative we request through Mapbox viewport.
-      await map.easeTo(
-        mapbox.CameraOptions(zoom: 12.0),
-        mapbox.MapAnimationOptions(duration: 800),
-      );
 
-      // Access the device location through the system
-      // Mapbox LocationComponent can provide the last known position via
-      // setting the camera to follow the puck.
-      // We set followPuckViewportState to center on user.
-      // Since direct coordinate access needs geolocator, we use
-      // a workaround: Mapbox handles internally via its own location engine.
-      await map.location.updateSettings(
-        mapbox.LocationComponentSettings(
-          enabled: true,
-          puckBearingEnabled: true,
-          pulsingEnabled: true,
-          pulsingColor: const Color(0xFF00F0FF).value,
-          pulsingMaxRadius: 60.0,
-          showAccuracyRing: true,
-          accuracyRingColor: const Color(0x2200F0FF).value,
-          accuracyRingBorderColor: const Color(0x8800F0FF).value,
-        ),
-      );
-
-      // Use Mapbox's viewport to follow the puck
-      // This is the idiomatic way without an extra geolocator package
-      // ignore: experimental_member_use
-      setStateWithViewportAnimation(
-        () {
-          _viewportState = mapbox.FollowPuckViewportState(
-            zoom: 12.0,
-            bearing: mapbox.FollowPuckViewportStateBearingConstant(0.0),
-            pitch: 0.0,
-          );
-        },
-        transition: mapbox.DefaultViewportTransition(
-          maxDuration: const Duration(milliseconds: 1500),
-        ),
-      );
-    } catch (_) {
-      // Viewport transition or location unavailable — silently ignore
-    }
-  }
 
   // ── Camera change → grid refresh ────────────────────────────────────────
 
@@ -309,7 +223,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
                   controller.mapCenter.latitude,
                 ),
               ),
-              zoom: 9.5,
+              zoom: 8.0,
             ),
             onMapCreated: _onMapCreated,
             onStyleLoadedListener: _onStyleLoaded,
@@ -781,7 +695,7 @@ class _ZoneDetailPanel extends StatelessWidget {
                 padding: EdgeInsets.symmetric(vertical: 15.h),
               ),
               onPressed: () =>
-                  Get.to(() => SummaryScreen(isReportMainScreen: false)),
+                  Get.to(() => SummaryScreen(isReportMainScreen: false), arguments: zone),
               child: Text(
                 'View Full Details',
                 style: getTextStyle(

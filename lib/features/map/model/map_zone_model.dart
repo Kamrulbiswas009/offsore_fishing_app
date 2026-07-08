@@ -18,6 +18,12 @@ class MapZoneModel {
   final String avgDepth;
   final TrendDirection trend;
 
+  // Bounds
+  final double? north;
+  final double? south;
+  final double? east;
+  final double? west;
+
   const MapZoneModel({
     required this.id,
     required this.name,
@@ -30,6 +36,10 @@ class MapZoneModel {
     this.topSpecies = 'Unknown',
     this.avgDepth = '—',
     this.trend = TrendDirection.stable,
+    this.north,
+    this.south,
+    this.east,
+    this.west,
   });
 
   Color get color {

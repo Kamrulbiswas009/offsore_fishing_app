@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:paytonpieper/features/map/model/map_zone_model.dart';
 import 'package:paytonpieper/features/report_main/report/model/report_model.dart';
 import 'package:paytonpieper/features/report_main/report_catch/screen/report_catch_screen.dart';
@@ -8,6 +9,7 @@ import 'package:paytonpieper/core/services/network_caller.dart';
 import 'package:paytonpieper/core/services/storage_service.dart';
 import 'package:paytonpieper/core/utils/constants/api_constants.dart';
 import 'package:paytonpieper/core/utils/logging/logger.dart';
+import 'package:paytonpieper/core/models/species_node.dart';
 
 
 class SummaryController extends GetxController {
@@ -77,6 +79,26 @@ class SummaryController extends GetxController {
     fetchWeather();
   }
 
+  void setZoneAndFetch(dynamic argument) {
+    if (argument is MapZoneModel) {
+      if (selectedZone.value?.id != argument.id) {
+        selectedZone.value = argument;
+        fetchReports();
+        fetchSummary();
+        fetchWeather();
+      }
+    }
+  }
+
+  void clearZoneAndFetch() {
+    if (selectedZone.value != null) {
+      selectedZone.value = null;
+      fetchReports();
+      fetchSummary();
+      fetchWeather();
+    }
+  }
+
   List<BarChartGroupData> get activityData {
     if (hourlyHistogram.isEmpty) {
       return List.generate(12, (index) => _makeGroupData(index, 0.0));
@@ -117,14 +139,7 @@ class SummaryController extends GetxController {
     selectedReportType.value = "";
   }
 
-  final List<String> speciesList = [
-    "Tuna",
-    "Marlin",
-    "Mahi",
-    "Snapper",
-    "Grouper",
-    "Wahoo",
-  ];
+  final List<String> speciesList = speciesHierarchy.expand((node) => node.allSelectableLeafNames).toList();
   final List<String> depthList = [
     "0-50 ft",
     "50-100 ft",
@@ -217,8 +232,10 @@ class SummaryController extends GetxController {
               final confirms = item['biteConfirmations']?['confirmed'] ?? 0;
               final author = item['user']?['name'];
               final type = item['visibility']?.toString().toLowerCase() ?? 'public';
+              final id = item['id']?.toString() ?? item['reportId']?.toString() ?? item['_id']?.toString();
 
               fetchedList.add(FishingReport(
+                id: id,
                 title: title,
                 timeAgo: timeAgo,
                 depth: depth,
@@ -397,23 +414,103 @@ class SummaryController extends GetxController {
   }
 
   void confirmBite(int index) {
-    Get.snackbar(
-      "Confirmed",
-      "You confirmed this bite!",
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: const Color(0xFF10B981),
-      colorText: Colors.white,
-    );
+    if (index < 0 || index >= filteredReports.length) return;
+    final report = filteredReports[index];
+    final reportId = report.id;
+
+    if (reportId == null || reportId.isEmpty) {
+      EasyLoading.showError("This report does not have a valid ID.");
+      return;
+    }
+
+    EasyLoading.show(status: 'Confirming bite...');
+    _confirmBiteAsync(reportId);
+  }
+
+  Future<void> _confirmBiteAsync(String reportId) async {
+    try {
+      final network = NetworkCaller();
+      final accessToken = StorageService.token;
+      final token = (accessToken != null && accessToken.isNotEmpty)
+          ? 'Bearer $accessToken'
+          : null;
+
+      final response = await network.postRequest(
+        ApiConstants.confirmReportApi(reportId),
+        token: token,
+      );
+
+      EasyLoading.dismiss();
+
+      if (response.isSuccess) {
+        AppLoggerHelper.info("Bite confirmed successfully for report ID: $reportId");
+        EasyLoading.showSuccess("Bite confirmed successfully!");
+        fetchReports();
+      } else {
+        AppLoggerHelper.error(
+          "Failed to confirm bite for report ID: $reportId. StatusCode: ${response.statusCode}, Error: ${response.errorMessage}",
+        );
+        EasyLoading.showError(
+          response.errorMessage.isNotEmpty
+              ? response.errorMessage
+              : "Failed to confirm bite.",
+        );
+      }
+    } catch (e) {
+      EasyLoading.dismiss();
+      AppLoggerHelper.error("Error confirming bite for report ID: $reportId", e);
+      EasyLoading.showError("An unexpected error occurred.");
+    }
   }
 
   void rejectBite(int index) {
-    Get.snackbar(
-      "Rejected",
-      "You rejected this bite!",
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: const Color(0xFFEF4444),
-      colorText: Colors.white,
-    );
+    if (index < 0 || index >= filteredReports.length) return;
+    final report = filteredReports[index];
+    final reportId = report.id;
+
+    if (reportId == null || reportId.isEmpty) {
+      EasyLoading.showError("This report does not have a valid ID.");
+      return;
+    }
+
+    EasyLoading.show(status: 'Rejecting bite...');
+    _rejectBiteAsync(reportId);
+  }
+
+  Future<void> _rejectBiteAsync(String reportId) async {
+    try {
+      final network = NetworkCaller();
+      final accessToken = StorageService.token;
+      final token = (accessToken != null && accessToken.isNotEmpty)
+          ? 'Bearer $accessToken'
+          : null;
+
+      final response = await network.postRequest(
+        ApiConstants.rejectReportApi(reportId),
+        token: token,
+      );
+
+      EasyLoading.dismiss();
+
+      if (response.isSuccess) {
+        AppLoggerHelper.info("Bite rejected successfully for report ID: $reportId");
+        EasyLoading.showSuccess("Bite rejected successfully!");
+        fetchReports();
+      } else {
+        AppLoggerHelper.error(
+          "Failed to reject bite for report ID: $reportId. StatusCode: ${response.statusCode}, Error: ${response.errorMessage}",
+        );
+        EasyLoading.showError(
+          response.errorMessage.isNotEmpty
+              ? response.errorMessage
+              : "Failed to reject bite.",
+        );
+      }
+    } catch (e) {
+      EasyLoading.dismiss();
+      AppLoggerHelper.error("Error rejecting bite for report ID: $reportId", e);
+      EasyLoading.showError("An unexpected error occurred.");
+    }
   }
   // Main Tab (Summary, Reports, Weather)
 
@@ -439,8 +536,12 @@ class SummaryController extends GetxController {
       }
       final token = 'Bearer $accessToken';
 
-      final zoneIdPart = selectedZone.value != null ? "&zoneId=${selectedZone.value!.name}" : "";
-      final url = "${ApiConstants.getZoneSummaryApi}?regionCode=GOM$zoneIdPart&page=1&limit=20";
+      final String url;
+      if (selectedZone.value != null) {
+        url = "${ApiConstants.getZoneSummaryApi}?zoneId=${selectedZone.value!.name}&page=1&limit=20";
+      } else {
+        url = "${ApiConstants.getZoneSummaryApi}?regionCode=GOM&page=1&limit=20";
+      }
 
       final response = await network.getRequest(
         url,
@@ -460,6 +561,45 @@ class SummaryController extends GetxController {
             summaryHitRate.value = "${overview['hitRate'] ?? 0}%";
             summaryNetworksCount.value = overview['networks'] ?? 0;
             summaryHotZonesCount.value = overview['hotZonesCount'] ?? 0;
+          }
+
+          // Update selectedZone dynamically with backend details if available
+          final singleZone = data['singleZoneDetails'];
+          if (singleZone != null && singleZone is Map<String, dynamic> && selectedZone.value != null) {
+            final current = selectedZone.value!;
+            double scoreVal = (singleZone['activityScore'] as num?)?.toDouble() ?? (current.activityScore * 100);
+            if (scoreVal > 1.0) {
+              scoreVal = scoreVal / 100.0;
+            }
+            final trendStr = singleZone['trendDirection'] as String?;
+            TrendDirection trendDir = TrendDirection.stable;
+            if (trendStr != null) {
+              if (trendStr.toUpperCase() == "RISING" || trendStr.toUpperCase() == "UP") {
+                trendDir = TrendDirection.rising;
+              } else if (trendStr.toUpperCase() == "FALLING" || trendStr.toUpperCase() == "DOWN") {
+                trendDir = TrendDirection.falling;
+              }
+            }
+
+            final reportsCount = overview?['reportsCount'] as int? ?? current.reports;
+
+            selectedZone.value = MapZoneModel(
+              id: current.id,
+              name: current.name,
+              location: current.location,
+              count: current.count,
+              level: scoreVal >= 0.7 ? ActivityLevel.high : (scoreVal >= 0.4 ? ActivityLevel.medium : ActivityLevel.low),
+              reports: reportsCount,
+              lastUpdated: current.lastUpdated,
+              activityScore: scoreVal,
+              topSpecies: current.topSpecies,
+              avgDepth: current.avgDepth,
+              trend: trendDir,
+              north: current.north,
+              south: current.south,
+              east: current.east,
+              west: current.west,
+            );
           }
 
           // 2. Top Species
@@ -543,7 +683,7 @@ class SummaryController extends GetxController {
       final lat = selectedZone.value?.location.latitude ?? 28.375;
       final lng = selectedZone.value?.location.longitude ?? -89.125;
 
-      final url = "https://api.stormglass.io/v2/weather/point?lat=$lat&lng=$lng&params=windSpeed,windDirection,waveHeight,waterTemperature,airTemperature,cloudCover";
+      final url = "https://api.stormglass.io/v2/weather/point?lat=$lat&lng=$lng&params=windSpeed,windDirection,waveHeight,waterTemperature,airTemperature,cloudCover,swellDirection,swellPeriod";
 
       final response = await network.getRequest(
         url,
@@ -700,6 +840,59 @@ class SummaryController extends GetxController {
     final val = extractSgValue(data['cloudCover']);
     if (val == null) return "25%";
     return "${val.toInt()}%";
+  }
+
+  String get marineWindSpeed {
+    final data = selectedDayNowEntry;
+    if (data == null) return "12";
+    final val = extractSgValue(data['windSpeed']);
+    if (val == null) return "12";
+    final mph = val * 2.237;
+    return mph.toStringAsFixed(0);
+  }
+
+  String get marineWindDirection => currentWindDirection;
+
+  String get marineWaveHeight {
+    final data = selectedDayNowEntry;
+    if (data == null) return "2.5";
+    final val = extractSgValue(data['waveHeight']);
+    if (val == null) return "2.5";
+    final feet = val * 3.281;
+    return feet.toStringAsFixed(1);
+  }
+
+  String get marineWaterTemp {
+    final data = selectedDayNowEntry;
+    if (data == null) return "78°";
+    final val = extractSgValue(data['waterTemperature']);
+    if (val == null) return "78°";
+    final f = (val * 9 / 5) + 32;
+    return "${f.toStringAsFixed(0)}°";
+  }
+
+  String get currentSwellDirection {
+    final data = selectedDayNowEntry;
+    if (data == null) return "SE";
+    final val = extractSgValue(data['swellDirection']);
+    if (val == null) return "SE";
+    return degreesToCardinal(val);
+  }
+
+  String get currentSwellPeriod {
+    final data = selectedDayNowEntry;
+    if (data == null) return "9–12s";
+    final val = extractSgValue(data['swellPeriod']);
+    if (val == null) return "9–12s";
+    return "${val.toStringAsFixed(0)}s";
+  }
+
+  String get currentSwellPeriodSeconds {
+    final data = selectedDayNowEntry;
+    if (data == null) return "8 seconds";
+    final val = extractSgValue(data['swellPeriod']);
+    if (val == null) return "8 seconds";
+    return "${val.toStringAsFixed(0)} seconds";
   }
 
   double? extractSgValue(dynamic field) {

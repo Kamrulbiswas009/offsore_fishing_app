@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/services/sync_service.dart';
+import 'package:paytonpieper/core/models/species_node.dart';
 import '../model/offline_report_model.dart';
 
 class OfflineReportsTabController extends GetxController {
@@ -13,20 +14,13 @@ class OfflineReportsTabController extends GetxController {
   RxInt get pendingSyncCount => _syncService.pendingCount;
 
   // Filter Observables
-  var speciesFilter = "Tuna".obs;
+  var speciesFilter = speciesHierarchy.expand((node) => node.allSelectableLeafNames).first.obs;
   var depthFilter = "100-200 ft".obs;
   var techniqueFilter = "Trolling".obs;
   var timeFilter = "24h".obs;
 
   // Filter Options
-  final List<String> speciesOptions = [
-    "Tuna",
-    "Marlin",
-    "Mahi Mahi",
-    "Snapper",
-    "Grouper",
-    "Sailfish",
-  ];
+  final List<String> speciesOptions = speciesHierarchy.expand((node) => node.allSelectableLeafNames).toList();
   final List<String> depthOptions = [
     "0-50 ft",
     "50-100 ft",

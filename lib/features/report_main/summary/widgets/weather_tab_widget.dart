@@ -421,13 +421,13 @@ class WeatherTabWidget extends GetView<SummaryController> {
         icon: Icons.explore,
         iconColor: AppColors.blue00F0FFColor,
         label: 'Swell Direction',
-        value: controller.currentWindDirection,
+        value: controller.currentSwellDirection,
       ),
       _MarineItem(
         icon: Icons.waves,
         iconColor: const Color(0xFFE25301),
         label: 'Swell Period',
-        value: '8 seconds',
+        value: controller.currentSwellPeriodSeconds,
       ),
       _MarineItem(
         icon: Icons.thermostat,
@@ -1160,12 +1160,14 @@ class WeatherTabWidget extends GetView<SummaryController> {
     final windVal = controller.extractSgValue(entry['windSpeed']);
     final seasVal = controller.extractSgValue(entry['waveHeight']);
     final skyVal = controller.extractSgValue(entry['cloudCover']);
-    final swellDirVal = controller.extractSgValue(entry['windDirection']);
+    final swellDirVal = controller.extractSgValue(entry['swellDirection']);
+    final swellPeriodVal = controller.extractSgValue(entry['swellPeriod']);
     
     final wind = windVal != null ? (windVal * 2.237).toStringAsFixed(1) : "10";
     final seas = seasVal != null ? (seasVal * 3.281).toStringAsFixed(1) : "2.0";
     final sky = skyVal != null ? skyVal.toInt().toString() : "20";
     final swellDirStr = swellDirVal != null ? controller.degreesToCardinal(swellDirVal) : "East";
+    final swellPeriodStr = swellPeriodVal != null ? "${swellPeriodVal.toStringAsFixed(0)} sec" : "8 sec";
     
     IconData icon = Icons.wb_sunny_outlined;
     Color iconColor = const Color(0xFFFF5A36);
@@ -1193,7 +1195,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
       'seas': seas,
       'sky': sky,
       'swellDirection': swellDirStr,
-      'swellPeriod': '8 sec',
+      'swellPeriod': swellPeriodStr,
       'description': 'Real-time forecast powered by StormGlass API.',
     };
   }

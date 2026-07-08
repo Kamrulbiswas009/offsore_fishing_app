@@ -229,7 +229,7 @@ class SummaryTabWidget extends StatelessWidget {
       children: [
         _sectionTitle(
           IconPath.airIcon,
-          "Marine Conditions - Zone A-7",
+          "Marine Conditions - ${controller.selectedZone.value?.name ?? 'Zone A-7'}",
           iconColor: AppColors.blue00F0FFColor,
         ),
         Container(
@@ -254,15 +254,35 @@ class SummaryTabWidget extends StatelessWidget {
               IntrinsicHeight(
                 child: Row(
                   children: [
-                    _marineItem(IconPath.airIcon, "12", "mph SE"),
+                    _marineItem(
+                      IconPath.airIcon,
+                      controller.marineWindSpeed,
+                      "mph ${controller.marineWindDirection}",
+                    ),
                     _vDivider(),
-                    _marineItem(IconPath.waveIcon, "2.5", "ft"),
+                    _marineItem(
+                      IconPath.waveIcon,
+                      controller.marineWaveHeight,
+                      "ft",
+                    ),
                     _vDivider(),
-                    _marineItem(IconPath.thermometerIcon, "78°", "F"),
+                    _marineItem(
+                      IconPath.thermometerIcon,
+                      controller.marineWaterTemp,
+                      "F",
+                    ),
                     _vDivider(),
-                    _marineItem(IconPath.waveIcon, "Swell", "wave\ndirection"),
+                    _marineItem(
+                      IconPath.waveIcon,
+                      controller.currentSwellDirection,
+                      "wave\ndirection",
+                    ),
                     _vDivider(),
-                    _marineItem(IconPath.waveIcon, "9–12s", "wave\ninterval"),
+                    _marineItem(
+                      IconPath.waveIcon,
+                      controller.currentSwellPeriod,
+                      "wave\ninterval",
+                    ),
                   ],
                 ),
               ),
@@ -458,7 +478,7 @@ class SummaryTabWidget extends StatelessWidget {
                 fontSize: 12,
                 color: Colors.white70,
                 fontWeight: FontWeight.w400,
-                lineHeight: 16,
+                lineHeight: 8,
               ),
             ),
           ],
@@ -514,14 +534,15 @@ class SummaryTabWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: getTextStyle(
-            fontSize: 10,
-            color: AppColors.whiteColor.withOpacity(0.6),
-            fontWeight: FontWeight.w500,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            style: getTextStyle(
+              fontSize: 10,
+              color: AppColors.whiteColor.withOpacity(0.6),
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
         SizedBox(height: 5.h),
@@ -581,24 +602,26 @@ class SummaryTabWidget extends StatelessWidget {
             ],
           ),
           SizedBox(height: 25.h),
-          Row(
-            children: [
-              Expanded(
-                flex: 2,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Peak Window",
-                      style: getTextStyle(
-                        fontSize: 12,
-                        color: AppColors.whiteColor,
-                        lineHeight: 9,
-                        fontWeight: FontWeight.w400,
-                      ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 340;
+
+              final Widget peakWindowSection = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Peak Window",
+                    style: getTextStyle(
+                      fontSize: 12,
+                      color: AppColors.whiteColor,
+                      lineHeight: 9,
+                      fontWeight: FontWeight.w400,
                     ),
-                    SizedBox(height: 4.h),
-                    Text(
+                  ),
+                  SizedBox(height: 4.h),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
                       controller.peakWindow.value,
                       style: getTextStyle(
                         fontSize: 12,
@@ -607,18 +630,26 @@ class SummaryTabWidget extends StatelessWidget {
                         lineHeight: 9,
                       ),
                     ),
-                    SizedBox(height: 20.h),
-                    Text(
-                      "Most Effective\nTechnique",
-                      style: getTextStyle(
-                        fontSize: 12,
-                        color: AppColors.whiteColor,
-                        lineHeight: 9,
-                        fontWeight: FontWeight.w500,
-                      ),
+                  ),
+                ],
+              );
+
+              final Widget techniqueSection = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Most Effective\nTechnique",
+                    style: getTextStyle(
+                      fontSize: 12,
+                      color: AppColors.whiteColor,
+                      lineHeight: 9,
+                      fontWeight: FontWeight.w500,
                     ),
-                    SizedBox(height: 8.h),
-                    Container(
+                  ),
+                  SizedBox(height: 8.h),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Container(
                       padding: EdgeInsets.symmetric(
                         horizontal: 14.w,
                         vertical: 8.h,
@@ -638,77 +669,114 @@ class SummaryTabWidget extends StatelessWidget {
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              Expanded(
-                flex: 3,
-                child: SizedBox(
-                  height: 120.h,
-                  child: BarChart(
-                    BarChartData(
-                      barGroups: controller.activityData,
-                      borderData: FlBorderData(show: false),
-                      gridData: FlGridData(show: false),
-                      titlesData: FlTitlesData(
-                        show: true,
-                        leftTitles: const AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
-                        ),
-                        topTitles: const AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
-                        ),
-                        rightTitles: const AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
-                        ),
-                        bottomTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            getTitlesWidget: (value, meta) {
-                              final intVal = value.toInt();
-                              if (intVal == 0) {
-                                return Text(
-                                  "12am",
-                                  style: getTextStyle(
-                                    fontSize: 8,
-                                    color: Colors.white38,
-                                  ),
-                                );
-                              } else if (intVal == 6) {
-                                return Text(
-                                  "6am",
-                                  style: getTextStyle(
-                                    fontSize: 8,
-                                    color: Colors.white38,
-                                  ),
-                                );
-                              } else if (intVal == 12) {
-                                return Text(
-                                  "12pm",
-                                  style: getTextStyle(
-                                    fontSize: 8,
-                                    color: Colors.white38,
-                                  ),
-                                );
-                              } else if (intVal == 18) {
-                                return Text(
-                                  "6pm",
-                                  style: getTextStyle(
-                                    fontSize: 8,
-                                    color: Colors.white38,
-                                  ),
-                                );
-                              }
-                              return const SizedBox.shrink();
-                            },
-                          ),
+                  ),
+                ],
+              );
+
+              final Widget chartWidget = SizedBox(
+                height: 120.h,
+                child: BarChart(
+                  BarChartData(
+                    barGroups: controller.activityData,
+                    borderData: FlBorderData(show: false),
+                    gridData: FlGridData(show: false),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      leftTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, meta) {
+                            final intVal = value.toInt();
+                            if (intVal == 0) {
+                              return Text(
+                                "12am",
+                                style: getTextStyle(
+                                  fontSize: 8,
+                                  color: Colors.white38,
+                                ),
+                              );
+                            } else if (intVal == 6) {
+                              return Text(
+                                "6am",
+                                style: getTextStyle(
+                                  fontSize: 8,
+                                  color: Colors.white38,
+                                ),
+                              );
+                            } else if (intVal == 12) {
+                              return Text(
+                                "12pm",
+                                style: getTextStyle(
+                                  fontSize: 8,
+                                  color: Colors.white38,
+                                ),
+                              );
+                            } else if (intVal == 18) {
+                              return Text(
+                                "6pm",
+                                style: getTextStyle(
+                                  fontSize: 8,
+                                  color: Colors.white38,
+                                ),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          },
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              );
+
+              if (isNarrow) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: peakWindowSection),
+                        SizedBox(width: 16.w),
+                        Expanded(child: techniqueSection),
+                      ],
+                    ),
+                    SizedBox(height: 24.h),
+                    chartWidget,
+                  ],
+                );
+              } else {
+                return Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          peakWindowSection,
+                          SizedBox(height: 20.h),
+                          techniqueSection,
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: 20.w),
+                    Expanded(
+                      flex: 3,
+                      child: chartWidget,
+                    ),
+                  ],
+                );
+              }
+            },
           ),
         ],
       ),
@@ -889,7 +957,7 @@ class SummaryTabWidget extends StatelessWidget {
       final leftColor = colors[i % colors.length];
       final leftPct = "${(leftItem['percentage'] as num?)?.toInt() ?? 0}%";
 
-      Widget rightWidget = const Spacer();
+      Widget rightWidget = const SizedBox.shrink();
       if (i + 1 < dist.length) {
         final rightItem = dist[i + 1];
         final rightColor = colors[(i + 1) % colors.length];
@@ -911,7 +979,7 @@ class SummaryTabWidget extends StatelessWidget {
                 leftPct,
               ),
             ),
-            const Spacer(),
+            SizedBox(width: 16.w),
             Expanded(child: rightWidget),
           ],
         ),
@@ -934,8 +1002,15 @@ class SummaryTabWidget extends StatelessWidget {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         SizedBox(width: 8.w),
-        Text(label, style: getTextStyle(fontSize: 12, color: Colors.white70)),
-        SizedBox(width: 25.w),
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: getTextStyle(fontSize: 12, color: Colors.white70),
+          ),
+        ),
+        SizedBox(width: 8.w),
         Text(
           percentage,
           style: getTextStyle(fontSize: 12, color: Colors.white),

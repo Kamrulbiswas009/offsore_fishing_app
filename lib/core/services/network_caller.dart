@@ -54,7 +54,7 @@ class NetworkCaller {
     String? token,
   }) async {
     log('POST Request: $url');
-    log('Request Body: ${jsonEncode(_redactSensitiveData(body))}');
+    log('Request Body: ${body != null ? jsonEncode(_redactSensitiveData(body)) : 'EMPTY'}');
 
     try {
       final Response response = await post(
@@ -63,7 +63,7 @@ class NetworkCaller {
           'Content-type': 'application/json',
           if (token != null && token.isNotEmpty) 'Authorization': token,
         },
-        body: jsonEncode(body),
+        body: body != null ? jsonEncode(body) : null,
       ).timeout(Duration(seconds: timeoutDuration));
       return _handleResponse(response);
     } catch (e) {
@@ -78,7 +78,7 @@ class NetworkCaller {
     String? token,
   }) async {
     log('PATCH Request: $url');
-    log('Request Body: ${jsonEncode(_redactSensitiveData(body))}');
+    log('Request Body: ${body != null ? jsonEncode(_redactSensitiveData(body)) : 'EMPTY'}');
 
     try {
       final Response response = await patch(
@@ -87,7 +87,7 @@ class NetworkCaller {
           'Content-type': 'application/json',
           if (token != null && token.isNotEmpty) 'Authorization': token,
         },
-        body: jsonEncode(body),
+        body: body != null ? jsonEncode(body) : null,
       ).timeout(Duration(seconds: timeoutDuration));
       return _handleResponse(response);
     } catch (e) {
@@ -199,8 +199,24 @@ class NetworkCaller {
   // Handle response
   ResponseData _handleResponse(Response response) {
     log('Response Status: ${response.statusCode}');
-    final decodedResponse = jsonDecode(response.body);
-    log('Response Body: ${jsonEncode(_redactSensitiveData(decodedResponse))}');
+    
+    dynamic decodedResponse;
+    bool isJson = false;
+
+    try {
+      if (response.body.isNotEmpty) {
+        decodedResponse = jsonDecode(response.body);
+        isJson = true;
+        log('Response Body: ${jsonEncode(_redactSensitiveData(decodedResponse))}');
+      } else {
+        decodedResponse = '';
+      }
+    } catch (e) {
+      log('Failed to decode JSON response: $e');
+      decodedResponse = response.body;
+    }
+
+    final bool isMap = isJson && decodedResponse is Map;
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return ResponseData(
@@ -214,25 +230,32 @@ class NetworkCaller {
         isSuccess: false,
         statusCode: response.statusCode,
         responseData: decodedResponse,
-        errorMessage: _extractErrorMessages(
-          decodedResponse['errorSources'],
-          fallback: decodedResponse['message'],
-        ),
+        errorMessage: isMap
+            ? _extractErrorMessages(
+                decodedResponse['errorSources'],
+                fallback: decodedResponse['message'],
+              )
+            : 'Validation error',
       );
     } else if (response.statusCode == 500) {
       return ResponseData(
         isSuccess: false,
         statusCode: response.statusCode,
         responseData: '',
-        errorMessage:
-            decodedResponse['message'] ?? 'An unexpected error occurred!',
+        errorMessage: isMap && decodedResponse['message'] != null
+            ? decodedResponse['message']
+            : 'An unexpected error occurred!',
       );
     } else {
       return ResponseData(
         isSuccess: false,
         statusCode: response.statusCode,
         responseData: decodedResponse,
-        errorMessage: decodedResponse['message'] ?? 'An unknown error occurred',
+        errorMessage: isMap && decodedResponse['message'] != null
+            ? decodedResponse['message']
+            : (decodedResponse is String && decodedResponse.isNotEmpty
+                ? decodedResponse
+                : 'An unknown error occurred'),
       );
     }
   }

@@ -245,24 +245,31 @@ class ReportTabWidget extends GetView<SummaryController> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Text(
-                    report.title,
-                    style: getTextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+              Expanded(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        report.title,
+                        style: getTextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                  SizedBox(width: 5.w),
-                  Icon(
-                    Icons.check_circle,
-                    color: AppColors.blue00F0FFColor,
-                    size: 16.sp,
-                  ),
-                ],
+                    SizedBox(width: 5.w),
+                    Icon(
+                      Icons.check_circle,
+                      color: AppColors.blue00F0FFColor,
+                      size: 16.sp,
+                    ),
+                  ],
+                ),
               ),
+              SizedBox(width: 10.w),
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                 decoration: BoxDecoration(
@@ -286,6 +293,8 @@ class ReportTabWidget extends GetView<SummaryController> {
                 ? "by ${report.author} . ${report.timeAgo}"
                 : report.timeAgo,
             style: getTextStyle(fontSize: 12, color: AppColors.grey8B95A5Color),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           SizedBox(height: 8.h),
 
@@ -320,63 +329,68 @@ class ReportTabWidget extends GetView<SummaryController> {
           SizedBox(height: 12.h),
 
           // Action Buttons
-          Wrap(
-            spacing: 12.w,
-            runSpacing: 8.h,
+          Row(
             children: [
               // Clickable Confirm Button
-              InkWell(
-                onTap: () => controller.confirmBite(index),
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFFF8C42), Color(0xFFE25301)],
-                    ),
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Image.asset(IconPath.hookIcon, width: 16.w, height: 16.h),
-                      SizedBox(width: 4.w),
-                      Text(
-                        "Confirm Bite",
-                        style: getTextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          lineHeight: 20,
-                        ),
+              Expanded(
+                child: InkWell(
+                  onTap: () => controller.confirmBite(index),
+                  borderRadius: BorderRadius.circular(10.r),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 10.h),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFF8C42), Color(0xFFE25301)],
                       ),
-                    ],
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(IconPath.hookIcon, width: 16.w, height: 16.h),
+                        SizedBox(width: 4.w),
+                        Text(
+                          "Confirm Bite",
+                          style: getTextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            lineHeight: 20,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
+              SizedBox(width: 12.w),
               // Clickable Reject Button
-              InkWell(
-                onTap: () => controller.rejectBite(index),
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEF4444),
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Image.asset(IconPath.hookIcon, width: 16.w, height: 16.h),
-                      SizedBox(width: 4.w),
-                      Text(
-                        "Reject Bite",
-                        style: getTextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          lineHeight: 20,
+              Expanded(
+                child: InkWell(
+                  onTap: () => controller.rejectBite(index),
+                  borderRadius: BorderRadius.circular(10.r),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 10.h),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEF4444),
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(IconPath.hookIcon, width: 16.w, height: 16.h),
+                        SizedBox(width: 4.w),
+                        Text(
+                          "Reject Bite",
+                          style: getTextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            lineHeight: 20,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -409,6 +423,8 @@ class ReportTabWidget extends GetView<SummaryController> {
           ),
         ],
       ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 
