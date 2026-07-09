@@ -70,13 +70,12 @@ class ApiConstants {
     required double west,
     required double east,
   }) => "$baseUrl/zones?south=$south&north=$north&west=$west&east=$east";
-}
+//}
 
 
   //payment flow-
-  static const String getPaymentPlanApi = "$baseUrl/subscriptions/plans";
-  static const String createPaymentIntentPlanApi =
-      "$baseUrl/subscriptions/intent";
+  static String getPaymentPlanApi = "$baseUrl/subscriptions/plans";
+  static const String createPaymentIntentPlanApi = "$baseUrl/subscriptions/intent";
 
   //report-get-for-group
   static String getReportForGroupApi({
