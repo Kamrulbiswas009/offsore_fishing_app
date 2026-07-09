@@ -5,7 +5,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
 import '../model/map_zone_model.dart';
-import '../utils/zone_grid_helper.dart';
+import 'package:paytonpieper/utils/zone_calculator.dart';
 import 'package:paytonpieper/core/services/network_caller.dart';
 import 'package:paytonpieper/core/services/storage_service.dart';
 import 'package:paytonpieper/core/utils/constants/api_constants.dart';
@@ -23,10 +23,9 @@ class MapScreenController extends GetxController {
   // Map centre – Gulf of Mexico offshore
   final LatLng mapCenter = const LatLng(28.5, -88.5);
 
-  // Grid origin pinned to real-world SW corner
-  static const LatLng gridOrigin = LatLng(20.0, -100.0);
-
-  late final ZoneGridHelper gridHelper;
+  // Viewport grid caching to avoid unnecessary GeoJSON updates
+  List<String> _lastRenderedZoneIds = [];
+  String _lastActiveStateSignature = '';
 
   // cell-id → {level, count}
   final Map<String, Map<String, dynamic>> activityMap = {};
@@ -53,10 +52,6 @@ class MapScreenController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    gridHelper = const ZoneGridHelper(
-      origin: gridOrigin,
-      cellMiles: 8.0,
-    );
     loadMockData();
 
 
@@ -205,18 +200,20 @@ class MapScreenController extends GetxController {
     LatLng sw,
     LatLng ne,
   ) async {
+    // Instantly draw/update the local grid boundaries for the viewport
+    await drawLocalGridInBounds(map, sw, ne);
+
     if (isInitialFetch) {
       isInitialFetch = false;
       await fetchZones(
-        south: 28.0,
-        north: 29.0,
-        west: -90.0,
-        east: -88.0,
+        south: sw.latitude,
+        north: ne.latitude,
+        west: sw.longitude,
+        east: ne.longitude,
         map: map,
       );
     } else {
-      // সরাসরি API কল না করে reactive variable-এ ডাটা পুশ করা হচ্ছে।
-      // এর ফলে ম্যাপ যতবারই স্ক্রোল হোক, ১০ সেকেন্ডের ডিবান্সার এটিকে লক করে রাখবে।
+      // API call debounce
       _cameraBounds.value = {
         'south': sw.latitude,
         'north': ne.latitude,
@@ -227,27 +224,182 @@ class MapScreenController extends GetxController {
     }
   }
 
+  /// Instantly draws grid boundaries in the viewport.
+  Future<void> drawLocalGridInBounds(
+    mapbox.MapboxMap map,
+    LatLng sw,
+    LatLng ne,
+  ) async {
+    try {
+      final localZones = ZoneCalculator.zonesInBounds(
+        south: sw.latitude,
+        north: ne.latitude,
+        west: sw.longitude,
+        east: ne.longitude,
+      );
+
+      final zoneIds = localZones.map((z) => z.zoneId).toList();
+      final activeMap = {for (var z in activeZones) z.id: z};
+      
+      // Calculate a signature representing active state within visible cells
+      final activeStateSignature = localZones.map((z) {
+        final az = activeMap[z.zoneId];
+        return '${z.zoneId}_${az?.level.name ?? 'empty'}_${az?.count ?? 0}';
+      }).join('|');
+
+      bool isIdentical = zoneIds.length == _lastRenderedZoneIds.length;
+      if (isIdentical) {
+        for (int i = 0; i < zoneIds.length; i++) {
+          if (zoneIds[i] != _lastRenderedZoneIds[i]) {
+            isIdentical = false;
+            break;
+          }
+        }
+      }
+
+      // Viewport grid lines and active colors match cache; skip Mapbox refresh
+      if (isIdentical && _lastActiveStateSignature == activeStateSignature) {
+        return;
+      }
+
+      _lastRenderedZoneIds = zoneIds;
+      _lastActiveStateSignature = activeStateSignature;
+
+      final features = localZones.map((zone) {
+        final activeZone = activeMap[zone.zoneId];
+        final level = activeZone?.level.name ?? 'empty';
+        final count = activeZone?.count ?? 0;
+
+        return {
+          'type': 'Feature',
+          'id': zone.zoneId,
+          'geometry': {
+            'type': 'Polygon',
+            'coordinates': [
+              [
+                [zone.boundWest, zone.boundSouth],
+                [zone.boundEast, zone.boundSouth],
+                [zone.boundEast, zone.boundNorth],
+                [zone.boundWest, zone.boundNorth],
+                [zone.boundWest, zone.boundSouth],
+              ]
+            ],
+          },
+          'properties': {
+            'id': zone.zoneId,
+            'activityLevel': level,
+            'reportCount': count,
+            'label': count > 0 ? count.toString() : '',
+          },
+        };
+      }).toList();
+
+      final cellJson = {
+        'type': 'FeatureCollection',
+        'features': features,
+      };
+
+      final labelFeatures = <Map<String, dynamic>>[];
+      for (final zone in localZones) {
+        final activeZone = activeMap[zone.zoneId];
+        final count = activeZone?.count ?? 0;
+        if (count == 0) continue;
+        labelFeatures.add({
+          'type': 'Feature',
+          'geometry': {
+            'type': 'Point',
+            'coordinates': [zone.centerLng, zone.centerLat],
+          },
+          'properties': {
+            'label': count.toString(),
+            'activityLevel': activeZone?.level.name ?? 'empty',
+          },
+        });
+      }
+
+      final labelJson = {
+        'type': 'FeatureCollection',
+        'features': labelFeatures,
+      };
+
+      final cellSrc =
+          await map.style.getSource(kGridCellSourceId) as mapbox.GeoJsonSource?;
+      cellSrc?.updateGeoJSON(jsonEncode(cellJson));
+
+      final labelSrc =
+          await map.style.getSource(kGridLabelSourceId) as mapbox.GeoJsonSource?;
+      labelSrc?.updateGeoJSON(jsonEncode(labelJson));
+    } catch (_) {
+      // Ignore style transition errors
+    }
+  }
+
+  /// Refreshes the grid overlay on the map by retrieving latest coordinates.
+  Future<void> refreshGridOnMap(mapbox.MapboxMap map) async {
+    try {
+      final cam = await map.getCameraState();
+      final bounds = await map.coordinateBoundsForCamera(
+        mapbox.CameraOptions(
+          center: cam.center,
+          zoom: cam.zoom,
+          bearing: cam.bearing,
+          pitch: cam.pitch,
+          padding: mapbox.MbxEdgeInsets(top: 0, left: 0, bottom: 0, right: 0),
+        ),
+      );
+
+      final sw = LatLng(
+        bounds.southwest.coordinates.lat.toDouble(),
+        bounds.southwest.coordinates.lng.toDouble(),
+      );
+      final ne = LatLng(
+        bounds.northeast.coordinates.lat.toDouble(),
+        bounds.northeast.coordinates.lng.toDouble(),
+      );
+
+      await drawLocalGridInBounds(map, sw, ne);
+    } catch (_) {}
+  }
+
   // ── Tap → zone lookup ─────────────────────────────────────────────────
 
   MapZoneModel? zoneForCoordinate(double lat, double lng) {
+    final zoneInfo = ZoneCalculator.fromLatLng(lat, lng);
+    if (zoneInfo == null) return null;
+
+    selectedCellId.value = zoneInfo.zoneId;
+
+    // Check if we have an entry in activeZones matching this zoneId
+    MapZoneModel? matched;
     for (final z in activeZones) {
-      if (z.south != null && z.north != null && z.west != null && z.east != null) {
-        if (lat >= z.south! && lat <= z.north! && lng >= z.west! && lng <= z.east!) {
-          selectedCellId.value = z.id;
-          return z;
-        }
-      } else {
-        // Fallback to grid helper if bounds are not available
-        final cell = gridHelper.cellForCoordinate(LatLng(lat, lng));
-        if (cell == null) continue;
-        final zCell = gridHelper.cellForCoordinate(z.location);
-        if (zCell?.id == cell.id) {
-          selectedCellId.value = cell.id;
-          return z;
-        }
+      if (z.id == zoneInfo.zoneId) {
+        matched = z;
+        break;
       }
     }
-    return null;
+
+    if (matched != null) {
+      return matched;
+    }
+
+    // Return a default MapZoneModel (0 reports) for this zone
+    return MapZoneModel(
+      id: zoneInfo.zoneId,
+      name: zoneInfo.zoneId,
+      location: LatLng(zoneInfo.centerLat, zoneInfo.centerLng),
+      count: 0,
+      level: ActivityLevel.low,
+      reports: 0,
+      lastUpdated: 'No reports yet',
+      activityScore: 0.0,
+      topSpecies: 'None',
+      avgDepth: '—',
+      trend: TrendDirection.stable,
+      north: zoneInfo.boundNorth,
+      south: zoneInfo.boundSouth,
+      east: zoneInfo.boundEast,
+      west: zoneInfo.boundWest,
+    );
   }
 
   void selectZone(MapZoneModel zone) => selectedZone.value = zone;
@@ -256,63 +408,86 @@ class MapScreenController extends GetxController {
   // ── Mock data ─────────────────────────────────────────────────────────
 
   void loadMockData() {
+    final zone1 = ZoneCalculator.fromLatLng(28.55, -88.45);
+    final zone2 = ZoneCalculator.fromLatLng(28.62, -88.60);
+    final zone3 = ZoneCalculator.fromLatLng(28.48, -88.52);
+    final zone4 = ZoneCalculator.fromLatLng(28.45, -88.42);
+    final zone5 = ZoneCalculator.fromLatLng(28.50, -88.30);
+    final zone6 = ZoneCalculator.fromLatLng(28.53, -88.22);
+
     activeZones.assignAll([
-      const MapZoneModel(
-        id: '1', name: 'GOM-12',
-        location: LatLng(28.55, -88.45),
-        count: 12, level: ActivityLevel.high,
-        reports: 24, lastUpdated: '6 hours ago',
-        activityScore: 0.92, topSpecies: 'Tuna', avgDepth: '120 ft',
-        trend: TrendDirection.rising,
-      ),
-      const MapZoneModel(
-        id: '2', name: 'GOM-8',
-        location: LatLng(28.62, -88.60),
-        count: 8, level: ActivityLevel.high,
-        reports: 17, lastUpdated: '2 hours ago',
-        activityScore: 0.78, topSpecies: 'Marlin', avgDepth: '95 ft',
-        trend: TrendDirection.stable,
-      ),
-      const MapZoneModel(
-        id: '3', name: 'GOM-3',
-        location: LatLng(28.48, -88.52),
-        count: 3, level: ActivityLevel.medium,
-        reports: 6, lastUpdated: '1 day ago',
-        activityScore: 0.35, topSpecies: 'Snapper', avgDepth: '60 ft',
-        trend: TrendDirection.falling,
-      ),
-      const MapZoneModel(
-        id: '5', name: 'GOM-1',
-        location: LatLng(28.45, -88.42),
-        count: 1, level: ActivityLevel.low,
-        reports: 3, lastUpdated: '5 hours ago',
-        activityScore: 0.15, topSpecies: 'Wahoo', avgDepth: '140 ft',
-        trend: TrendDirection.stable,
-      ),
-      const MapZoneModel(
-        id: '6', name: 'GOM-7',
-        location: LatLng(28.50, -88.30),
-        count: 7, level: ActivityLevel.medium,
-        reports: 14, lastUpdated: '30 min ago',
-        activityScore: 0.68, topSpecies: 'Mahi', avgDepth: '110 ft',
-        trend: TrendDirection.rising,
-      ),
-      const MapZoneModel(
-        id: '7', name: 'GOM-4',
-        location: LatLng(28.53, -88.22),
-        count: 4, level: ActivityLevel.medium,
-        reports: 9, lastUpdated: '4 hours ago',
-        activityScore: 0.44, topSpecies: 'Sailfish', avgDepth: '200 ft',
-        trend: TrendDirection.falling,
-      ),
+      if (zone1 != null)
+        MapZoneModel(
+          id: zone1.zoneId, name: zone1.zoneId,
+          location: LatLng(zone1.centerLat, zone1.centerLng),
+          count: 12, level: ActivityLevel.high,
+          reports: 24, lastUpdated: '6 hours ago',
+          activityScore: 0.92, topSpecies: 'Tuna', avgDepth: '120 ft',
+          trend: TrendDirection.rising,
+          north: zone1.boundNorth, south: zone1.boundSouth,
+          east: zone1.boundEast, west: zone1.boundWest,
+        ),
+      if (zone2 != null)
+        MapZoneModel(
+          id: zone2.zoneId, name: zone2.zoneId,
+          location: LatLng(zone2.centerLat, zone2.centerLng),
+          count: 8, level: ActivityLevel.high,
+          reports: 17, lastUpdated: '2 hours ago',
+          activityScore: 0.78, topSpecies: 'Marlin', avgDepth: '95 ft',
+          trend: TrendDirection.stable,
+          north: zone2.boundNorth, south: zone2.boundSouth,
+          east: zone2.boundEast, west: zone2.boundWest,
+        ),
+      if (zone3 != null)
+        MapZoneModel(
+          id: zone3.zoneId, name: zone3.zoneId,
+          location: LatLng(zone3.centerLat, zone3.centerLng),
+          count: 3, level: ActivityLevel.medium,
+          reports: 6, lastUpdated: '1 day ago',
+          activityScore: 0.35, topSpecies: 'Snapper', avgDepth: '60 ft',
+          trend: TrendDirection.falling,
+          north: zone3.boundNorth, south: zone3.boundSouth,
+          east: zone3.boundEast, west: zone3.boundWest,
+        ),
+      if (zone4 != null)
+        MapZoneModel(
+          id: zone4.zoneId, name: zone4.zoneId,
+          location: LatLng(zone4.centerLat, zone4.centerLng),
+          count: 1, level: ActivityLevel.low,
+          reports: 3, lastUpdated: '5 hours ago',
+          activityScore: 0.15, topSpecies: 'Wahoo', avgDepth: '140 ft',
+          trend: TrendDirection.stable,
+          north: zone4.boundNorth, south: zone4.boundSouth,
+          east: zone4.boundEast, west: zone4.boundWest,
+        ),
+      if (zone5 != null)
+        MapZoneModel(
+          id: zone5.zoneId, name: zone5.zoneId,
+          location: LatLng(zone5.centerLat, zone5.centerLng),
+          count: 7, level: ActivityLevel.medium,
+          reports: 14, lastUpdated: '30 min ago',
+          activityScore: 0.68, topSpecies: 'Mahi', avgDepth: '110 ft',
+          trend: TrendDirection.rising,
+          north: zone5.boundNorth, south: zone5.boundSouth,
+          east: zone5.boundEast, west: zone5.boundWest,
+        ),
+      if (zone6 != null)
+        MapZoneModel(
+          id: zone6.zoneId, name: zone6.zoneId,
+          location: LatLng(zone6.centerLat, zone6.centerLng),
+          count: 4, level: ActivityLevel.medium,
+          reports: 9, lastUpdated: '4 hours ago',
+          activityScore: 0.44, topSpecies: 'Sailfish', avgDepth: '200 ft',
+          trend: TrendDirection.falling,
+          north: zone6.boundNorth, south: zone6.boundSouth,
+          east: zone6.boundEast, west: zone6.boundWest,
+        ),
     ]);
 
     // Build activity map keyed by cell id
     activityMap.clear();
     for (final z in activeZones) {
-      final cell = gridHelper.cellForCoordinate(z.location);
-      if (cell == null) continue;
-      activityMap[cell.id] = {'level': z.level.name, 'count': z.count};
+      activityMap[z.id] = {'level': z.level.name, 'count': z.count};
     }
   }
 
@@ -414,9 +589,9 @@ class MapScreenController extends GetxController {
 
           activeZones.assignAll(zonesList);
 
-          // If map is provided, update the grid layers immediately
+          // If map is provided, update the grid layers immediately using local calculator
           if (map != null) {
-            await _updateMapGridLayers(map, zonesList);
+            await refreshGridOnMap(map);
           }
         }
       } else {
@@ -451,82 +626,6 @@ class MapScreenController extends GetxController {
       } else {
         isLoading.value = false;
       }
-    }
-  }
-
-  Map<String, dynamic> buildCellGeoJsonFromZones(List<MapZoneModel> zones) {
-    final features = zones.map((z) {
-      final swLng = z.west ?? (z.location.longitude - 0.125);
-      final swLat = z.south ?? (z.location.latitude - 0.125);
-      final neLng = z.east ?? (z.location.longitude + 0.125);
-      final neLat = z.north ?? (z.location.latitude + 0.125);
-
-      return {
-        'type': 'Feature',
-        'id': z.id,
-        'geometry': {
-          'type': 'Polygon',
-          'coordinates': [
-            [
-              [swLng, swLat],
-              [neLng, swLat],
-              [neLng, neLat],
-              [swLng, neLat],
-              [swLng, swLat],
-            ]
-          ],
-        },
-        'properties': {
-          'id': z.id,
-          'activityLevel': z.level.name,
-          'reportCount': z.count,
-          'label': z.count > 0 ? z.count.toString() : '',
-        },
-      };
-    }).toList();
-
-    return {
-      'type': 'FeatureCollection',
-      'features': features,
-    };
-  }
-
-  Map<String, dynamic> buildLabelGeoJsonFromZones(List<MapZoneModel> zones) {
-    final features = <Map<String, dynamic>>[];
-    for (final z in zones) {
-      if (z.count == 0) continue;
-      features.add({
-        'type': 'Feature',
-        'geometry': {
-          'type': 'Point',
-          'coordinates': [z.location.longitude, z.location.latitude],
-        },
-        'properties': {
-          'label': z.count.toString(),
-          'activityLevel': z.level.name,
-        },
-      });
-    }
-    return {
-      'type': 'FeatureCollection',
-      'features': features,
-    };
-  }
-
-  Future<void> _updateMapGridLayers(mapbox.MapboxMap map, List<MapZoneModel> zones) async {
-    try {
-      final cellJson = buildCellGeoJsonFromZones(zones);
-      final labelJson = buildLabelGeoJsonFromZones(zones);
-
-      final cellSrc =
-          await map.style.getSource(kGridCellSourceId) as mapbox.GeoJsonSource?;
-      cellSrc?.updateGeoJSON(jsonEncode(cellJson));
-
-      final labelSrc =
-          await map.style.getSource(kGridLabelSourceId) as mapbox.GeoJsonSource?;
-      labelSrc?.updateGeoJSON(jsonEncode(labelJson));
-    } catch (_) {
-      // Ignore errors during style transitions
     }
   }
 }
