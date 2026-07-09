@@ -63,14 +63,38 @@ class ReportCatch2Controller extends GetxController {
   var selectedDate = DateFormat('MM/dd/yyyy').format(DateTime.now()).obs;
   var selectedTime = DateFormat('hh:mm a').format(DateTime.now()).obs;
 
+  void setSamePattern(bool value) {
+    isSamePattern.value = value;
+    if (!value) {
+      if (selectedSpeciesList.length > 1) {
+        selectedSpeciesList.assignAll([selectedSpeciesList.first]);
+      }
+      if (selectedSpeciesList.isNotEmpty) {
+        final singleSpecies = selectedSpeciesList.first;
+        final currentQty = quantities[singleSpecies] ?? 1;
+        quantities.assignAll({singleSpecies: currentQty});
+      } else if (quantities.length > 1) {
+        final firstKey = quantities.keys.first;
+        quantities.assignAll({firstKey: quantities[firstKey]!});
+      }
+    }
+  }
+
   void addSpecies(String name) {
-    if (!selectedSpeciesList.contains(name)) {
-      selectedSpeciesList.add(name);
+    if (!isSamePattern.value) {
+      selectedSpeciesList.assignAll([name]);
+      final currentQty = quantities[name] ?? 1;
+      quantities.assignAll({name: currentQty});
+    } else {
+      if (!selectedSpeciesList.contains(name)) {
+        selectedSpeciesList.add(name);
+      }
     }
   }
 
   void removeSpecies(String name) {
     selectedSpeciesList.remove(name);
+    quantities.remove(name);
   }
 
   void updateQuantity(String species, int qty) {
