@@ -15,6 +15,7 @@ import 'package:paytonpieper/core/utils/logging/logger.dart';
 import 'package:paytonpieper/features/payment_service/model/payment_plan_model.dart';
 import 'package:paytonpieper/features/profile_and_setting/controller/profile_main_screen_controller.dart';
 
+
 class PaymentServiceController extends GetxController {
   final NetworkCaller _networkCaller = NetworkCaller();
   final RxList<PaymentPlanModel> paymentPlans = <PaymentPlanModel>[].obs;
