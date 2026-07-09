@@ -10,6 +10,7 @@ import 'package:paytonpieper/core/services/network_caller.dart';
 import 'package:paytonpieper/core/services/storage_service.dart';
 import 'package:paytonpieper/core/utils/constants/api_constants.dart';
 import 'package:paytonpieper/core/utils/logging/logger.dart';
+import 'package:paytonpieper/features/main_screen/controller/filter_controller.dart';
 
 // ── Source / Layer IDs ────────────────────────────────────────────────────
 const kGridCellSourceId  = 'zone-grid-cell-source';   // polygons (fill + line)
@@ -518,12 +519,73 @@ class MapScreenController extends GetxController {
           ? 'Bearer $accessToken'
           : null;
 
-      final url = ApiConstants.getZonesApi(
-        south: south,
-        north: north,
-        west: west,
-        east: east,
-      );
+      // Extract dynamic filters if FilterController is registered
+      String? speciesParam;
+      int? depthMin;
+      int? depthMax;
+      String? methodParam;
+      String? visibilityParam;
+      String? timeRange;
+      bool isFiltering = false;
+
+      if (Get.isRegistered<FilterController>()) {
+        final filterController = Get.find<FilterController>();
+        isFiltering = filterController.selectedSpecies.isNotEmpty ||
+            filterController.selectedMethods.isNotEmpty ||
+            filterController.selectedTime.value != "24h" ||
+            filterController.depthValue.value != 250.0 ||
+            filterController.selectedVisibilities.length != 1 ||
+            !filterController.selectedVisibilities.contains("Public");
+        speciesParam = filterController.selectedSpecies.isEmpty
+            ? null
+            : filterController.selectedSpecies.join(',');
+        depthMin = 0;
+        depthMax = filterController.depthValue.value.toInt();
+
+        final mappedMethods = filterController.selectedMethods.map((m) {
+          final clean = m.trim().toUpperCase();
+          if (clean.contains("TROLLING")) return "TROLLING";
+          if (clean.contains("JIGGING")) return "JIGGING";
+          if (clean.contains("BOTTOM")) return "ANCHOR_SPOT_FISHING";
+          if (clean.contains("LIVE BAILT") || clean.contains("LIVE BAIT"))
+            return "ANCHOR_SPOT_FISHING";
+          return "CASTING";
+        }).toList();
+        methodParam = mappedMethods.isEmpty ? null : mappedMethods.join(',');
+
+        final upperVis = filterController.selectedVisibilities
+            .map((v) => v.trim().toUpperCase())
+            .toList();
+        if (upperVis.contains("PUBLIC") && !upperVis.contains("GROUP")) {
+          visibilityParam = "PUBLIC";
+        } else if (upperVis.contains("GROUP") && !upperVis.contains("PUBLIC")) {
+          visibilityParam = "GROUP";
+        } else if (upperVis.contains("PUBLIC") && upperVis.contains("GROUP")) {
+          visibilityParam = "PUBLIC,GROUP";
+        }
+        timeRange = filterController.selectedTime.value;
+      }
+
+      final String url;
+      if (isFiltering) {
+        url = ApiConstants.getFilteredRegionReportsApi(
+          regionCode: "GOM",
+          scope: "region",
+          species: speciesParam,
+          timeframe: timeRange,
+          fishingMethod: methodParam,
+          depthMinFt: depthMin,
+          depthMaxFt: depthMax,
+          visibility: visibilityParam,
+        );
+      } else {
+        url = ApiConstants.getZonesApi(
+          south: south,
+          north: north,
+          west: west,
+          east: east,
+        );
+      }
 
       final response = await network.getRequest(
         url,
@@ -532,58 +594,143 @@ class MapScreenController extends GetxController {
 
       if (response.isSuccess) {
         AppLoggerHelper.info(
-          "Successfully fetched zones. API: $url, Response: ${response.responseData}",
+          "Successfully fetched data. API: $url, Response: ${response.responseData}",
         );
         final data = response.responseData['data'] as List?;
         if (data != null) {
           final List<MapZoneModel> zonesList = [];
-          for (var item in data) {
-            if (item is Map<String, dynamic>) {
-              final zoneId = item['zoneId'] ?? '';
-              final displayName = item['displayName'] ?? zoneId;
-              final centerLat = (item['centerLat'] as num?)?.toDouble() ?? 0.0;
-              final centerLng = (item['centerLng'] as num?)?.toDouble() ?? 0.0;
-              
-              final boundsMap = item['bounds'] as Map<String, dynamic>?;
-              final zNorth = (boundsMap?['north'] as num?)?.toDouble();
-              final zSouth = (boundsMap?['south'] as num?)?.toDouble();
-              final zEast = (boundsMap?['east'] as num?)?.toDouble();
-              final zWest = (boundsMap?['west'] as num?)?.toDouble();
+          
+          if (isFiltering) {
+            final Map<String, int> zoneCounts = {};
+            final Map<String, List<String>> zoneSpecies = {};
+            final Map<String, List<int>> zoneDepths = {};
 
-              final activityScore = (item['activityScore'] as num?)?.toDouble() ?? 0.0;
-              final trendDirectionStr = item['trendDirection'] as String? ?? 'STABLE';
-              final reportCount = (item['reportCount'] as num?)?.toInt() ?? 0;
+            for (var item in data) {
+              if (item is Map<String, dynamic>) {
+                final zoneId = item['zoneId'] ?? item['zone']?['zoneId'] ?? '';
+                if (zoneId.isEmpty) continue;
 
-              // Map trend direction
-              TrendDirection trend = TrendDirection.stable;
-              if (trendDirectionStr == 'RISING') {
-                trend = TrendDirection.rising;
-              } else if (trendDirectionStr == 'FALLING') {
-                trend = TrendDirection.falling;
+                zoneCounts[zoneId] = (zoneCounts[zoneId] ?? 0) + 1;
+
+                // Collect species names
+                final speciesList = item['species'] as List?;
+                if (speciesList != null) {
+                  for (var sp in speciesList) {
+                    if (sp is Map<String, dynamic>) {
+                      final name = sp['speciesName'] as String? ?? '';
+                      if (name.isNotEmpty) {
+                        zoneSpecies.putIfAbsent(zoneId, () => []).add(name);
+                      }
+                    }
+                  }
+                }
+
+                // Collect depth
+                final depth = item['waterDepthFt'] as int?;
+                if (depth != null) {
+                  zoneDepths.putIfAbsent(zoneId, () => []).add(depth);
+                }
               }
+            }
 
-              // Determine activity level
-              ActivityLevel level = ActivityLevel.low;
-              if (reportCount >= 5 || activityScore >= 70.0) {
-                level = ActivityLevel.high;
-              } else if (reportCount >= 1 || activityScore >= 30.0) {
-                level = ActivityLevel.medium;
+            // Build MapZoneModel for each matching zone
+            zoneCounts.forEach((zoneId, count) {
+              final zoneInfo = ZoneCalculator.fromZoneId(zoneId);
+              if (zoneInfo != null) {
+                // Determine level
+                ActivityLevel level = ActivityLevel.low;
+                if (count >= 5) {
+                  level = ActivityLevel.high;
+                } else if (count >= 1) {
+                  level = ActivityLevel.medium;
+                }
+
+                // Determine average depth
+                final depths = zoneDepths[zoneId] ?? [];
+                final avgDepth = depths.isEmpty
+                    ? '—'
+                    : '${(depths.reduce((a, b) => a + b) / depths.length).round()} ft';
+
+                // Determine top species
+                final species = zoneSpecies[zoneId] ?? [];
+                final Map<String, int> speciesCounts = {};
+                for (var name in species) {
+                  speciesCounts[name] = (speciesCounts[name] ?? 0) + 1;
+                }
+                String topSpecies = 'None';
+                int maxSpCount = 0;
+                speciesCounts.forEach((name, spCount) {
+                  if (spCount > maxSpCount) {
+                    maxSpCount = spCount;
+                    topSpecies = name;
+                  }
+                });
+
+                zonesList.add(MapZoneModel(
+                  id: zoneId,
+                  name: zoneId,
+                  location: LatLng(zoneInfo.centerLat, zoneInfo.centerLng),
+                  count: count,
+                  level: level,
+                  reports: count,
+                  avgDepth: avgDepth,
+                  topSpecies: topSpecies,
+                  north: zoneInfo.boundNorth,
+                  south: zoneInfo.boundSouth,
+                  east: zoneInfo.boundEast,
+                  west: zoneInfo.boundWest,
+                ));
               }
+            });
+          } else {
+            for (var item in data) {
+              if (item is Map<String, dynamic>) {
+                final zoneId = item['zoneId'] ?? '';
+                final displayName = item['displayName'] ?? zoneId;
+                final centerLat = (item['centerLat'] as num?)?.toDouble() ?? 0.0;
+                final centerLng = (item['centerLng'] as num?)?.toDouble() ?? 0.0;
+                
+                final boundsMap = item['bounds'] as Map<String, dynamic>?;
+                final zNorth = (boundsMap?['north'] as num?)?.toDouble();
+                final zSouth = (boundsMap?['south'] as num?)?.toDouble();
+                final zEast = (boundsMap?['east'] as num?)?.toDouble();
+                final zWest = (boundsMap?['west'] as num?)?.toDouble();
 
-              zonesList.add(MapZoneModel(
-                id: zoneId,
-                name: displayName,
-                location: LatLng(centerLat, centerLng),
-                count: reportCount,
-                level: level,
-                reports: reportCount,
-                activityScore: activityScore > 1.0 ? activityScore / 100.0 : activityScore,
-                trend: trend,
-                north: zNorth,
-                south: zSouth,
-                east: zEast,
-                west: zWest,
-              ));
+                final activityScore = (item['activityScore'] as num?)?.toDouble() ?? 0.0;
+                final trendDirectionStr = item['trendDirection'] as String? ?? 'STABLE';
+                final reportCount = (item['reportCount'] as num?)?.toInt() ?? 0;
+
+                // Map trend direction
+                TrendDirection trend = TrendDirection.stable;
+                if (trendDirectionStr == 'RISING') {
+                  trend = TrendDirection.rising;
+                } else if (trendDirectionStr == 'FALLING') {
+                  trend = TrendDirection.falling;
+                }
+
+                // Determine activity level
+                ActivityLevel level = ActivityLevel.low;
+                if (reportCount >= 5 || activityScore >= 70.0) {
+                  level = ActivityLevel.high;
+                } else if (reportCount >= 1 || activityScore >= 30.0) {
+                  level = ActivityLevel.medium;
+                }
+
+                zonesList.add(MapZoneModel(
+                  id: zoneId,
+                  name: displayName,
+                  location: LatLng(centerLat, centerLng),
+                  count: reportCount,
+                  level: level,
+                  reports: reportCount,
+                  activityScore: activityScore > 1.0 ? activityScore / 100.0 : activityScore,
+                  trend: trend,
+                  north: zNorth,
+                  south: zSouth,
+                  east: zEast,
+                  west: zWest,
+                ));
+              }
             }
           }
 
@@ -626,6 +773,26 @@ class MapScreenController extends GetxController {
       } else {
         isLoading.value = false;
       }
+    }
+  }
+
+  Future<void> refreshMapWithFilters() async {
+    final bounds = _cameraBounds.value;
+    if (bounds != null) {
+      await fetchZones(
+        south: bounds['south'],
+        north: bounds['north'],
+        west: bounds['west'],
+        east: bounds['east'],
+        map: bounds['map'],
+      );
+    } else {
+      await fetchZones(
+        south: 28.0,
+        north: 29.0,
+        west: -90.0,
+        east: -88.0,
+      );
     }
   }
 }

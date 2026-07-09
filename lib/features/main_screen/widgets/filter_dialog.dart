@@ -82,11 +82,13 @@ class FilterDialog extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   _sectionHeader(IconPath.waveIcon, "Depth Range"),
-                  Text(
-                    "0ft - 500ft",
-                    style: getTextStyle(
-                      fontSize: 14,
-                      color: AppColors.grey8B95A5Color,
+                  Obx(
+                    () => Text(
+                      "0ft - ${controller.depthValue.value.toInt()}ft",
+                      style: getTextStyle(
+                        fontSize: 14,
+                        color: AppColors.grey8B95A5Color,
+                      ),
                     ),
                   ),
                 ],
@@ -183,7 +185,7 @@ class FilterDialog extends StatelessWidget {
                     child: _actionButton(
                       "Apply Filters",
                       AppColors.orangeColor,
-                      () => Get.back(),
+                      () => controller.applyFilters(),
                     ),
                   ),
                 ],

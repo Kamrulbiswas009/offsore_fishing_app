@@ -62,6 +62,47 @@ class ApiConstants {
       "$baseUrl/zones/reports?regionCode=GOM&scope=region";
   static const String getZoneSummaryApi = "$baseUrl/zones/summary";
   
+  static String getFilteredZoneSummaryApi({
+    String? zoneId,
+    String? zoneIds,
+    String regionCode = "GOM",
+    double? lat,
+    double? lng,
+    String? scope,
+    String? species,
+    int? depthMinFt,
+    int? depthMaxFt,
+    String? fishingMethod,
+    String? visibility,
+    String? timeRange,
+    int page = 1,
+    int limit = 20,
+  }) {
+    final queryParameters = <String, String>{
+      'regionCode': regionCode,
+      if (zoneId != null && zoneId.isNotEmpty) 'zoneId': zoneId,
+      if (zoneIds != null && zoneIds.isNotEmpty) 'zoneIds': zoneIds,
+      if (lat != null) 'lat': lat.toString(),
+      if (lng != null) 'lng': lng.toString(),
+      if (scope != null && scope.isNotEmpty) 'scope': scope,
+      if (species != null && species.isNotEmpty) 'species': species,
+      if (depthMinFt != null) 'depthMinFt': depthMinFt.toString(),
+      if (depthMaxFt != null) 'depthMaxFt': depthMaxFt.toString(),
+      if (fishingMethod != null && fishingMethod.isNotEmpty)
+        'fishingMethod': fishingMethod,
+      if (visibility != null && visibility.isNotEmpty)
+        'visibility': visibility,
+      if (timeRange != null && timeRange.isNotEmpty)
+        'timeRange': timeRange,
+      'page': page.toString(),
+      'limit': limit.toString(),
+    };
+
+    return Uri.parse(getZoneSummaryApi)
+        .replace(queryParameters: queryParameters)
+        .toString();
+  }
+  
  static String confirmReportApi(String reportId) => "$baseUrl/reports/$reportId/confirm";
   static String rejectReportApi(String reportId) => "$baseUrl/reports/$reportId/reject";
   static String getZonesApi({
@@ -69,7 +110,61 @@ class ApiConstants {
     required double north,
     required double west,
     required double east,
-  }) => "$baseUrl/zones?south=$south&north=$north&west=$west&east=$east";
+    String? species,
+    int? depthMinFt,
+    int? depthMaxFt,
+    String? fishingMethod,
+    String? visibility,
+    String? timeRange,
+  }) {
+    final queryParameters = <String, String>{
+      'south': south.toString(),
+      'north': north.toString(),
+      'west': west.toString(),
+      'east': east.toString(),
+      if (species != null && species.isNotEmpty) 'species': species,
+      if (depthMinFt != null) 'depthMinFt': depthMinFt.toString(),
+      if (depthMaxFt != null) 'depthMaxFt': depthMaxFt.toString(),
+      if (fishingMethod != null && fishingMethod.isNotEmpty)
+        'fishingMethod': fishingMethod,
+      if (visibility != null && visibility.isNotEmpty)
+        'visibility': visibility,
+      if (timeRange != null && timeRange.isNotEmpty)
+        'timeRange': timeRange,
+    };
+
+    return Uri.parse("$baseUrl/zones")
+        .replace(queryParameters: queryParameters)
+        .toString();
+  }
+
+  static String getFilteredRegionReportsApi({
+    String regionCode = "GOM",
+    String scope = "region",
+    String? species,
+    String? timeframe,
+    String? fishingMethod,
+    int? depthMinFt,
+    int? depthMaxFt,
+    String? visibility,
+  }) {
+    final queryParameters = <String, String>{
+      'regionCode': regionCode,
+      'scope': scope,
+      if (species != null && species.isNotEmpty) 'species': species,
+      if (timeframe != null && timeframe.isNotEmpty) 'timeframe': timeframe,
+      if (fishingMethod != null && fishingMethod.isNotEmpty)
+        'fishingMethod': fishingMethod,
+      if (depthMinFt != null) 'depthMinFt': depthMinFt.toString(),
+      if (depthMaxFt != null) 'depthMaxFt': depthMaxFt.toString(),
+      if (visibility != null && visibility.isNotEmpty)
+        'visibility': visibility,
+    };
+
+    return Uri.parse("$baseUrl/zones/reports")
+        .replace(queryParameters: queryParameters)
+        .toString();
+  }
 //}
 
 
