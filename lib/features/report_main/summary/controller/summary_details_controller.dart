@@ -554,104 +554,7 @@ class SummaryController extends GetxController {
         );
         final data = response.responseData['data'];
         if (data != null && data is Map<String, dynamic>) {
-          // 1. Activity Overview
-          final overview = data['activityOverview'];
-          if (overview != null && overview is Map<String, dynamic>) {
-            summaryReportsCount.value = overview['reportsCount'] ?? 0;
-            summaryHitRate.value = "${overview['hitRate'] ?? 0}%";
-            summaryNetworksCount.value = overview['networks'] ?? 0;
-            summaryHotZonesCount.value = overview['hotZonesCount'] ?? 0;
-          }
-
-          // Update selectedZone dynamically with backend details if available
-          final singleZone = data['singleZoneDetails'];
-          if (singleZone != null && singleZone is Map<String, dynamic> && selectedZone.value != null) {
-            final current = selectedZone.value!;
-            double scoreVal = (singleZone['activityScore'] as num?)?.toDouble() ?? (current.activityScore * 100);
-            if (scoreVal > 1.0) {
-              scoreVal = scoreVal / 100.0;
-            }
-            final trendStr = singleZone['trendDirection'] as String?;
-            TrendDirection trendDir = TrendDirection.stable;
-            if (trendStr != null) {
-              if (trendStr.toUpperCase() == "RISING" || trendStr.toUpperCase() == "UP") {
-                trendDir = TrendDirection.rising;
-              } else if (trendStr.toUpperCase() == "FALLING" || trendStr.toUpperCase() == "DOWN") {
-                trendDir = TrendDirection.falling;
-              }
-            }
-
-            final reportsCount = overview?['reportsCount'] as int? ?? current.reports;
-
-            selectedZone.value = MapZoneModel(
-              id: current.id,
-              name: current.name,
-              location: current.location,
-              count: current.count,
-              level: scoreVal >= 0.7 ? ActivityLevel.high : (scoreVal >= 0.4 ? ActivityLevel.medium : ActivityLevel.low),
-              reports: reportsCount,
-              lastUpdated: current.lastUpdated,
-              activityScore: scoreVal,
-              topSpecies: current.topSpecies,
-              avgDepth: current.avgDepth,
-              trend: trendDir,
-              north: current.north,
-              south: current.south,
-              east: current.east,
-              west: current.west,
-            );
-          }
-
-          // 2. Top Species
-          final topSp = data['topSpecies'] as List?;
-          if (topSp != null) {
-            summaryTopSpecies.assignAll(topSp.map((item) {
-              return {
-                "name": item['name'] ?? 'Unknown',
-                "count": item['count'] ?? 0,
-              };
-            }).toList());
-          }
-
-          // 3. Pattern Intelligence
-          final pattern = data['patternIntelligence'];
-          if (pattern != null && pattern is Map<String, dynamic>) {
-            patternSummaryText.value = pattern['summaryText'] ?? "—";
-            final minD = pattern['commonDepthMinFt'];
-            final maxD = pattern['commonDepthMaxFt'];
-            if (minD != null && maxD != null) {
-              patternDepth.value = minD == maxD ? "${minD} ft" : "${minD}-${maxD} ft";
-            } else {
-              patternDepth.value = "—";
-            }
-
-            patternBait.value = _mapBackendBaitToUser(pattern['topBaitLure']);
-            patternMethod.value = _mapBackendMethodToUser(pattern['dominantMethod']);
-            patternStrikeZone.value = _mapBackendColumnToUser(pattern['topWaterColumn']);
-          }
-
-          // 4. Activity Timing
-          final timing = data['activityTiming'];
-          if (timing != null && timing is Map<String, dynamic>) {
-            peakWindow.value = timing['peakWindow'] ?? "—";
-            effectiveMethod.value = _mapBackendMethodToUser(timing['mostEffectiveMethod']);
-
-            final histogram = timing['hourlyHistogram'] as List?;
-            if (histogram != null) {
-              hourlyHistogram.assignAll(histogram.map((item) => (item as num).toDouble()).toList());
-            }
-          }
-
-          // 5. Species Distribution
-          final dist = data['speciesDistribution'] as List?;
-          if (dist != null) {
-            speciesDistribution.assignAll(dist.map((item) {
-              return {
-                "name": item['name'] ?? 'Others',
-                "percentage": (item['percentage'] as num).toDouble(),
-              };
-            }).toList());
-          }
+          parseSummaryData(data);
         }
       } else {
         debugPrint("Failed to fetch zone summary: ${response.errorMessage}");
@@ -660,6 +563,108 @@ class SummaryController extends GetxController {
       debugPrint("Exception fetching zone summary: $e");
     } finally {
       isSummaryLoading.value = false;
+    }
+  }
+
+  void parseSummaryData(Map<String, dynamic>? data) {
+    if (data == null) return;
+    // 1. Activity Overview
+    final overview = data['activityOverview'];
+    if (overview != null && overview is Map<String, dynamic>) {
+      summaryReportsCount.value = overview['reportsCount'] ?? 0;
+      summaryHitRate.value = "${overview['hitRate'] ?? 0}%";
+      summaryNetworksCount.value = overview['networks'] ?? 0;
+      summaryHotZonesCount.value = overview['hotZonesCount'] ?? 0;
+    }
+
+    // Update selectedZone dynamically with backend details if available
+    final singleZone = data['singleZoneDetails'];
+    if (singleZone != null && singleZone is Map<String, dynamic> && selectedZone.value != null) {
+      final current = selectedZone.value!;
+      double scoreVal = (singleZone['activityScore'] as num?)?.toDouble() ?? (current.activityScore * 100);
+      if (scoreVal > 1.0) {
+        scoreVal = scoreVal / 100.0;
+      }
+      final trendStr = singleZone['trendDirection'] as String?;
+      TrendDirection trendDir = TrendDirection.stable;
+      if (trendStr != null) {
+        if (trendStr.toUpperCase() == "RISING" || trendStr.toUpperCase() == "UP") {
+          trendDir = TrendDirection.rising;
+        } else if (trendStr.toUpperCase() == "FALLING" || trendStr.toUpperCase() == "DOWN") {
+          trendDir = TrendDirection.falling;
+        }
+      }
+
+      final reportsCount = overview?['reportsCount'] as int? ?? current.reports;
+
+      selectedZone.value = MapZoneModel(
+        id: current.id,
+        name: current.name,
+        location: current.location,
+        count: current.count,
+        level: scoreVal >= 0.7 ? ActivityLevel.high : (scoreVal >= 0.4 ? ActivityLevel.medium : ActivityLevel.low),
+        reports: reportsCount,
+        lastUpdated: current.lastUpdated,
+        activityScore: scoreVal,
+        topSpecies: current.topSpecies,
+        avgDepth: current.avgDepth,
+        trend: trendDir,
+        north: current.north,
+        south: current.south,
+        east: current.east,
+        west: current.west,
+      );
+    }
+
+    // 2. Top Species
+    final topSp = data['topSpecies'] as List?;
+    if (topSp != null) {
+      summaryTopSpecies.assignAll(topSp.map((item) {
+        return {
+          "name": item['name'] ?? 'Unknown',
+          "count": item['count'] ?? 0,
+        };
+      }).toList());
+    }
+
+    // 3. Pattern Intelligence
+    final pattern = data['patternIntelligence'];
+    if (pattern != null && pattern is Map<String, dynamic>) {
+      patternSummaryText.value = pattern['summaryText'] ?? "—";
+      final minD = pattern['commonDepthMinFt'];
+      final maxD = pattern['commonDepthMaxFt'];
+      if (minD != null && maxD != null) {
+        patternDepth.value = minD == maxD ? "${minD} ft" : "${minD}-${maxD} ft";
+      } else {
+        patternDepth.value = "—";
+      }
+
+      patternBait.value = _mapBackendBaitToUser(pattern['topBaitLure']);
+      patternMethod.value = _mapBackendMethodToUser(pattern['dominantMethod']);
+      patternStrikeZone.value = _mapBackendColumnToUser(pattern['topWaterColumn']);
+    }
+
+    // 4. Activity Timing
+    final timing = data['activityTiming'];
+    if (timing != null && timing is Map<String, dynamic>) {
+      peakWindow.value = timing['peakWindow'] ?? "—";
+      effectiveMethod.value = _mapBackendMethodToUser(timing['mostEffectiveMethod']);
+
+      final histogram = timing['hourlyHistogram'] as List?;
+      if (histogram != null) {
+        hourlyHistogram.assignAll(histogram.map((item) => (item as num).toDouble()).toList());
+      }
+    }
+
+    // 5. Species Distribution
+    final dist = data['speciesDistribution'] as List?;
+    if (dist != null) {
+      speciesDistribution.assignAll(dist.map((item) {
+        return {
+          "name": item['name'] ?? 'Others',
+          "percentage": (item['percentage'] as num).toDouble(),
+        };
+      }).toList());
     }
   }
 

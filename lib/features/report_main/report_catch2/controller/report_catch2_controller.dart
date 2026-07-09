@@ -8,6 +8,7 @@ import 'package:paytonpieper/features/submit_report/screen/submit_report_screen.
 import 'package:paytonpieper/core/services/sync_service.dart';
 import 'package:paytonpieper/features/report_main/report_catch/controller/report_catch_step1_screen.dart';
 import 'package:paytonpieper/core/models/species_node.dart';
+import 'package:paytonpieper/utils/zone_calculator.dart';
 
 class ReportCatch2Controller extends GetxController {
   @override
@@ -241,11 +242,15 @@ class ReportCatch2Controller extends GetxController {
     // Format ISO string to match curl example format (no milliseconds to avoid strict regex fails)
     final catchTimestampStr = "${catchDateTime.toUtc().toIso8601String().split('.').first}Z";
 
+    final lat = selectedLat.value ?? 28.4521;
+    final lng = selectedLng.value ?? -89.1234;
+    final zoneInfo = ZoneCalculator.fromLatLng(lat, lng);
+
     final payload = {
       "frontendReportId": _generateUuid(),
-      "zoneId": null,
-      "reportLat": selectedLat.value ?? 28.4521,
-      "reportLng": selectedLng.value ?? -89.1234,
+      "zoneId": zoneInfo?.zoneId,
+      "reportLat": lat,
+      "reportLng": lng,
       "species": speciesList,
       "fishingMethod": _mapMethod(selectedMethod.value),
       "baitLureType": _mapBait(selectedBait.value, selectedMethod.value),
