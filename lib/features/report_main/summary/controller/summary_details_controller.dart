@@ -755,7 +755,7 @@ class SummaryController extends GetxController {
 
       final response = await network.cachedGetRequest(
         url,
-        token: "cb2f317e-409f-11f1-beac-0242ac120004-cb2f31e2-409f-11f1-beac-0242ac120004",
+        token: ApiConstants.stormGlassApiKey,
         cacheKey: "weather_${lat.toStringAsFixed(3)}_${lng.toStringAsFixed(3)}",
         ttlMinutes: ttl,
       );
@@ -791,13 +791,13 @@ class SummaryController extends GetxController {
     for (var item in hours) {
       final timeStr = item['time'] as String?;
       if (timeStr == null) continue;
-      final dateStr = timeStr.substring(0, 10);
-      if (dateStr == nowStr) continue;
-      if (uniqueDates.contains(dateStr)) continue;
-
-      uniqueDates.add(dateStr);
       try {
-        final dt = DateTime.parse(dateStr);
+        final dt = DateTime.parse(timeStr).toLocal();
+        final dateStr = dt.toIso8601String().substring(0, 10);
+        if (dateStr == nowStr) continue;
+        if (uniqueDates.contains(dateStr)) continue;
+
+        uniqueDates.add(dateStr);
         final label = "${weekdays[dt.weekday % 7]} ${dt.day}";
         computed.add(label);
       } catch (_) {}
@@ -817,7 +817,7 @@ class SummaryController extends GetxController {
         final timeStr = item['time'] as String?;
         if (timeStr == null) continue;
         try {
-          final dt = DateTime.parse(timeStr);
+          final dt = DateTime.parse(timeStr).toLocal();
           final label = "${weekdays[dt.weekday % 7]} ${dt.day}";
           if (label == dayLabel) {
             targetDate = dt;
@@ -835,7 +835,7 @@ class SummaryController extends GetxController {
       final timeStr = item['time'] as String?;
       if (timeStr == null) continue;
       try {
-        final dt = DateTime.parse(timeStr);
+        final dt = DateTime.parse(timeStr).toLocal();
         final diff = DateTime(dt.year, dt.month, dt.day, dt.hour)
             .difference(DateTime(targetDate.year, targetDate.month, targetDate.day, targetHour))
             .inHours
@@ -987,7 +987,7 @@ class SummaryController extends GetxController {
         final timeStr = item['time'] as String?;
         if (timeStr == null) continue;
         try {
-          final dt = DateTime.parse(timeStr);
+          final dt = DateTime.parse(timeStr).toLocal();
           final label = "${weekdays[dt.weekday % 7]} ${dt.day}";
           if (label == dayLabel) {
             targetDate = dt;
@@ -1008,7 +1008,7 @@ class SummaryController extends GetxController {
       final timeStr = item['time'] as String?;
       if (timeStr == null) continue;
       try {
-        final dt = DateTime.parse(timeStr);
+        final dt = DateTime.parse(timeStr).toLocal();
         final diff = DateTime(dt.year, dt.month, dt.day, dt.hour)
             .difference(DateTime(targetDate.year, targetDate.month, targetDate.day, targetHour))
             .inHours

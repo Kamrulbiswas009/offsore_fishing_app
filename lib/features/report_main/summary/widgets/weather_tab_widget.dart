@@ -17,6 +17,36 @@ class WeatherTabWidget extends GetView<SummaryController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Obx(() {
+          if (controller.weatherData.value == null && !controller.isWeatherLoading.value) {
+            return Container(
+              margin: EdgeInsets.only(bottom: 16.h),
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: Colors.amber.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: Colors.amber.withOpacity(0.4)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 20.sp),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: Text(
+                      'Weather API quota exceeded or offline. Showing simulated weather data.',
+                      style: getTextStyle(
+                        fontSize: 12,
+                        color: Colors.amber,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+          return const SizedBox.shrink();
+        }),
         _buildFishingConditionsCard(),
         SizedBox(height: 16.h),
         _buildSelectDay(),
@@ -1154,7 +1184,7 @@ class WeatherTabWidget extends GetView<SummaryController> {
   Map<String, dynamic> _forecastDataFor(String period) {
     final entry = controller.getForecastEntry(controller.selectedDay.value, period);
     if (entry == null) {
-      return _mockForecastDataFor(period);
+      return _mockForecastDataFor(controller.selectedDay.value, period);
     }
     
     final windVal = controller.extractSgValue(entry['windSpeed']);
@@ -1200,19 +1230,22 @@ class WeatherTabWidget extends GetView<SummaryController> {
     };
   }
 
-  Map<String, dynamic> _mockForecastDataFor(String period) {
+  Map<String, dynamic> _mockForecastDataFor(String dayLabel, String period) {
+    // Generate a simple deterministic offset based on the dayLabel characters to make data dynamic per day
+    final int offset = dayLabel.codeUnits.fold(0, (prev, element) => prev + element) % 5;
+
     switch (period) {
       case 'Afternoon':
         return {
           'icon': Icons.wb_sunny,
           'iconColor': const Color(0xFFFFAA00),
           'time': '12:00 PM - 6:00 PM',
-          'badge': 'Fair',
-          'wind': '14',
-          'seas': '2.5',
-          'sky': '35',
-          'swellDirection': 'East-Southeast',
-          'swellPeriod': '7 sec',
+          'badge': offset % 2 == 0 ? 'Fair' : 'Good',
+          'wind': '${12 + offset}',
+          'seas': '${2.0 + (offset * 0.3)}',
+          'sky': '${30 + (offset * 5)}',
+          'swellDirection': offset % 2 == 0 ? 'East-Southeast' : 'Southeast',
+          'swellPeriod': '${6 + offset} sec',
           'description':
               'Moderate winds picking up in the afternoon. Seas building slightly but still fishable.',
         };
@@ -1222,11 +1255,11 @@ class WeatherTabWidget extends GetView<SummaryController> {
           'iconColor': AppColors.blue00F0FFColor,
           'time': '6:00 PM - 10:00 PM',
           'badge': 'Good',
-          'wind': '8',
-          'seas': '1.5',
-          'sky': '15',
+          'wind': '${6 + offset}',
+          'seas': '${1.0 + (offset * 0.2)}',
+          'sky': '${10 + offset}',
           'swellDirection': 'East',
-          'swellPeriod': '9 sec',
+          'swellPeriod': '${8 + offset} sec',
           'description':
               'Calm evening conditions. Light winds and minimal swell — great for inshore fishing.',
         };
@@ -1236,11 +1269,11 @@ class WeatherTabWidget extends GetView<SummaryController> {
           'iconColor': const Color(0xFFFF5A36),
           'time': '6:00 AM - 12:00 PM',
           'badge': 'Good',
-          'wind': '10',
-          'seas': '2.0',
-          'sky': '20',
+          'wind': '${8 + offset}',
+          'seas': '${1.5 + (offset * 0.2)}',
+          'sky': '${15 + (offset * 3)}',
           'swellDirection': 'East',
-          'swellPeriod': '8 sec',
+          'swellPeriod': '${7 + offset} sec',
           'description':
               'Calm winds and smaller seas. Great window to get offshore.',
         };
