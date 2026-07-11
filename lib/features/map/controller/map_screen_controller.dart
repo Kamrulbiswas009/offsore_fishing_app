@@ -587,9 +587,10 @@ class MapScreenController extends GetxController {
         );
       }
 
-      final response = await network.getRequest(
+      final response = await network.cachedGetRequest(
         url,
         token: token,
+        cacheKey: "zones_bounds_${south.toStringAsFixed(2)}_${north.toStringAsFixed(2)}_${west.toStringAsFixed(2)}_${east.toStringAsFixed(2)}_filtering_${isFiltering}_sp_${speciesParam}_time_${timeRange}_m_${methodParam}_d_${depthMin}_${depthMax}_v_${visibilityParam}",
       );
 
       if (response.isSuccess) {

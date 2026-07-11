@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:paytonpieper/core/models/response_data.dart';
 import 'package:paytonpieper/core/services/network_caller.dart';
 import 'package:paytonpieper/core/services/storage_service.dart';
+import 'package:paytonpieper/core/services/offline_cache_service.dart';
 import 'package:paytonpieper/core/utils/constants/api_constants.dart';
 import 'package:paytonpieper/core/utils/logging/logger.dart';
 import 'package:paytonpieper/features/profile_and_setting/model/auth_me_model.dart';
@@ -103,11 +104,12 @@ class ProfileMainScreenController extends GetxController {
 
   Future<ResponseData> _requestAuthMe() {
     final accessToken = StorageService.token;
-    return _networkCaller.getRequest(
+    return _networkCaller.cachedGetRequest(
       ApiConstants.authMeApi,
       token: accessToken == null || accessToken.isEmpty
           ? null
           : 'Bearer $accessToken',
+      cacheKey: "auth_me",
     );
   }
 
@@ -327,6 +329,11 @@ class ProfileMainScreenController extends GetxController {
     await EasyLoading.show(status: 'Logging out...');
 
     try {
+      try {
+        await Get.find<OfflineCacheService>().clearAll();
+      } catch (e) {
+        AppLoggerHelper.error('Failed to clear cache on logout', e);
+      }
       await StorageService.logoutUser();
       authMe.value = null;
       AppLoggerHelper.info('Logout successful. Local data cleared.');

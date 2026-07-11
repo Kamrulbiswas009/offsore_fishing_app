@@ -321,13 +321,13 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
                     _toggleBtn(
                       "Yes",
                       controller.isSamePattern.value,
-                      () => controller.isSamePattern.value = true,
+                      () => controller.setSamePattern(true),
                     ),
                     SizedBox(width: 10.w),
                     _toggleBtn(
                       "No",
                       !controller.isSamePattern.value,
-                      () => controller.isSamePattern.value = false,
+                      () => controller.setSamePattern(false),
                     ),
                   ],
                 ),
@@ -523,25 +523,30 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
                   .toList(),
             ),
           ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: GestureDetector(
-              onTap: () {
-                if (controller.speciesOptions.isNotEmpty) {
-                  final nextSpecies = controller.speciesOptions.firstWhere(
-                    (s) => !controller.quantities.containsKey(s),
-                    orElse: () => controller.speciesOptions.first,
-                  );
-                  controller.quantities[nextSpecies] = 1;
-                }
-              },
-              child: Icon(
-                Icons.add_circle,
-                color: AppColors.orangeColor,
-                size: 28.sp,
+          Obx(() {
+            final showAddButton =
+                controller.isSamePattern.value || controller.quantities.isEmpty;
+            if (!showAddButton) return const SizedBox.shrink();
+            return Align(
+              alignment: Alignment.centerRight,
+              child: GestureDetector(
+                onTap: () {
+                  if (controller.speciesOptions.isNotEmpty) {
+                    final nextSpecies = controller.speciesOptions.firstWhere(
+                      (s) => !controller.quantities.containsKey(s),
+                      orElse: () => controller.speciesOptions.first,
+                    );
+                    controller.quantities[nextSpecies] = 1;
+                  }
+                },
+                child: Icon(
+                  Icons.add_circle,
+                  color: AppColors.orangeColor,
+                  size: 28.sp,
+                ),
               ),
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );
@@ -618,6 +623,9 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
                               controller.quantities[species] ?? 1;
                           controller.quantities.remove(species);
                           controller.quantities[val] = currentQty;
+                          if (!controller.isSamePattern.value) {
+                            controller.selectedSpeciesList.value = [val];
+                          }
                         }
                       },
                     ),

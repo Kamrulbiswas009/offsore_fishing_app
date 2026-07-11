@@ -2,9 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'package:get/get.dart' hide Response, MultipartFile;
 import 'package:http/http.dart';
+import 'package:http_parser/http_parser.dart';
 
 import '../models/response_data.dart';
+import 'offline_cache_service.dart';
 
 class NetworkCaller {
   final int timeoutDuration = 30;
@@ -25,6 +28,47 @@ class NetworkCaller {
       return _handleResponse(response);
     } catch (e) {
       return _handleError(e);
+    }
+  }
+
+  // GET with Offline Caching fallback
+  Future<ResponseData> cachedGetRequest(
+    String url, {
+    String? token,
+    required String cacheKey,
+    int ttlMinutes = 1440,
+  }) async {
+    // 1. Try request first
+    final response = await getRequest(url, token: token);
+    if (response.isSuccess) {
+      // Save cache
+      try {
+        final cacheService = Get.find<OfflineCacheService>();
+        await cacheService.saveCache(cacheKey, response.responseData, ttlMinutes: ttlMinutes);
+      } catch (e) {
+        log('Failed to save to cache: $e');
+      }
+      return response;
+    } else {
+      // 2. Fallback to cache if failure (offline, timeout, etc.)
+      try {
+        final cacheService = Get.find<OfflineCacheService>();
+        final cachedData = await cacheService.getCache(cacheKey);
+        if (cachedData != null) {
+          log('Returning cached fallback data for key: $cacheKey');
+          return ResponseData(
+            isSuccess: true,
+            statusCode: 200,
+            errorMessage: '',
+            responseData: cachedData,
+            isFromCache: true,
+          );
+        }
+      } catch (e) {
+        log('Failed to read from cache: $e');
+      }
+      // Return original error if cache miss or error
+      return response;
     }
   }
 

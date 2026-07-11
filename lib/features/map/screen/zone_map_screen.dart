@@ -13,6 +13,7 @@ import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/main_screen/widgets/filter_dialog.dart';
 import 'package:paytonpieper/features/report_main/report_catch/screen/report_catch_screen.dart';
 import 'package:paytonpieper/features/report_main/summary/screen/summary_details.dart';
+import 'package:paytonpieper/core/services/sync_service.dart';
 
 import '../controller/map_screen_controller.dart';
 import '../model/map_zone_model.dart';
@@ -76,6 +77,15 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
 
   Future<void> _onMapCreated(mapbox.MapboxMap map) async {
     _mapboxMap = map;
+    
+    // Check if offline to log mapbox offline loading
+    try {
+      final syncService = Get.find<SyncService>();
+      if (!syncService.isOnline.value) {
+        debugPrint('[ZoneMapScreen] Offline detected. Mapbox will serve cached offline TileRegion and StylePack.');
+      }
+    } catch (_) {}
+
     await map.gestures.updateSettings(
       mapbox.GesturesSettings(
         scrollEnabled: true,

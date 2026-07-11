@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:paytonpieper/core/services/mapbox_offline_service.dart';
 
 class SettingsScreenController extends GetxController {
   final RxBool isOfflineModeEnabled = true.obs;
@@ -6,8 +7,12 @@ class SettingsScreenController extends GetxController {
   final RxBool isHotZoneAlertsEnabled = true.obs;
   final RxBool isGroupActivityEnabled = true.obs;
 
-  final int storageUsedInMb = 245;
-  final int totalStorageInMb = 500;
+  int get storageUsedInMb => MapboxOfflineService.to.storageUsedInMb.value;
+  int get totalStorageInMb => 500;
+
+  bool get isDownloadingMap => MapboxOfflineService.to.isDownloading.value;
+  double get downloadProgress => MapboxOfflineService.to.downloadProgress.value;
+  String get downloadStatusMessage => MapboxOfflineService.to.statusMessage.value;
 
   late final List<SettingsAboutItemModel> aboutItems =
       const <SettingsAboutItemModel>[
@@ -35,9 +40,13 @@ class SettingsScreenController extends GetxController {
     isGroupActivityEnabled.value = value;
   }
 
-  void downloadMapArea() {}
+  void downloadMapArea() {
+    MapboxOfflineService.to.startOfflineDownload();
+  }
 
-  void clearOfflineData() {}
+  void clearOfflineData() {
+    MapboxOfflineService.to.clearOfflineMap();
+  }
 
   void handleAboutItemTap(SettingsAboutItemModel item) {}
 }
