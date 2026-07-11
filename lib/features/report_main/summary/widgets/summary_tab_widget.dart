@@ -286,20 +286,29 @@ class SummaryTabWidget extends StatelessWidget {
             ),
           ),
         ),
-        Row(
-          children: [
-            Text(
-              "Updated 2 min ago",
-              style: getTextStyle(
-                fontSize: 12,
-                color: Color(0xFF018896),
-                fontWeight: FontWeight.w500,
-                lineHeight: 9,
+        GestureDetector(
+          onTap: () {
+            controller.fetchReports();
+            controller.fetchSummary();
+            controller.fetchWeather();
+          },
+          child: Row(
+            children: [
+              Obx(
+                () => Text(
+                  controller.lastUpdatedText,
+                  style: getTextStyle(
+                    fontSize: 12,
+                    color: const Color(0xFF018896),
+                    fontWeight: FontWeight.w500,
+                    lineHeight: 9,
+                  ),
+                ),
               ),
-            ),
-            SizedBox(width: 5.w),
-            Image.asset(IconPath.refreshIcon, height: 14.h, width: 14.w),
-          ],
+              SizedBox(width: 5.w),
+              Image.asset(IconPath.refreshIcon, height: 14.h, width: 14.w),
+            ],
+          ),
         ),
       ],
     );
