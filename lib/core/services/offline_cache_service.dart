@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -13,28 +14,40 @@ class OfflineCacheService extends GetxService {
   static OfflineCacheService get to => Get.find<OfflineCacheService>();
 
   Database? _db;
+  Completer<Database>? _dbCompleter;
 
   // ── Database initialisation ──────────────────────────────────────────
 
   Future<Database> get database async {
     if (_db != null) return _db!;
-    final dbPath = await getDatabasesPath();
-    final path = p.join(dbPath, 'offline_cache.db');
-    _db = await openDatabase(
-      path,
-      version: 1,
-      onCreate: (db, version) async {
-        await db.execute('''
-          CREATE TABLE IF NOT EXISTS cached_responses (
-            cache_key TEXT PRIMARY KEY,
-            response_json TEXT NOT NULL,
-            cached_at TEXT NOT NULL,
-            ttl_minutes INTEGER NOT NULL DEFAULT 1440
-          )
-        ''');
-      },
-    );
-    return _db!;
+    if (_dbCompleter != null) return _dbCompleter!.future;
+
+    _dbCompleter = Completer<Database>();
+    try {
+      final dbPath = await getDatabasesPath();
+      final path = p.join(dbPath, 'offline_cache.db');
+      final database = await openDatabase(
+        path,
+        version: 1,
+        onCreate: (db, version) async {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS cached_responses (
+              cache_key TEXT PRIMARY KEY,
+              response_json TEXT NOT NULL,
+              cached_at TEXT NOT NULL,
+              ttl_minutes INTEGER NOT NULL DEFAULT 1440
+            )
+          ''');
+        },
+      );
+      _db = database;
+      _dbCompleter!.complete(database);
+      return database;
+    } catch (e) {
+      _dbCompleter!.completeError(e);
+      _dbCompleter = null;
+      rethrow;
+    }
   }
 
   @override

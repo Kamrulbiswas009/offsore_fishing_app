@@ -240,11 +240,29 @@ class SyncService extends GetxService {
               ? 'Bearer $accessToken'
               : null;
 
-          final response = await _networkCaller.postRequest(
+          var response = await _networkCaller.postRequest(
             ApiConstants.submitReportApi,
             body: payloadMap,
             token: token,
           );
+
+          if (response.statusCode == 401) {
+            debugPrint("=== SYNC UNAUTHORIZED (401) for report ID: $frontendReportId. Attempting token refresh... ===");
+            final didRefresh = await _refreshAccessToken();
+            if (didRefresh) {
+              final newAccessToken = StorageService.token;
+              final newToken = (newAccessToken != null && newAccessToken.isNotEmpty)
+                  ? 'Bearer $newAccessToken'
+                  : null;
+              
+              // Retry posting report with fresh token
+              response = await _networkCaller.postRequest(
+                ApiConstants.submitReportApi,
+                body: payloadMap,
+                token: newToken,
+              );
+            }
+          }
 
           if (response.isSuccess) {
             debugPrint("=== SYNC SUCCESS for report ID: $frontendReportId ===");
@@ -283,6 +301,61 @@ class SyncService extends GetxService {
     await _updatePendingCount();
     isSyncing.value = false;
     debugPrint("=== BACKGROUND SYNC FINISHED ===");
+  }
+
+  Future<bool> _refreshAccessToken() async {
+    final refreshToken = StorageService.refreshToken;
+    final userId = StorageService.userId ?? _userIdFromToken(refreshToken);
+
+    if (refreshToken == null || refreshToken.isEmpty || userId == null) {
+      debugPrint('[SyncService] Token refresh skipped because userId or refreshToken is missing.');
+      return false;
+    }
+
+    final response = await _networkCaller.postRequest(
+      ApiConstants.getAccessTokenApi,
+      body: {'userId': userId, 'refreshToken': refreshToken},
+    );
+
+    if (!response.isSuccess) {
+      debugPrint('[SyncService] Token refresh failed: ${response.errorMessage}');
+      return false;
+    }
+
+    final responseBody = response.responseData;
+    final data = responseBody is Map ? responseBody['data'] : null;
+    final newAccessToken = data is Map ? data['accessToken'] : null;
+    final newRefreshToken = data is Map ? data['refreshToken'] : null;
+
+    if (newAccessToken is! String ||
+        newAccessToken.isEmpty ||
+        newRefreshToken is! String ||
+        newRefreshToken.isEmpty) {
+      debugPrint('[SyncService] Token refresh response contained invalid tokens.');
+      return false;
+    }
+
+    await StorageService.saveAuthTokens(
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    );
+    await StorageService.saveUserId(userId);
+    return true;
+  }
+
+  String? _userIdFromToken(String? token) {
+    if (token == null || token.isEmpty) return null;
+
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+      final payload = jsonDecode(
+        utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
+      );
+      return payload is Map ? payload['sub'] as String? : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   @override
