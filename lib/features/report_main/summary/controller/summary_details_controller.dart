@@ -694,8 +694,8 @@ class SummaryController extends GetxController {
     if (column == null) return "Unknown";
     final clean = column.trim().toUpperCase();
     if (clean == "MID_COLUMN") return "Mid Column";
-    if (clean == "TOP_COLUMN") return "Top Column";
-    if (clean == "BOTTOM") return "Bottom";
+    if (clean == "TOP_COLUMN" || clean == "SURFACE") return "Top Column";
+    if (clean == "BOTTOM" || clean == "BOTTOM_COLUMN") return "Bottom";
     
     return clean.split('_').map((word) {
       if (word.isEmpty) return '';

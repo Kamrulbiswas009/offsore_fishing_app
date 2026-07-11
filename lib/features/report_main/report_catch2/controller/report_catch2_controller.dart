@@ -239,9 +239,9 @@ class ReportCatch2Controller extends GetxController {
 
   String _mapWaterColumn(String pos) {
     final clean = pos.trim().toUpperCase();
-    if (clean == "TOPWATER") return "TOP_COLUMN";
+    if (clean == "TOPWATER") return "SURFACE";
     if (clean == "SUSPENDED") return "MID_COLUMN";
-    if (clean == "BOTTOM") return "BOTTOM_COLUMN";
+    if (clean == "BOTTOM") return "BOTTOM";
     return "MID_COLUMN";
   }
 
