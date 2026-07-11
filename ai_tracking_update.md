@@ -541,6 +541,22 @@ class ResponseData {
 2. **Step 2** — `ReportCatch2Screen`: Selects species, depth, method, bait, water column, notes
 3. **Step 3** — `SubmitReportScreen`: Selects visibility (PUBLIC/PRIVATE) + group sharing
 
+### 8.1 Master Data Selection & Dependency Logic
+- **Method Options**: `Anchor/Spot Fishing`, `Casting`, `Chunking`, `Jigging`, `Spearing`, `Trolling`.
+- **Bait / Lure Type Options**: Filtered dynamically based on selected Method:
+  - `Diving Lure` (Only shows if Method = Trolling)
+  - `Cut Bait` (Only shows if Method = Anchor/Spot Fishing, Casting, Chunking, Trolling)
+  - `Live Bait` (Only shows if Method = Anchor/Spot Fishing, Casting, Trolling)
+  - `Popper` (Only shows if Method = Casting)
+  - `Plug Lure` (Only shows if Method = Trolling)
+  - `Skirted Lure` (Only shows if Method = Trolling)
+  - `Slow Jig` (Only shows if Method = Jigging)
+  - `Soft Plastic` (Only shows if Method = Casting)
+  - `Stickbait` (Only shows if Method = Casting)
+  - `Vertical Jig` (Only shows if Method = Jigging)
+  - `Other` (Shows for all method selections)
+- **Selection Integrity**: Changing the Method automatically resets the Bait/Lure selection if it is no longer valid under the dependency rules.
+
 ### Submit Report API
 
 | Field | Value |
@@ -566,7 +582,7 @@ class ResponseData {
   "waterDepthFt": 120,
   "fishingMethod": "TROLLING | BOTTOM_FISHING | JIGGING | ANCHOR_SPOT_FISHING | FLY_FISHING | DRIFTING | CASTING",
   "baitLureType": "LIVE_BALLYHOO | CUT_BAIT | VERTICAL_JIG | SKIRTED_LURE",
-  "waterColumn": "MID_COLUMN | TOP_COLUMN | BOTTOM",
+  "waterColumn": "MID_COLUMN | SURFACE | BOTTOM",
   "catchTimestamp": "2026-07-11T02:15:43Z",
   "species": [
     {"speciesName": "Yellowfin Tuna", "quantity": 2}
@@ -615,6 +631,15 @@ class ResponseData {
   - This ensures that subsequent fetches (even when online during normal browsing) preserve the offline status and do not overwrite the cache entry with a short (24-hour) expiration.
   - When a user removes a zone from the offline cache, the app prompts for confirmation, then deletes `zone_summary_{zoneName}` and `weather_{lat}_{lng}` keys using `OfflineCacheService.deleteCache()`, and updates the saved zones list in `SharedPreferences`.
   - The grid's summary screen dynamically observes the saved zones list and displays an interactive download/save button with three states: **Save Offline** (prompts download), **Saving...** (displays progress spinner), and **Saved Offline** (premium green styling).
+- **Mapbox Satellite Offline Region Downloader**:
+  - Managed by [MapboxOfflineService](file:///Users/betopia/kamrul's Project/paytonpieper/lib/core/services/mapbox_offline_service.dart).
+  - Initiated from the profile settings screen via `SettingsScreenController.downloadMapArea()`.
+  - Downloads Mapbox style pack (`SATELLITE_STREETS` style URI) and offline tile region descriptors (`TileRegionLoadOptions`) for the predefined Gulf of Mexico boundaries: **SW: `(24.0, -98.0)` / NE: `(31.0, -81.0)`** with a zoom range of `0` to `8`.
+  - Exposes reactive variables (`downloadProgress`, `isDownloading`, `statusMessage`, `storageUsedInMb`) for real-time progress indicators in the settings UI.
+  - Can clear downloaded tile regions/styles via `TileStore.removeRegion('gulf_of_mexico_id')`.
+- **Connectivity Auto-Reload**:
+  - `SummaryController` and `GroupMainScreenController` listen to `SyncService.isOnline` using GetX workers (`ever`).
+  - When connection status switches (e.g. online to offline), it automatically triggers a reload, displaying the last fetched local data from `OfflineCacheService` without requiring manual page refresh.
 
 ### Sync Architecture
 
@@ -987,8 +1012,7 @@ graph TD
 ### 18.1 Dynamic Sharing Group Fetching
 - **Subsystem**: Submission Sharing Dialog
 - **Controller**: [VisibilitySharingController](file:///Users/betopia/kamrul's Project/paytonpieper/lib/features/submit_report/controller/submit_report_controller.dart)
-- **Current Status**: Uses a static mock array `privateGroups` with 3 hardcoded groups.
-- **Requirement**: Call `GET /groups` dynamically to fetch user's actual group memberships.
+- **Current Status**: ✅ Fully Implemented. Dynamically fetches user's actual joined group memberships using `featchGroupListApi` (`GET /groups`), manages loading/empty list states reactively, and restricts selections to a single group as expected by the backend reports endpoint.
 
 ### 18.2 Offline Report Feed Static Merging
 - **Subsystem**: Offline Reports Feed

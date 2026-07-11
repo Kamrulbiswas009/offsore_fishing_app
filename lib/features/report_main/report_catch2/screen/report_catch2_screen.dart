@@ -751,14 +751,14 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
             hint: "Select Method",
             items: controller.methodOptions,
             selectedValue: controller.selectedMethod.value,
-            onChanged: (val) => controller.selectedMethod.value = val ?? "",
+            onChanged: (val) => controller.selectMethod(val ?? ""),
           ),
         ),
         Obx(
           () => _labelDropdown(
             label: "Bait / Lure Type",
             hint: "Select bait",
-            items: controller.baitOptions,
+            items: controller.filteredBaitOptions,
             selectedValue: controller.selectedBait.value,
             onChanged: (val) => controller.selectedBait.value = val ?? "",
           ),

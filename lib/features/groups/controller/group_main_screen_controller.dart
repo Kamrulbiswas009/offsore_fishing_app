@@ -7,6 +7,7 @@ import 'package:paytonpieper/core/services/storage_service.dart';
 import 'package:paytonpieper/core/utils/constants/api_constants.dart';
 import 'package:paytonpieper/core/utils/logging/logger.dart';
 import 'package:paytonpieper/features/groups/model/group_model.dart';
+import 'package:paytonpieper/core/services/sync_service.dart';
 
 class GroupMainScreenController extends GetxController {
   // ── Join-group sheet state ──────────────────────────────────────────
@@ -26,6 +27,14 @@ class GroupMainScreenController extends GetxController {
     super.onInit();
     inviteCodeController.addListener(_handleInviteCodeChanged);
     fetchGroupList();
+
+    // Automatically reload cached/live data when connectivity changes
+    try {
+      final syncService = Get.find<SyncService>();
+      ever(syncService.isOnline, (bool online) {
+        fetchGroupList();
+      });
+    } catch (_) {}
   }
 
   // ── Fetch group list ────────────────────────────────────────────────

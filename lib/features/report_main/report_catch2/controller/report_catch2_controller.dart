@@ -42,18 +42,73 @@ class ReportCatch2Controller extends GetxController {
   var waterPosition = "Suspended".obs; // Topwater, Suspended, Bottom
 
   // Dropdown Options
-  var methodOptions = ["Trolling", "Bottom ", "Jigging", "Live Bailt"].obs;
-  var baitOptions = [
-    "Live Bait",
-    "Artificial Lure",
-    "Cut Bait",
-    "Plastic",
-    "Metal",
+  var methodOptions = [
+    "Anchor/Spot Fishing",
+    "Casting",
+    "Chunking",
+    "Jigging",
+    "Spearing",
+    "Trolling",
   ].obs;
 
   // Selected values
-  var selectedMethod = "Select Method".obs;
-  var selectedBait = "Select Bait".obs;
+  var selectedMethod = "".obs;
+  var selectedBait = "".obs;
+
+  List<String> get filteredBaitOptions {
+    final method = selectedMethod.value;
+    if (method.isEmpty || method == "Select Method") {
+      return ["Other"];
+    }
+
+    final list = <String>[];
+
+    if (method == "Trolling") {
+      list.add("Diving Lure");
+    }
+    if (method == "Anchor/Spot Fishing" ||
+        method == "Casting" ||
+        method == "Chunking" ||
+        method == "Trolling") {
+      list.add("Cut Bait");
+    }
+    if (method == "Anchor/Spot Fishing" ||
+        method == "Casting" ||
+        method == "Trolling") {
+      list.add("Live Bait");
+    }
+    if (method == "Casting") {
+      list.add("Popper");
+    }
+    if (method == "Trolling") {
+      list.add("Plug Lure");
+    }
+    if (method == "Trolling") {
+      list.add("Skirted Lure");
+    }
+    if (method == "Jigging") {
+      list.add("Slow Jig");
+    }
+    if (method == "Casting") {
+      list.add("Soft Plastic");
+    }
+    if (method == "Casting") {
+      list.add("Stickbait");
+    }
+    if (method == "Jigging") {
+      list.add("Vertical Jig");
+    }
+    list.add("Other");
+
+    return list;
+  }
+
+  void selectMethod(String method) {
+    selectedMethod.value = method;
+    if (!filteredBaitOptions.contains(selectedBait.value)) {
+      selectedBait.value = "";
+    }
+  }
 
   // Form Controllers
   final depthController = TextEditingController(text: "120");
@@ -210,30 +265,27 @@ class ReportCatch2Controller extends GetxController {
   // Mapping helpers
   String _mapMethod(String method) {
     final clean = method.trim().toUpperCase();
-    if (clean.contains("TROLLING")) return "TROLLING";
-    if (clean.contains("JIGGING")) return "JIGGING";
-    if (clean.contains("BOTTOM")) return "ANCHOR_SPOT_FISHING";
-    if (clean.contains("LIVE BAILT") || clean.contains("LIVE BAIT")) return "ANCHOR_SPOT_FISHING";
-    return "CASTING";
+    if (clean == "ANCHOR/SPOT FISHING" || clean == "ANCHOR SPOT FISHING") return "ANCHOR_SPOT_FISHING";
+    if (clean == "CASTING") return "CASTING";
+    if (clean == "CHUNKING") return "CHUNKING";
+    if (clean == "JIGGING") return "JIGGING";
+    if (clean == "SPEARING") return "SPEARING";
+    if (clean == "TROLLING") return "TROLLING";
+    return clean.replaceAll(" ", "_");
   }
 
   String _mapBait(String bait, String method) {
     final cleanBait = bait.trim().toUpperCase();
-    final cleanMethod = _mapMethod(method);
-
-    if (cleanBait.contains("LIVE BAIT")) return "LIVE_BAIT";
-    if (cleanBait.contains("CUT BAIT")) return "CUT_BAIT";
-
-    // Handle method-specific defaults for artificial options
-    if (cleanMethod == "JIGGING") {
-      return "VERTICAL_JIG";
-    }
-    if (cleanMethod == "TROLLING") {
-      return "SKIRTED_LURE";
-    }
-    if (cleanMethod == "CASTING") {
-      return "POPPER";
-    }
+    if (cleanBait == "DIVING LURE") return "DIVING_LURE";
+    if (cleanBait == "CUT BAIT") return "CUT_BAIT";
+    if (cleanBait == "LIVE BAIT") return "LIVE_BAIT";
+    if (cleanBait == "POPPER") return "POPPER";
+    if (cleanBait == "PLUG LURE") return "PLUG_LURE";
+    if (cleanBait == "SKIRTED LURE") return "SKIRTED_LURE";
+    if (cleanBait == "SLOW JIG") return "SLOW_JIG";
+    if (cleanBait == "SOFT PLASTIC") return "SOFT_PLASTIC";
+    if (cleanBait == "STICKBAIT") return "STICKBAIT";
+    if (cleanBait == "VERTICAL JIG") return "VERTICAL_JIG";
     return "OTHER";
   }
 
