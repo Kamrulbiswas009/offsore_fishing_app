@@ -87,6 +87,16 @@ class SummaryController extends GetxController {
     fetchReports();
     fetchSummary();
     fetchWeather();
+
+    // Automatically reload cached/live data when connectivity changes
+    try {
+      final syncService = Get.find<SyncService>();
+      ever(syncService.isOnline, (bool online) {
+        fetchReports();
+        fetchSummary();
+        fetchWeather();
+      });
+    } catch (_) {}
   }
 
   void setZoneAndFetch(dynamic argument) {
