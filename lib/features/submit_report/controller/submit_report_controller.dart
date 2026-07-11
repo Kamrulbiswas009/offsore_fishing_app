@@ -15,20 +15,67 @@ class VisibilitySharingController extends GetxController {
   var isPublicSelected = false.obs;
   var selectedGroups = <String>[].obs; // Stores IDs of selected groups
 
-  // Mock Groups Data
-  final List<Map<String, dynamic>> privateGroups = [
-    {"id": "a0613eb0-3ca8-4522-9080-a83571dd7d81", "name": "Miami Offshore Crew", "members": 24},
-    {"id": "a0613eb0-3ca8-4522-9080-a83571dd7d82", "name": "Keys Anglers", "members": 56},
-    {"id": "a0613eb0-3ca8-4522-9080-a83571dd7d83", "name": "Tournament Team", "members": 8},
-  ];
+  var privateGroups = <Map<String, dynamic>>[].obs;
+  var isLoadingGroups = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchGroups();
+  }
+
+  Future<void> fetchGroups() async {
+    isLoadingGroups.value = true;
+    try {
+      final network = NetworkCaller();
+      final accessToken = StorageService.token;
+      final token = (accessToken != null && accessToken.isNotEmpty)
+          ? 'Bearer $accessToken'
+          : null;
+
+      final response = await network.cachedGetRequest(
+        ApiConstants.featchGroupListApi,
+        token: token,
+        cacheKey: "group_list",
+      );
+
+      if (response.isSuccess) {
+        final body = response.responseData;
+        final rawList = body is Map ? body['data'] : null;
+        if (rawList is List) {
+          final mapped = rawList.map((e) {
+            final map = Map<String, dynamic>.from(e as Map);
+            final countMap = map['_count'] as Map?;
+            final membersCount = countMap != null ? (countMap['members'] as num?)?.toInt() ?? 1 : 1;
+            return {
+              "id": map['groupId'] ?? '',
+              "name": map['name'] ?? '',
+              "members": membersCount,
+            };
+          }).toList();
+          privateGroups.assignAll(mapped);
+        }
+      } else {
+        AppLoggerHelper.error(
+          '[VisibilitySharingController] fetchGroups failed | '
+          'statusCode: ${response.statusCode} | '
+          'error: ${response.errorMessage}',
+        );
+      }
+    } catch (e) {
+      AppLoggerHelper.error('[VisibilitySharingController] fetchGroups exception', e);
+    } finally {
+      isLoadingGroups.value = false;
+    }
+  }
 
   void togglePublic() => isPublicSelected.value = !isPublicSelected.value;
 
   void toggleGroup(String id) {
     if (selectedGroups.contains(id)) {
-      selectedGroups.remove(id);
+      selectedGroups.clear();
     } else {
-      selectedGroups.add(id);
+      selectedGroups.assignAll([id]);
     }
   }
 

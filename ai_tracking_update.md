@@ -1,6 +1,6 @@
 # PaytonPieper Project — Complete Analysis & API Tracking
 
-> **Last Updated**: 2026-07-11T10:01:05+06:00  
+> **Last Updated**: 2026-07-11T10:43:00+06:00  
 > **Analyzer**: AI Deep Scan — Full Source Code Review  
 > **Base URL**: `http://172.252.13.68:8000/api/v1`  
 > **Socket URL**: `http://172.252.13.68:8000` (derived by stripping `/api/v1`)
@@ -605,7 +605,8 @@ class ResponseData {
 | `ttl_minutes` | `INTEGER` | Time-to-live minutes (defaults to 1440 / 24 hours) |
 
 ### Cache & Offline Mode Architecture
-- **Caching Mechanism**: Handled automatically via `NetworkCaller.cachedGetRequest()`. If online, it performs a live API query, updates/inserts the payload in `cached_responses`, and returns it. If offline or times out, it falls back to parsing the valid cache item.
+- **Caching Mechanism**: Handled automatically via `NetworkCaller.cachedGetRequest()`. If the device is offline (based on `SyncService.isOnline`), it immediately bypasses the network call and loads from the local cache. If online, it performs a live API query, updates/inserts the payload in `cached_responses`, and returns it. If the request fails or times out, it falls back to parsing the valid cache item.
+- **Thread-Safety**: [OfflineCacheService](file:///Users/betopia/kamrul's Project/paytonpieper/lib/core/services/offline_cache_service.dart) implements a thread-safe `Completer<Database>` pattern to serialize database open requests and prevent database lock race conditions during concurrent startup hits.
 - **Offline Banner**: [OfflineBannerWidget](file:///Users/betopia/kamrul's Project/paytonpieper/lib/core/common/widgets/offline_banner_widget.dart) is integrated inside [MainScreen](file:///Users/betopia/kamrul's Project/paytonpieper/lib/features/main_screen/screen/home_main_screen.dart) and dynamically renders a floating warning overlay at the top of all main pages whenever `SyncService.isOnline` drops to false.
 - **Offline Grid Details Caching (On-Demand)**:
   - Users can explicitly save specific grid (zone) details offline from the Summary screen.
@@ -664,6 +665,9 @@ sequenceDiagram
 - Connectivity change (offline → online)
 - Periodic retry timer (every 5 minutes)
 - Manual via `checkConnectivityAndSync()`
+
+### Background Sync Auto-Token Refresh (401 Handling)
+During the FIFO sync loop, if a report upload fails with `401 Unauthorized`, `SyncService` automatically intercepts the failure, executes a JWT token refresh using the stored refresh token via `POST /auth/refresh-token`, updates `StorageService`, and retries the report upload with the new credentials.
 
 ### Reactive State
 - `isOnline: RxBool` — real-time connectivity status

@@ -8,6 +8,7 @@ import 'package:http_parser/http_parser.dart';
 
 import '../models/response_data.dart';
 import 'offline_cache_service.dart';
+import 'sync_service.dart';
 
 class NetworkCaller {
   final int timeoutDuration = 30;
@@ -38,6 +39,37 @@ class NetworkCaller {
     required String cacheKey,
     int ttlMinutes = 1440,
   }) async {
+    // Check if device is online according to SyncService
+    bool isOnline = true;
+    try {
+      isOnline = Get.find<SyncService>().isOnline.value;
+    } catch (_) {}
+
+    if (!isOnline) {
+      try {
+        final cacheService = Get.find<OfflineCacheService>();
+        final cachedData = await cacheService.getCache(cacheKey);
+        if (cachedData != null) {
+          log('Returning cached fallback data for key: $cacheKey (offline mode)');
+          return ResponseData(
+            isSuccess: true,
+            statusCode: 200,
+            errorMessage: '',
+            responseData: cachedData,
+            isFromCache: true,
+          );
+        }
+      } catch (e) {
+        log('Failed to read from cache in offline check: $e');
+      }
+      return ResponseData(
+        isSuccess: false,
+        statusCode: 500,
+        errorMessage: 'Network error occurred. Device is offline.',
+        responseData: '',
+      );
+    }
+
     // 1. Try request first
     final response = await getRequest(url, token: token);
     if (response.isSuccess) {
@@ -50,7 +82,7 @@ class NetworkCaller {
       }
       return response;
     } else {
-      // 2. Fallback to cache if failure (offline, timeout, etc.)
+      // 2. Fallback to cache if failure (timeout, server error, etc.)
       try {
         final cacheService = Get.find<OfflineCacheService>();
         final cachedData = await cacheService.getCache(cacheKey);

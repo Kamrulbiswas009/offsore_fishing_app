@@ -105,21 +105,47 @@ class VisibilitySharingDialog extends StatelessWidget {
                         color: AppColors.grey516173Color,
                       ),
                     ),
-                    SizedBox(height: 15.h),
-                    Column(
-                      children: controller.privateGroups.map((group) {
-                        return Obx(
-                          () => _buildGroupCard(
-                            title: group['name'],
-                            subtitle: "${group['members']} members",
-                            isSelected: controller.selectedGroups.contains(
-                              group['id'],
+                    Obx(() {
+                      if (controller.isLoadingGroups.value) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 20),
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.orangeColor),
                             ),
-                            onTap: () => controller.toggleGroup(group['id']),
                           ),
                         );
-                      }).toList(),
-                    ),
+                      }
+                      if (controller.privateGroups.isEmpty) {
+                        return Padding(
+                          padding: EdgeInsets.symmetric(vertical: 10.h),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              "You haven't joined any groups yet.",
+                              style: getTextStyle(
+                                fontSize: 13,
+                                color: AppColors.grey516173Color,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      return Column(
+                        children: controller.privateGroups.map((group) {
+                          return Obx(
+                            () => _buildGroupCard(
+                              title: group['name'],
+                              subtitle: "${group['members']} members",
+                              isSelected: controller.selectedGroups.contains(
+                                group['id'],
+                              ),
+                              onTap: () => controller.toggleGroup(group['id']),
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    }),
                   ],
                 ),
               ),

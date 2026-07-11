@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
+import 'package:paytonpieper/core/common/widgets/common_message.dart';
 
 class MapboxOfflineService extends GetxService {
   static MapboxOfflineService get to => Get.find<MapboxOfflineService>();
@@ -91,7 +92,7 @@ class MapboxOfflineService extends GetxService {
       final tilesetDescriptor = mapbox.TilesetDescriptorOptions(
         styleURI: styleUri,
         minZoom: 0,
-        maxZoom: 11,
+        maxZoom: 8,
       );
 
       final tileRegionOptions = mapbox.TileRegionLoadOptions(
@@ -117,10 +118,18 @@ class MapboxOfflineService extends GetxService {
       statusMessage.value = "Download Complete!";
       storageUsedInMb.value = 85; // Mock storage used
       debugPrint('[MapboxOfflineService] Gulf of Mexico download complete.');
+      CommonMessage.showMessage(
+        title: "Download Complete",
+        message: "Offline map downloaded successfully.",
+      );
     } catch (e, stack) {
       isDownloading.value = false;
       statusMessage.value = "Download Failed";
       debugPrint('[MapboxOfflineService] Error downloading map: $e\n$stack');
+      CommonMessage.showMessage(
+        title: "Download Failed",
+        message: "Failed to download offline map: $e",
+      );
     }
   }
 
