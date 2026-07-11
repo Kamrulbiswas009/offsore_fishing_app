@@ -5,9 +5,20 @@ class StorageService {
   static const String _tokenKey = 'token';
   static const String _refreshTokenKey = 'refreshToken';
   static const String _idKey = 'userId';
+  static const String _offlineZonesKey = 'offline_zones';
 
   // Singleton instance for SharedPreferences
   static SharedPreferences? _preferences;
+
+  // Retrieve the list of zones saved offline
+  static List<String> getOfflineZones() {
+    return _preferences?.getStringList(_offlineZonesKey) ?? [];
+  }
+
+  // Save the list of zones saved offline
+  static Future<void> saveOfflineZones(List<String> zones) async {
+    await _preferences?.setStringList(_offlineZonesKey, zones);
+  }
 
   // Initialize SharedPreferences (call this during app startup)
   static Future<void> init() async {

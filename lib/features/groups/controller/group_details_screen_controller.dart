@@ -364,9 +364,10 @@ class GroupDetailsScreenController extends GetxController {
           ? 'Bearer $accessToken'
           : null;
 
-      final response = await _networkCaller.getRequest(
+      final response = await _networkCaller.cachedGetRequest(
         ApiConstants.featchSingleGroupDetailsApi(groupId),
         token: token,
+        cacheKey: "group_details_$groupId",
       );
 
       if (response.isSuccess) {
@@ -457,7 +458,11 @@ class GroupDetailsScreenController extends GetxController {
         depthMaxFt: _selectedDepthRange?[1],
       );
 
-      final response = await _networkCaller.getRequest(url, token: token);
+      final response = await _networkCaller.cachedGetRequest(
+        url,
+        token: token,
+        cacheKey: "group_reports_$fetchKey",
+      );
 
       if (response.isSuccess) {
         final body = response.responseData;

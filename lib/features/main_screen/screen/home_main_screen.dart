@@ -4,9 +4,9 @@ import 'package:paytonpieper/features/groups/presentation/screen/group_main_scre
 import 'package:paytonpieper/features/map/screen/zone_map_screen.dart';
 import 'package:paytonpieper/features/profile_and_setting/presentation/screen/profile_main_screen.dart';
 import 'package:paytonpieper/features/report_main/summary/screen/summary_details.dart';
+import 'package:paytonpieper/core/common/widgets/offline_banner_widget.dart';
 import '../controller/main_screen_controller.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
-// Import your Map Screen here
 
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
@@ -20,33 +20,40 @@ class MainScreen extends StatelessWidget {
       body: SafeArea(
         top: true,
         bottom: true,
-        child: Stack(
+        child: Column(
           children: [
-            // The body switches based on Nav Bar selection
-            Obx(
-              () => IndexedStack(
-                index: controller.currentIndex.value,
+            const OfflineBannerWidget(),
+            Expanded(
+              child: Stack(
                 children: [
-                  const ZoneMapScreen(), // The Map Content (Code below)
-                  const SummaryScreen(isReportMainScreen: true),
-                  GroupMainScreen(),
-                  ProfileMainScreen(),
-                ],
-              ),
-            ),
+                  // The body switches based on Nav Bar selection
+                  Obx(
+                    () => IndexedStack(
+                      index: controller.currentIndex.value,
+                      children: [
+                        const ZoneMapScreen(), // The Map Content (Code below)
+                        const SummaryScreen(isReportMainScreen: true),
+                        GroupMainScreen(),
+                        ProfileMainScreen(),
+                      ],
+                    ),
+                  ),
 
-            // Floating Bottom Navigation Bar
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Obx(
-                () => CustomBottomNavBar(
-                  currentIndex: controller.currentIndex.value,
-                  onTap: (index) {
-                    controller.changeIndex(index);
-                  },
-                ),
+                  // Floating Bottom Navigation Bar
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: Obx(
+                      () => CustomBottomNavBar(
+                        currentIndex: controller.currentIndex.value,
+                        onTap: (index) {
+                          controller.changeIndex(index);
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

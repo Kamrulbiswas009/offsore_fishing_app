@@ -7,6 +7,8 @@ import 'package:paytonpieper/features/report_main/report/model/report_model.dart
 import 'package:paytonpieper/features/report_main/report_catch/screen/report_catch_screen.dart';
 import 'package:paytonpieper/core/services/network_caller.dart';
 import 'package:paytonpieper/core/services/storage_service.dart';
+import 'package:paytonpieper/core/services/offline_cache_service.dart';
+import 'package:paytonpieper/core/services/sync_service.dart';
 import 'package:paytonpieper/core/utils/constants/api_constants.dart';
 import 'package:paytonpieper/core/utils/logging/logger.dart';
 import 'package:paytonpieper/core/models/species_node.dart';
@@ -31,6 +33,13 @@ class SummaryController extends GetxController {
 
   var selectedZone = Rxn<MapZoneModel>();
   var isLoading = false.obs;
+
+  // Offline caching states
+  var offlineZones = <String>[].obs;
+  var isDownloadingZone = false.obs;
+  var downloadingZoneName = "".obs;
+
+  bool get isCurrentZoneOffline => selectedZone.value != null && offlineZones.contains(selectedZone.value!.name);
 
   // Summary Tab API States
   var isSummaryLoading = false.obs;
@@ -71,6 +80,7 @@ class SummaryController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    offlineZones.assignAll(StorageService.getOfflineZones());
     if (Get.arguments is MapZoneModel) {
       selectedZone.value = Get.arguments;
     }
@@ -192,7 +202,7 @@ class SummaryController extends GetxController {
     ),
   ].obs;
 
-  Future<void> fetchReports() async {
+  Future<void> fetchReports({int? customTtl}) async {
     isLoading.value = true;
     try {
       final network = NetworkCaller();
@@ -202,9 +212,13 @@ class SummaryController extends GetxController {
       }
       final token = 'Bearer $accessToken';
 
-      final response = await network.getRequest(
+      final ttl = customTtl ?? (isCurrentZoneOffline ? 52560000 : 1440);
+
+      final response = await network.cachedGetRequest(
         ApiConstants.getRegionReportsApi,
         token: token,
+        cacheKey: "region_reports",
+        ttlMinutes: ttl,
       );
 
       if (response.isSuccess) {
@@ -526,7 +540,7 @@ class SummaryController extends GetxController {
   var isWeatherLoading = false.obs;
   var weatherData = Rxn<Map<String, dynamic>>();
 
-  Future<void> fetchSummary() async {
+  Future<void> fetchSummary({int? customTtl}) async {
     isSummaryLoading.value = true;
     try {
       final network = NetworkCaller();
@@ -543,9 +557,17 @@ class SummaryController extends GetxController {
         url = "${ApiConstants.getZoneSummaryApi}?regionCode=GOM&page=1&limit=20";
       }
 
-      final response = await network.getRequest(
+      final cacheKey = selectedZone.value != null
+          ? "zone_summary_${selectedZone.value!.name}"
+          : "zone_summary_region";
+
+      final ttl = customTtl ?? (isCurrentZoneOffline ? 52560000 : 1440);
+
+      final response = await network.cachedGetRequest(
         url,
         token: token,
+        cacheKey: cacheKey,
+        ttlMinutes: ttl,
       );
 
       if (response.isSuccess) {
@@ -681,7 +703,7 @@ class SummaryController extends GetxController {
     }).join(' ');
   }
 
-  Future<void> fetchWeather() async {
+  Future<void> fetchWeather({int? customTtl}) async {
     isWeatherLoading.value = true;
     try {
       final network = NetworkCaller();
@@ -690,9 +712,13 @@ class SummaryController extends GetxController {
 
       final url = "https://api.stormglass.io/v2/weather/point?lat=$lat&lng=$lng&params=windSpeed,windDirection,waveHeight,waterTemperature,airTemperature,cloudCover,swellDirection,swellPeriod";
 
-      final response = await network.getRequest(
+      final ttl = customTtl ?? (isCurrentZoneOffline ? 52560000 : 1440);
+
+      final response = await network.cachedGetRequest(
         url,
         token: "cb2f317e-409f-11f1-beac-0242ac120004-cb2f31e2-409f-11f1-beac-0242ac120004",
+        cacheKey: "weather_${lat.toStringAsFixed(3)}_${lng.toStringAsFixed(3)}",
+        ttlMinutes: ttl,
       );
 
       if (response.isSuccess) {
@@ -956,5 +982,89 @@ class SummaryController extends GetxController {
     }
 
     return bestMatch;
+  }
+
+  void toggleOfflineZone(MapZoneModel zone) async {
+    final name = zone.name;
+    if (offlineZones.contains(name)) {
+      Get.defaultDialog(
+        title: "Remove Offline Cache",
+        middleText: "Are you sure you want to remove the offline cache for $name?",
+        textConfirm: "Remove",
+        textCancel: "Cancel",
+        confirmTextColor: Colors.white,
+        buttonColor: Colors.red,
+        onConfirm: () async {
+          Get.back(); // close dialog
+          EasyLoading.show(status: "Removing...");
+          await _removeOfflineZone(zone);
+          EasyLoading.showSuccess("Offline data removed");
+        },
+      );
+    } else {
+      // Check connectivity using SyncService
+      bool online = false;
+      try {
+        final syncService = Get.find<SyncService>();
+        online = syncService.isOnline.value;
+      } catch (_) {}
+
+      if (!online) {
+        Get.snackbar(
+          "Connection Required",
+          "You must be online to download offline data for $name.",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.withOpacity(0.8),
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      isDownloadingZone.value = true;
+      downloadingZoneName.value = name;
+      try {
+        await _downloadOfflineZone(zone);
+        EasyLoading.showSuccess("Grid details saved offline!");
+      } catch (e) {
+        EasyLoading.showError("Failed to save offline: $e");
+      } finally {
+        isDownloadingZone.value = false;
+        downloadingZoneName.value = "";
+      }
+    }
+  }
+
+  Future<void> _downloadOfflineZone(MapZoneModel zone) async {
+    // Fetch and save with a custom long TTL (e.g. 52560000 minutes = 100 years)
+    final longTtl = 52560000;
+    
+    await Future.wait([
+      fetchReports(customTtl: longTtl),
+      fetchSummary(customTtl: longTtl),
+      fetchWeather(customTtl: longTtl),
+    ]);
+
+    if (!offlineZones.contains(zone.name)) {
+      offlineZones.add(zone.name);
+    }
+    await StorageService.saveOfflineZones(offlineZones.toList());
+  }
+
+  Future<void> _removeOfflineZone(MapZoneModel zone) async {
+    final cacheService = Get.find<OfflineCacheService>();
+    final lat = zone.location.latitude;
+    final lng = zone.location.longitude;
+
+    // Delete keys:
+    // 1. zone_summary_${zone.name}
+    final summaryKey = "zone_summary_${zone.name}";
+    await cacheService.deleteCache(summaryKey);
+
+    // 2. weather_${lat.toStringAsFixed(3)}_${lng.toStringAsFixed(3)}
+    final weatherKey = "weather_${lat.toStringAsFixed(3)}_${lng.toStringAsFixed(3)}";
+    await cacheService.deleteCache(weatherKey);
+
+    offlineZones.remove(zone.name);
+    await StorageService.saveOfflineZones(offlineZones.toList());
   }
 }

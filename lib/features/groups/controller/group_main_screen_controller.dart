@@ -39,9 +39,10 @@ class GroupMainScreenController extends GetxController {
               ? 'Bearer $accessToken'
               : null;
 
-      final response = await _networkCaller.getRequest(
+      final response = await _networkCaller.cachedGetRequest(
         ApiConstants.featchGroupListApi,
         token: token,
+        cacheKey: "group_list",
       );
 
       if (response.isSuccess) {

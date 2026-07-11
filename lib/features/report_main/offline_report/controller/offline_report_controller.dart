@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:paytonpieper/core/services/sync_service.dart';
 import 'package:paytonpieper/core/models/species_node.dart';
 import '../model/offline_report_model.dart';
+import 'package:paytonpieper/core/services/offline_cache_service.dart';
 
 class OfflineReportsTabController extends GetxController {
   final SyncService _syncService = Get.find<SyncService>();
@@ -90,43 +91,141 @@ class OfflineReportsTabController extends GetxController {
       }
     }
 
-    reports.assignAll([
-      ...localReports,
-      OfflineReportModel(
-        id: "1",
-        species: "Tuna",
-        subSpecies: "Blackfin",
-        timeAgo: "about 3 hours ago",
-        depth: "120ft",
-        zone: "Z1",
-        technique: "Trolling",
-        bait: "Live Ballyhoo",
-        note: "Strong bite around the weedline",
-        confirms: 3,
-      ),
-      OfflineReportModel(
-        id: "2",
-        species: "Tuna",
-        timeAgo: "about 19 hours ago",
-        depth: "65ft",
-        zone: "Z6",
-        technique: "Bottom Fishing",
-        bait: "Cut bait",
-        confirms: 2,
-      ),
-      OfflineReportModel(
-        id: "3",
-        species: "Tuna",
-        subSpecies: "Blackfin",
-        author: "Offshore Dan",
-        timeAgo: "about 9 hours ago",
-        depth: "150ft",
-        zone: "Z5",
-        technique: "Trolling",
-        bait: "Live Ballyhoo",
-        confirms: 4,
-      ),
-    ]);
+    final List<OfflineReportModel> cachedReports = [];
+    try {
+      final cacheService = Get.find<OfflineCacheService>();
+      final cachedData = await cacheService.getCache("region_reports");
+      if (cachedData != null && cachedData is Map && cachedData['data'] is List) {
+        final List dataList = cachedData['data'];
+        for (var item in dataList) {
+          if (item is Map) {
+            final speciesList = item['species'] as List?;
+            final speciesName = (speciesList != null && speciesList.isNotEmpty)
+                ? speciesList.map((s) => s['speciesName']).join(', ')
+                : 'Unknown';
+
+            final catchTimestamp = item['catchTimestamp'] as String?;
+            final timeAgo = _formatTimeAgo(catchTimestamp);
+            final depth = "${item['waterDepthFt'] ?? 0}ft";
+            final zone = item['zoneId'] ?? item['zone']?['zoneId'] ?? 'Unknown';
+            final technique = _mapBackendMethodToUser(item['fishingMethod']);
+            final bait = _mapBackendBaitToUser(item['baitLureType']);
+            final note = item['notes'];
+            final confirms = item['biteConfirmations']?['confirmed'] ?? 0;
+            final author = item['user']?['name'];
+
+            cachedReports.add(OfflineReportModel(
+              id: item['id']?.toString() ?? item['reportId']?.toString() ?? item['_id']?.toString() ?? '',
+              species: speciesName,
+              timeAgo: timeAgo,
+              depth: depth,
+              zone: zone,
+              technique: technique,
+              bait: bait,
+              note: note,
+              confirms: confirms,
+              author: author,
+              isVerified: true,
+            ));
+          }
+        }
+      }
+    } catch (e) {
+      // Ignore cache load errors
+    }
+
+    // Fall back to original mock reports only if both local pending and cache are empty
+    if (localReports.isEmpty && cachedReports.isEmpty) {
+      reports.assignAll([
+        OfflineReportModel(
+          id: "1",
+          species: "Tuna",
+          subSpecies: "Blackfin",
+          timeAgo: "about 3 hours ago",
+          depth: "120ft",
+          zone: "Z1",
+          technique: "Trolling",
+          bait: "Live Ballyhoo",
+          note: "Strong bite around the weedline",
+          confirms: 3,
+        ),
+        OfflineReportModel(
+          id: "2",
+          species: "Tuna",
+          timeAgo: "about 19 hours ago",
+          depth: "65ft",
+          zone: "Z6",
+          technique: "Bottom Fishing",
+          bait: "Cut bait",
+          confirms: 2,
+        ),
+        OfflineReportModel(
+          id: "3",
+          species: "Tuna",
+          subSpecies: "Blackfin",
+          author: "Offshore Dan",
+          timeAgo: "about 9 hours ago",
+          depth: "150ft",
+          zone: "Z5",
+          technique: "Trolling",
+          bait: "Live Ballyhoo",
+          confirms: 4,
+        ),
+      ]);
+    } else {
+      reports.assignAll([
+        ...localReports,
+        ...cachedReports,
+      ]);
+    }
+  }
+
+  String _formatTimeAgo(String? timestampStr) {
+    if (timestampStr == null) return "Unknown time";
+    try {
+      final dateTime = DateTime.parse(timestampStr);
+      final difference = DateTime.now().difference(dateTime);
+
+      if (difference.isNegative || difference.inSeconds < 60) {
+        return "just now";
+      } else if (difference.inMinutes < 60) {
+        return "about ${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago";
+      } else if (difference.inHours < 24) {
+        return "about ${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago";
+      } else {
+        return "about ${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago";
+      }
+    } catch (e) {
+      return "Unknown time";
+    }
+  }
+
+  String _mapBackendMethodToUser(String? method) {
+    if (method == null) return "Unknown";
+    final clean = method.trim().toUpperCase();
+    if (clean == "BOTTOM_FISHING") return "Bottom Fishing";
+    if (clean == "ANCHOR_SPOT_FISHING") return "Anchor Spot Fishing";
+    if (clean == "FLY_FISHING") return "Fly Fishing";
+    if (clean == "JIGGING") return "Jigging";
+    if (clean == "TROLLING") return "Trolling";
+    if (clean == "DRIFTING") return "Drifting";
+    return clean.split('_').map((word) {
+      if (word.isEmpty) return '';
+      return word[0] + word.substring(1).toLowerCase();
+    }).join(' ');
+  }
+
+  String _mapBackendBaitToUser(String? bait) {
+    if (bait == null) return "Unknown";
+    final clean = bait.trim().toUpperCase();
+    if (clean == "LIVE_BALLYHOO") return "Live Ballyhoo";
+    if (clean == "CUT_BAIT") return "Cut Bait";
+    if (clean == "VERTICAL_JIG") return "Vertical Jig";
+    if (clean == "SKIRTED_LURE") return "Skirted Lure";
+    return clean.split('_').map((word) {
+      if (word.isEmpty) return '';
+      return word[0] + word.substring(1).toLowerCase();
+    }).join(' ');
   }
 
   void onConfirmBite(String id) {

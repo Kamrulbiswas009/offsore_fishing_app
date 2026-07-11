@@ -250,6 +250,22 @@ class SyncService extends GetxService {
             debugPrint("=== SYNC SUCCESS for report ID: $frontendReportId ===");
             // Remove from local storage upon success
             await database.delete('pending_reports', where: 'id = ?', whereArgs: [id]);
+
+            // Notify user of successful auto-sync
+            try {
+              final speciesList = payloadMap['species'] as List?;
+              final firstSpecies = (speciesList != null && speciesList.isNotEmpty)
+                  ? speciesList[0]['speciesName']
+                  : 'Catch Report';
+              Get.snackbar(
+                "Offline Report Synced",
+                "Your offline report for $firstSpecies has been automatically synced!",
+                snackPosition: SnackPosition.BOTTOM,
+                backgroundColor: const Color(0xFF00E676),
+                colorText: Colors.white,
+                duration: const Duration(seconds: 4),
+              );
+            } catch (_) {}
           } else {
             // If response indicates a validation/server error, log it and continue
             debugPrint("=== SYNC FAILURE for report ID: $frontendReportId. Code: ${response.statusCode}, Error: ${response.errorMessage} ===");

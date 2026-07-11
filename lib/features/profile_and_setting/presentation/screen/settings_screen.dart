@@ -76,39 +76,63 @@ class SettingsScreen extends StatelessWidget {
                       color: AppColors.grey516173Color.withValues(alpha: 0.45),
                       height: 26.h,
                     ),
-                    SettingsActionTileWidget(
-                      title: 'Download Map Area',
-                      leadingIcon: IconPath.downloadIcon,
-                      onTap: controller.downloadMapArea,
-                    ),
-                    SizedBox(height: 10.h),
-                    Row(
-                      children: [
-                        Text(
-                          'Storage Used',
-                          style: getTextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.whiteE5E7EBColor,
-                            lineHeight: 10,
+                     Obx(() {
+                      final isDownloading = controller.isDownloadingMap;
+                      final progress = controller.downloadProgress;
+                      final status = controller.downloadStatusMessage;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          SettingsActionTileWidget(
+                            title: isDownloading
+                                ? 'Downloading Map... (${progress.toStringAsFixed(0)}%)'
+                                : 'Download Map Area',
+                            leadingIcon: IconPath.downloadIcon,
+                            onTap: isDownloading ? () {} : controller.downloadMapArea,
                           ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '${controller.storageUsedInMb} MB / ${controller.totalStorageInMb} MB',
-                          style: getTextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.grey8B95A5Color,
-                            lineHeight: 10,
+                          if (isDownloading) ...[
+                            SizedBox(height: 6.h),
+                            Text(
+                              status,
+                              textAlign: TextAlign.center,
+                              style: getTextStyle(
+                                fontSize: 13,
+                                color: AppColors.blue00F0FFColor,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ],
+                          SizedBox(height: 10.h),
+                          Row(
+                            children: [
+                              Text(
+                                'Storage Used',
+                                style: getTextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w400,
+                                  color: AppColors.whiteE5E7EBColor,
+                                  lineHeight: 10,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                '${controller.storageUsedInMb} MB / ${controller.totalStorageInMb} MB',
+                                style: getTextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w400,
+                                  color: AppColors.grey8B95A5Color,
+                                  lineHeight: 10,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 10.h),
-                    StorageProgressBarWidget(
-                      progress: controller.storageProgress,
-                    ),
+                          SizedBox(height: 10.h),
+                          StorageProgressBarWidget(
+                            progress: controller.storageProgress,
+                          ),
+                        ],
+                      );
+                    }),
                     SizedBox(height: 16.h),
                     SizedBox(
                       width: double.infinity,

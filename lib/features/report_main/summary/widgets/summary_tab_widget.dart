@@ -49,21 +49,148 @@ class SummaryTabWidget extends StatelessWidget {
   }
 
   Widget _buildZoneHeader(MapZoneModel? zone) {
+    if (zone == null) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildDynamicZoneName(
-          zone?.name ?? 'GOM-12',
-          fontSize: 28,
-          lineHeight: 20,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: _buildDynamicZoneName(
+                zone.name,
+                fontSize: 28,
+                lineHeight: 20,
+              ),
+            ),
+            _buildOfflineSaveButton(zone),
+          ],
         ),
         SizedBox(height: 4.h),
         Text(
-          '${zone?.reports ?? 24} reports • Last updated ${zone?.lastUpdated ?? "6 hours ago"}',
+          '${zone.reports} reports • Last updated ${zone.lastUpdated}',
           style: getTextStyle(fontSize: 14, color: Colors.white54),
         ),
       ],
     );
+  }
+
+  Widget _buildOfflineSaveButton(MapZoneModel zone) {
+    return Obx(() {
+      final isSaved = controller.offlineZones.contains(zone.name);
+      final isDownloading = controller.isDownloadingZone.value &&
+          controller.downloadingZoneName.value == zone.name;
+
+      if (isDownloading) {
+        return Container(
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+          decoration: BoxDecoration(
+            color: AppColors.orangeColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20.r),
+            border: Border.all(color: AppColors.orangeColor.withValues(alpha: 0.5)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 14.w,
+                height: 14.w,
+                child: const CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.orangeColor),
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Text(
+                "Saving...",
+                style: getTextStyle(
+                  fontSize: 12,
+                  color: AppColors.orangeColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      if (isSaved) {
+        return GestureDetector(
+          onTap: () => controller.toggleOfflineZone(zone),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF00E676).withValues(alpha: 0.15),
+                  const Color(0xFF00C853).withValues(alpha: 0.15),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20.r),
+              border: Border.all(color: const Color(0xFF00E676), width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00E676).withValues(alpha: 0.2),
+                  blurRadius: 8,
+                )
+              ]
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.offline_pin,
+                  color: Color(0xFF00E676),
+                  size: 16,
+                ),
+                SizedBox(width: 6.w),
+                Text(
+                  "Saved Offline",
+                  style: getTextStyle(
+                    fontSize: 12,
+                    color: const Color(0xFF00E676),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
+      return GestureDetector(
+        onTap: () => controller.toggleOfflineZone(zone),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+          decoration: BoxDecoration(
+            color: AppColors.blue0D2B43Color.withValues(alpha: 0.6),
+            borderRadius: BorderRadius.circular(20.r),
+            border: Border.all(color: AppColors.blue00F0FFColor.withValues(alpha: 0.4), width: 1.2),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.download_for_offline,
+                color: AppColors.blue00F0FFColor,
+                size: 16,
+              ),
+              SizedBox(width: 6.w),
+              Text(
+                "Save Offline",
+                style: getTextStyle(
+                  fontSize: 12,
+                  color: AppColors.blue00F0FFColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildAddReportButton() {

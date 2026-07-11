@@ -21,10 +21,14 @@ import 'package:paytonpieper/features/report_main/report_catch2/controller/repor
 import 'package:paytonpieper/features/report_main/summary/controller/summary_details_controller.dart';
 import 'package:paytonpieper/features/splash_screen/controller/splash_screen_controller.dart';
 import 'package:paytonpieper/core/services/sync_service.dart';
+import 'package:paytonpieper/core/services/offline_cache_service.dart';
+import 'package:paytonpieper/core/services/mapbox_offline_service.dart';
 
 class ControllerBinder extends Bindings {
   @override
   void dependencies() {
+    Get.put(OfflineCacheService(), permanent: true);
+    Get.put(MapboxOfflineService(), permanent: true);
     Get.put(SyncService(), permanent: true);
     Get.lazyPut<LocationPermissionService>(
       () => LocationPermissionService(),
