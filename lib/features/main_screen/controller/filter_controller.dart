@@ -20,7 +20,14 @@ class FilterController extends GetxController {
 
   // Method Selection
   var selectedMethods = <String>[].obs;
-  final List<String> methods = ["Trolling", "Bottom", "Jigging", "Live Bait"];
+  final List<String> methods = [
+    "Anchor/Spot Fishing",
+    "Casting",
+    "Chunking",
+    "Jigging",
+    "Spearing",
+    "Trolling",
+  ];
 
   // Visibility
   var selectedVisibilities = <String>["Public"].obs;
@@ -66,11 +73,13 @@ class FilterController extends GetxController {
 
       final mappedMethods = selectedMethods.map((m) {
         final clean = m.trim().toUpperCase();
-        if (clean.contains("TROLLING")) return "TROLLING";
-        if (clean.contains("JIGGING")) return "JIGGING";
-        if (clean.contains("BOTTOM")) return "ANCHOR_SPOT_FISHING";
-        if (clean.contains("LIVE BAILT") || clean.contains("LIVE BAIT")) return "ANCHOR_SPOT_FISHING";
-        return "CASTING";
+        if (clean == "ANCHOR/SPOT FISHING" || clean == "ANCHOR SPOT FISHING") return "ANCHOR_SPOT_FISHING";
+        if (clean == "CASTING") return "CASTING";
+        if (clean == "CHUNKING") return "CHUNKING";
+        if (clean == "JIGGING") return "JIGGING";
+        if (clean == "SPEARING") return "SPEARING";
+        if (clean == "TROLLING") return "TROLLING";
+        return clean.replaceAll(" ", "_");
       }).toList();
       final methodParam = mappedMethods.isEmpty ? null : mappedMethods.join(',');
 

@@ -77,6 +77,23 @@ class SummaryController extends GetxController {
     {"name": "Grouper", "percentage": 15.0},
   ].obs;
 
+  var lastUpdatedTime = Rxn<DateTime>();
+
+  String get lastUpdatedText {
+    final time = lastUpdatedTime.value;
+    if (time == null) return "Updated —";
+    final difference = DateTime.now().difference(time);
+    if (difference.inSeconds < 60) {
+      return "Updated just now";
+    } else if (difference.inMinutes < 60) {
+      return "Updated ${difference.inMinutes} min ago";
+    } else if (difference.inHours < 24) {
+      return "Updated ${difference.inHours} hr ago";
+    } else {
+      return "Updated ${difference.inDays} day ago";
+    }
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -276,6 +293,12 @@ class SummaryController extends GetxController {
             }
           }
           reports.assignAll(fetchedList);
+        }
+        final timestampStr = response.responseData['timestamp'] as String?;
+        if (timestampStr != null) {
+          lastUpdatedTime.value = DateTime.tryParse(timestampStr) ?? DateTime.now();
+        } else {
+          lastUpdatedTime.value = DateTime.now();
         }
       } else {
         debugPrint("Failed to fetch reports: ${response.errorMessage}");
@@ -587,6 +610,12 @@ class SummaryController extends GetxController {
         final data = response.responseData['data'];
         if (data != null && data is Map<String, dynamic>) {
           parseSummaryData(data);
+        }
+        final timestampStr = response.responseData['timestamp'] as String?;
+        if (timestampStr != null) {
+          lastUpdatedTime.value = DateTime.tryParse(timestampStr) ?? DateTime.now();
+        } else {
+          lastUpdatedTime.value = DateTime.now();
         }
       } else {
         debugPrint("Failed to fetch zone summary: ${response.errorMessage}");
