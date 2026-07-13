@@ -48,7 +48,7 @@ class NetworkCaller {
     if (!isOnline) {
       try {
         final cacheService = Get.find<OfflineCacheService>();
-        final cachedData = await cacheService.getCache(cacheKey);
+        final cachedData = await cacheService.getCache(cacheKey, ignoreExpiry: true);
         if (cachedData != null) {
           log('Returning cached fallback data for key: $cacheKey (offline mode)');
           return ResponseData(
@@ -85,7 +85,7 @@ class NetworkCaller {
       // 2. Fallback to cache if failure (timeout, server error, etc.)
       try {
         final cacheService = Get.find<OfflineCacheService>();
-        final cachedData = await cacheService.getCache(cacheKey);
+        final cachedData = await cacheService.getCache(cacheKey, ignoreExpiry: true);
         if (cachedData != null) {
           log('Returning cached fallback data for key: $cacheKey');
           return ResponseData(

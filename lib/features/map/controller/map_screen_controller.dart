@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
@@ -8,6 +9,7 @@ import '../model/map_zone_model.dart';
 import 'package:paytonpieper/utils/zone_calculator.dart';
 import 'package:paytonpieper/core/services/network_caller.dart';
 import 'package:paytonpieper/core/services/storage_service.dart';
+import 'package:paytonpieper/core/services/offline_cache_service.dart';
 import 'package:paytonpieper/core/utils/constants/api_constants.dart';
 import 'package:paytonpieper/core/utils/logging/logger.dart';
 import 'package:paytonpieper/features/main_screen/controller/filter_controller.dart';
@@ -69,7 +71,7 @@ class MapScreenController extends GetxController {
           );
         }
       },
-      time: const Duration(seconds: 10), 
+      time: const Duration(milliseconds: 1500), 
     );
 
     fetchZones(
@@ -112,9 +114,9 @@ class MapScreenController extends GetxController {
         fillColorExpression: [
           'match',
           ['get', 'activityLevel'],
-          'high',   'rgba(226, 83, 1, 0.55)',
-          'medium', 'rgba(0, 184, 217, 0.40)',
-          'low',    'rgba(28, 44, 58, 0.45)',
+          'high',   'rgba(226, 83, 1, 0.75)',
+          'medium', 'rgba(12, 152, 175, 0.50)',
+          'low',    'rgba(28, 44, 58, 0.50)',
           'rgba(0, 0, 0, 0)',         // empty → transparent
         ],
         fillOpacity: 1.0,
@@ -127,8 +129,33 @@ class MapScreenController extends GetxController {
       mapbox.LineLayer(
         id:          kGridLineLayerId,
         sourceId:    kGridCellSourceId,
-        lineColor:   0x2800F0FF,   // semi-transparent cyan
+        lineColor:   0x33153A56,   // Extremely subtle dark blue/cyan matching mockup
         lineWidth:   0.8,
+        lineOpacity: 1.0,
+      ),
+    );
+
+    // Highlighted borders for active cells
+    await map.style.addLayer(
+      mapbox.LineLayer(
+        id:          'active-grid-line-layer',
+        sourceId:    kGridCellSourceId,
+        lineColorExpression: [
+          'match',
+          ['get', 'activityLevel'],
+          'high',   'rgba(255, 140, 66, 0.95)', // Glowing orange border
+          'medium', 'rgba(0, 240, 255, 0.85)', // Cyan border
+          'low',    'rgba(81, 97, 115, 0.60)', // Grey border
+          'rgba(0, 0, 0, 0)',                  // Transparent for empty
+        ],
+        lineWidthExpression: [
+          'match',
+          ['get', 'activityLevel'],
+          'high',   2.2,
+          'medium', 1.5,
+          'low',    1.0,
+          0.0,
+        ],
         lineOpacity: 1.0,
       ),
     );
@@ -139,10 +166,17 @@ class MapScreenController extends GetxController {
         id:                 kGridLabelLayerId,
         sourceId:           kGridLabelSourceId,
         textFieldExpression: ['get', 'label'],
-        textSize:            16.0,
-        textColor:           0xFFFFFFFF,
-        textHaloColor:       0xCC000000,
-        textHaloWidth:       1.2,
+        textSize:            20.0,
+        textColorExpression: [
+          'match',
+          ['get', 'activityLevel'],
+          'high',   '#FFFFFF', // White text for High Activity
+          'medium', '#FF8C42', // Orange text for Medium Activity (like 1, 7, 3, 6)
+          'low',    '#C8D0DB', // Light grey text for Low
+          '#FFFFFF',
+        ],
+        textHaloColor:       0xFF0A1628, // Deep navy halo matching the background theme
+        textHaloWidth:       2.0,
         textFont:            ['DIN Pro Bold', 'Arial Unicode MS Bold'],
         textAllowOverlap:    true,
         iconAllowOverlap:    true,
@@ -566,6 +600,19 @@ class MapScreenController extends GetxController {
         timeRange = filterController.selectedTime.value;
       }
 
+      double southParam = south;
+      double northParam = north;
+      double westParam = west;
+      double eastParam = east;
+
+      if (!isFiltering) {
+        // Snap coordinates to nearest 0.5 degrees to enable snaps and hit local cache
+        southParam = (south / 0.5).floor() * 0.5;
+        northParam = (north / 0.5).ceil() * 0.5;
+        westParam = (west / 0.5).floor() * 0.5;
+        eastParam = (east / 0.5).ceil() * 0.5;
+      }
+
       final String url;
       if (isFiltering) {
         url = ApiConstants.getFilteredRegionReportsApi(
@@ -580,17 +627,31 @@ class MapScreenController extends GetxController {
         );
       } else {
         url = ApiConstants.getZonesApi(
-          south: south,
-          north: north,
-          west: west,
-          east: east,
+          south: southParam,
+          north: northParam,
+          west: westParam,
+          east: eastParam,
         );
       }
 
+      final cacheKey = "zones_bounds_${southParam.toStringAsFixed(2)}_${northParam.toStringAsFixed(2)}_${westParam.toStringAsFixed(2)}_${eastParam.toStringAsFixed(2)}_filtering_${isFiltering}_sp_${speciesParam}_time_${timeRange}_m_${methodParam}_d_${depthMin}_${depthMax}_v_${visibilityParam}";
+
+      // 1. Load from cache instantly if available
+      try {
+        final cacheService = Get.find<OfflineCacheService>();
+        final cachedData = await cacheService.getCache(cacheKey, ignoreExpiry: true);
+        if (cachedData != null && cachedData is Map && cachedData['data'] is List) {
+          await _parseAndApplyZonesList(cachedData['data'] as List, isFiltering, map);
+        }
+      } catch (e) {
+        debugPrint("Instant local cache load error (zones): $e");
+      }
+
+      // 2. Perform network request
       final response = await network.cachedGetRequest(
         url,
         token: token,
-        cacheKey: "zones_bounds_${south.toStringAsFixed(2)}_${north.toStringAsFixed(2)}_${west.toStringAsFixed(2)}_${east.toStringAsFixed(2)}_filtering_${isFiltering}_sp_${speciesParam}_time_${timeRange}_m_${methodParam}_d_${depthMin}_${depthMax}_v_${visibilityParam}",
+        cacheKey: cacheKey,
       );
 
       if (response.isSuccess) {
@@ -599,148 +660,7 @@ class MapScreenController extends GetxController {
         );
         final data = response.responseData['data'] as List?;
         if (data != null) {
-          final List<MapZoneModel> zonesList = [];
-          
-          if (isFiltering) {
-            final Map<String, int> zoneCounts = {};
-            final Map<String, List<String>> zoneSpecies = {};
-            final Map<String, List<int>> zoneDepths = {};
-
-            for (var item in data) {
-              if (item is Map<String, dynamic>) {
-                final zoneId = item['zoneId'] ?? item['zone']?['zoneId'] ?? '';
-                if (zoneId.isEmpty) continue;
-
-                zoneCounts[zoneId] = (zoneCounts[zoneId] ?? 0) + 1;
-
-                // Collect species names
-                final speciesList = item['species'] as List?;
-                if (speciesList != null) {
-                  for (var sp in speciesList) {
-                    if (sp is Map<String, dynamic>) {
-                      final name = sp['speciesName'] as String? ?? '';
-                      if (name.isNotEmpty) {
-                        zoneSpecies.putIfAbsent(zoneId, () => []).add(name);
-                      }
-                    }
-                  }
-                }
-
-                // Collect depth
-                final depth = item['waterDepthFt'] as int?;
-                if (depth != null) {
-                  zoneDepths.putIfAbsent(zoneId, () => []).add(depth);
-                }
-              }
-            }
-
-            // Build MapZoneModel for each matching zone
-            zoneCounts.forEach((zoneId, count) {
-              final zoneInfo = ZoneCalculator.fromZoneId(zoneId);
-              if (zoneInfo != null) {
-                // Determine level
-                ActivityLevel level = ActivityLevel.low;
-                if (count >= 5) {
-                  level = ActivityLevel.high;
-                } else if (count >= 1) {
-                  level = ActivityLevel.medium;
-                }
-
-                // Determine average depth
-                final depths = zoneDepths[zoneId] ?? [];
-                final avgDepth = depths.isEmpty
-                    ? '—'
-                    : '${(depths.reduce((a, b) => a + b) / depths.length).round()} ft';
-
-                // Determine top species
-                final species = zoneSpecies[zoneId] ?? [];
-                final Map<String, int> speciesCounts = {};
-                for (var name in species) {
-                  speciesCounts[name] = (speciesCounts[name] ?? 0) + 1;
-                }
-                String topSpecies = 'None';
-                int maxSpCount = 0;
-                speciesCounts.forEach((name, spCount) {
-                  if (spCount > maxSpCount) {
-                    maxSpCount = spCount;
-                    topSpecies = name;
-                  }
-                });
-
-                zonesList.add(MapZoneModel(
-                  id: zoneId,
-                  name: zoneId,
-                  location: LatLng(zoneInfo.centerLat, zoneInfo.centerLng),
-                  count: count,
-                  level: level,
-                  reports: count,
-                  avgDepth: avgDepth,
-                  topSpecies: topSpecies,
-                  north: zoneInfo.boundNorth,
-                  south: zoneInfo.boundSouth,
-                  east: zoneInfo.boundEast,
-                  west: zoneInfo.boundWest,
-                ));
-              }
-            });
-          } else {
-            for (var item in data) {
-              if (item is Map<String, dynamic>) {
-                final zoneId = item['zoneId'] ?? '';
-                final displayName = item['displayName'] ?? zoneId;
-                final centerLat = (item['centerLat'] as num?)?.toDouble() ?? 0.0;
-                final centerLng = (item['centerLng'] as num?)?.toDouble() ?? 0.0;
-                
-                final boundsMap = item['bounds'] as Map<String, dynamic>?;
-                final zNorth = (boundsMap?['north'] as num?)?.toDouble();
-                final zSouth = (boundsMap?['south'] as num?)?.toDouble();
-                final zEast = (boundsMap?['east'] as num?)?.toDouble();
-                final zWest = (boundsMap?['west'] as num?)?.toDouble();
-
-                final activityScore = (item['activityScore'] as num?)?.toDouble() ?? 0.0;
-                final trendDirectionStr = item['trendDirection'] as String? ?? 'STABLE';
-                final reportCount = (item['reportCount'] as num?)?.toInt() ?? 0;
-
-                // Map trend direction
-                TrendDirection trend = TrendDirection.stable;
-                if (trendDirectionStr == 'RISING') {
-                  trend = TrendDirection.rising;
-                } else if (trendDirectionStr == 'FALLING') {
-                  trend = TrendDirection.falling;
-                }
-
-                // Determine activity level
-                ActivityLevel level = ActivityLevel.low;
-                if (reportCount >= 5 || activityScore >= 70.0) {
-                  level = ActivityLevel.high;
-                } else if (reportCount >= 1 || activityScore >= 30.0) {
-                  level = ActivityLevel.medium;
-                }
-
-                zonesList.add(MapZoneModel(
-                  id: zoneId,
-                  name: displayName,
-                  location: LatLng(centerLat, centerLng),
-                  count: reportCount,
-                  level: level,
-                  reports: reportCount,
-                  activityScore: activityScore > 1.0 ? activityScore / 100.0 : activityScore,
-                  trend: trend,
-                  north: zNorth,
-                  south: zSouth,
-                  east: zEast,
-                  west: zWest,
-                ));
-              }
-            }
-          }
-
-          activeZones.assignAll(zonesList);
-
-          // If map is provided, update the grid layers immediately using local calculator
-          if (map != null) {
-            await refreshGridOnMap(map);
-          }
+          await _parseAndApplyZonesList(data, isFiltering, map);
         }
       } else {
         AppLoggerHelper.error(
@@ -774,6 +694,155 @@ class MapScreenController extends GetxController {
       } else {
         isLoading.value = false;
       }
+    }
+  }
+
+  Future<void> _parseAndApplyZonesList(
+    List data,
+    bool isFiltering,
+    mapbox.MapboxMap? map,
+  ) async {
+    final List<MapZoneModel> zonesList = [];
+    
+    if (isFiltering) {
+      final Map<String, int> zoneCounts = {};
+      final Map<String, List<String>> zoneSpecies = {};
+      final Map<String, List<int>> zoneDepths = {};
+
+      for (var item in data) {
+        if (item is Map<String, dynamic>) {
+          final zoneId = item['zoneId'] ?? item['zone']?['zoneId'] ?? '';
+          if (zoneId.isEmpty) continue;
+
+          zoneCounts[zoneId] = (zoneCounts[zoneId] ?? 0) + 1;
+
+          // Collect species names
+          final speciesList = item['species'] as List?;
+          if (speciesList != null) {
+            for (var sp in speciesList) {
+              if (sp is Map<String, dynamic>) {
+                final name = sp['speciesName'] as String? ?? '';
+                if (name.isNotEmpty) {
+                  zoneSpecies.putIfAbsent(zoneId, () => []).add(name);
+                }
+              }
+            }
+          }
+
+          // Collect depth
+          final depth = item['waterDepthFt'] as int?;
+          if (depth != null) {
+            zoneDepths.putIfAbsent(zoneId, () => []).add(depth);
+          }
+        }
+      }
+
+      // Build MapZoneModel for each matching zone
+      zoneCounts.forEach((zoneId, count) {
+        final zoneInfo = ZoneCalculator.fromZoneId(zoneId);
+        if (zoneInfo != null) {
+          // Determine level
+          ActivityLevel level = ActivityLevel.low;
+          if (count >= 5) {
+            level = ActivityLevel.high;
+          } else if (count >= 1) {
+            level = ActivityLevel.medium;
+          }
+
+          // Determine average depth
+          final depths = zoneDepths[zoneId] ?? [];
+          final avgDepth = depths.isEmpty
+              ? '—'
+              : '${(depths.reduce((a, b) => a + b) / depths.length).round()} ft';
+
+          // Determine top species
+          final species = zoneSpecies[zoneId] ?? [];
+          final Map<String, int> speciesCounts = {};
+          for (var name in species) {
+            speciesCounts[name] = (speciesCounts[name] ?? 0) + 1;
+          }
+          String topSpecies = 'None';
+          int maxSpCount = 0;
+          speciesCounts.forEach((name, spCount) {
+            if (spCount > maxSpCount) {
+              maxSpCount = spCount;
+              topSpecies = name;
+            }
+          });
+
+          zonesList.add(MapZoneModel(
+            id: zoneId,
+            name: zoneId,
+            location: LatLng(zoneInfo.centerLat, zoneInfo.centerLng),
+            count: count,
+            level: level,
+            reports: count,
+            avgDepth: avgDepth,
+            topSpecies: topSpecies,
+            north: zoneInfo.boundNorth,
+            south: zoneInfo.boundSouth,
+            east: zoneInfo.boundEast,
+            west: zoneInfo.boundWest,
+          ));
+        }
+      });
+    } else {
+      for (var item in data) {
+        if (item is Map<String, dynamic>) {
+          final zoneId = item['zoneId'] ?? '';
+          final displayName = item['displayName'] ?? zoneId;
+          final centerLat = (item['centerLat'] as num?)?.toDouble() ?? 0.0;
+          final centerLng = (item['centerLng'] as num?)?.toDouble() ?? 0.0;
+          
+          final boundsMap = item['bounds'] as Map<String, dynamic>?;
+          final zNorth = (boundsMap?['north'] as num?)?.toDouble();
+          final zSouth = (boundsMap?['south'] as num?)?.toDouble();
+          final zEast = (boundsMap?['east'] as num?)?.toDouble();
+          final zWest = (boundsMap?['west'] as num?)?.toDouble();
+
+          final activityScore = (item['activityScore'] as num?)?.toDouble() ?? 0.0;
+          final trendDirectionStr = item['trendDirection'] as String? ?? 'STABLE';
+          final reportCount = (item['reportCount'] as num?)?.toInt() ?? 0;
+
+          // Map trend direction
+          TrendDirection trend = TrendDirection.stable;
+          if (trendDirectionStr == 'RISING') {
+            trend = TrendDirection.rising;
+          } else if (trendDirectionStr == 'FALLING') {
+            trend = TrendDirection.falling;
+          }
+
+          // Determine activity level
+          ActivityLevel level = ActivityLevel.low;
+          if (reportCount >= 5 || activityScore >= 70.0) {
+            level = ActivityLevel.high;
+          } else if (reportCount >= 1 || activityScore >= 30.0) {
+            level = ActivityLevel.medium;
+          }
+
+          zonesList.add(MapZoneModel(
+            id: zoneId,
+            name: displayName,
+            location: LatLng(centerLat, centerLng),
+            count: reportCount,
+            level: level,
+            reports: reportCount,
+            activityScore: activityScore > 1.0 ? activityScore / 100.0 : activityScore,
+            trend: trend,
+            north: zNorth,
+            south: zSouth,
+            east: zEast,
+            west: zWest,
+          ));
+        }
+      }
+    }
+
+    activeZones.assignAll(zonesList);
+
+    // If map is provided, update the grid layers immediately using local calculator
+    if (map != null) {
+      await refreshGridOnMap(map);
     }
   }
 

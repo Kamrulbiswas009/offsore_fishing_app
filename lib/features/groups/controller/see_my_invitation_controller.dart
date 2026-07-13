@@ -20,6 +20,7 @@ class SeeMyInvitationController extends GetxController {
   }
 
   Future<void> seeMyInvitations({bool showHUD = true}) async {
+    if (isLoading.value) return;
     isLoading.value = true;
     if (showHUD) {
       EasyLoading.show(status: 'Loading invitations...');

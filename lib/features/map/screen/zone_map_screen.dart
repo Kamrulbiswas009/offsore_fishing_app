@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -47,6 +48,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
   bool _layersReady = false;
   bool _isLocating = false; // prevents double-tap on location button
   Timer? _gridDebounce;
+  double _bearing = 0.0;
 
   @override
   void initState() {
@@ -144,12 +146,24 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
 
   // ── Camera change → grid refresh ────────────────────────────────────────
 
-  void _onCameraChange(mapbox.CameraChangedEventData _) {
+  void _onCameraChange(mapbox.CameraChangedEventData _) async {
     _gridDebounce?.cancel();
     _gridDebounce = Timer(
       const Duration(milliseconds: 150),
       _updateGridForViewport,
     );
+
+    final map = _mapboxMap;
+    if (map != null) {
+      try {
+        final cam = await map.getCameraState();
+        if (mounted && _bearing != cam.bearing) {
+          setState(() {
+            _bearing = cam.bearing;
+          });
+        }
+      } catch (_) {}
+    }
   }
 
   Future<void> _updateGridForViewport() async {
@@ -250,6 +264,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
 
           // ── Fixed UI chrome
           _buildHeader(isPickerMode: isPickerMode),
+          if (!isPickerMode) _buildCompass(),
           _buildLegend(),
           if (!isPickerMode) _buildActionButtons(),
 
@@ -288,7 +303,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isPickerMode ? 'SELECT LOCATION' : 'ZONE ACTIVITY MAP',
+            isPickerMode ? 'Select Location' : 'Zone Activity Map',
             style: getTextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -456,25 +471,55 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
 
   Widget _filterButton() {
     return Stack(
-      alignment: Alignment.topRight,
+      clipBehavior: Clip.none,
       children: [
         Container(
+          width: 56.r,
+          height: 56.r,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: AppColors.blue00D4FFColor, width: 1.5.w),
+            color: AppColors.blue134D67Color.withValues(alpha: 0.9),
+            border: Border.all(color: AppColors.blue00F0FFColor, width: 1.5.w),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.blue00F0FFColor.withValues(alpha: 0.25),
+                blurRadius: 10,
+                spreadRadius: 1,
+              ),
+            ],
           ),
-          child: CircleAvatar(
-            radius: 28.r,
-            backgroundColor: AppColors.blue134D67Color,
-            child: Image.asset(IconPath.filterIcon, height: 33.h, width: 33.w),
+          child: Center(
+            child: Image.asset(
+              IconPath.filterIcon, 
+              height: 24.r, 
+              width: 24.r,
+              color: AppColors.blue00F0FFColor,
+            ),
           ),
         ),
-        CircleAvatar(
-          radius: 9.r,
-          backgroundColor: Colors.red,
-          child: Text(
-            '3',
-            style: TextStyle(fontSize: 10.sp, color: Colors.white),
+        Positioned(
+          top: -2.r,
+          right: -2.r,
+          child: Container(
+            padding: EdgeInsets.all(4.r),
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(0xFFFF5252), // vibrant red badge
+            ),
+            constraints: BoxConstraints(
+              minWidth: 18.r,
+              minHeight: 18.r,
+            ),
+            child: Center(
+              child: Text(
+                '3',
+                style: TextStyle(
+                  fontSize: 10.sp, 
+                  color: Colors.white, 
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ),
         ),
       ],
@@ -485,15 +530,101 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
     return Container(
       width: 56.r,
       height: 56.r,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [Color(0xFFFF8C42), Color(0xFFE25301)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFE25301).withValues(alpha: 0.45),
+            blurRadius: 15,
+            spreadRadius: 2,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Icon(Icons.add, color: Colors.white, size: 30.sp),
     );
   }
+
+  Widget _buildCompass() {
+    final angleRad = -_bearing * 3.141592653589793 / 180.0;
+    return Positioned(
+      top: 130.h,
+      left: 20.w,
+      child: Column(
+        children: [
+          Container(
+            width: 48.r,
+            height: 48.r,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.blue0D2B43Color.withValues(alpha: 0.8),
+              border: Border.all(color: AppColors.blue00F0FFColor, width: 1.5.w),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.blue00F0FFColor.withValues(alpha: 0.2),
+                  blurRadius: 8,
+                )
+              ]
+            ),
+            child: Center(
+              child: Transform.rotate(
+                angle: angleRad,
+                child: CustomPaint(
+                  size: Size(18.w, 24.h),
+                  painter: const CompassNeedlePainter(),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 4.h),
+          Text(
+            "N",
+            style: getTextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: AppColors.blue00F0FFColor,
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class CompassNeedlePainter extends CustomPainter {
+  const CompassNeedlePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.fill;
+    
+    final path = ui.Path();
+    // Draw top half (orange)
+    paint.color = const Color(0xFFFF8C42);
+    path.moveTo(size.width / 2, 0);
+    path.lineTo(size.width, size.height);
+    path.lineTo(size.width / 2, size.height * 0.75);
+    path.close();
+    canvas.drawPath(path, paint);
+
+    // Draw left half shade (dark orange) for 3D effect
+    final pathLeft = ui.Path();
+    paint.color = const Color(0xFFE25301);
+    pathLeft.moveTo(size.width / 2, 0);
+    pathLeft.lineTo(0, size.height);
+    pathLeft.lineTo(size.width / 2, size.height * 0.75);
+    pathLeft.close();
+    canvas.drawPath(pathLeft, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // ── Zone Detail Panel
