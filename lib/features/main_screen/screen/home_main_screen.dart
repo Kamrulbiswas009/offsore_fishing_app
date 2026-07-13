@@ -17,47 +17,50 @@ class MainScreen extends StatelessWidget {
 
     return Scaffold(
       extendBody: true, // Allows content to flow behind the floating nav bar
-      body: SafeArea(
-        top: true,
-        bottom: true,
-        child: Column(
-          children: [
-            const OfflineBannerWidget(),
-            Expanded(
-              child: Stack(
-                children: [
-                  // The body switches based on Nav Bar selection
-                  Obx(
-                    () => IndexedStack(
-                      index: controller.currentIndex.value,
-                      children: [
-                        const ZoneMapScreen(), // The Map Content (Code below)
-                        const SummaryScreen(isReportMainScreen: true),
-                        GroupMainScreen(),
-                        ProfileMainScreen(),
-                      ],
-                    ),
-                  ),
+      body: Stack(
+        children: [
+          // The body switches based on Nav Bar selection
+          Obx(
+            () => IndexedStack(
+              index: controller.currentIndex.value,
+              children: [
+                const ZoneMapScreen(), // The Map Content
+                const SummaryScreen(isReportMainScreen: true),
+                SafeArea(
+                  bottom: false,
+                  child: GroupMainScreen(),
+                ),
+                ProfileMainScreen(),
+              ],
+            ),
+          ),
 
-                  // Floating Bottom Navigation Bar
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: Obx(
-                      () => CustomBottomNavBar(
-                        currentIndex: controller.currentIndex.value,
-                        onTap: (index) {
-                          controller.changeIndex(index);
-                        },
-                      ),
-                    ),
-                  ),
-                ],
+          // Floating Offline Banner
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              bottom: false,
+              child: OfflineBannerWidget(),
+            ),
+          ),
+
+          // Floating Bottom Navigation Bar
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Obx(
+              () => CustomBottomNavBar(
+                currentIndex: controller.currentIndex.value,
+                onTap: (index) {
+                  controller.changeIndex(index);
+                },
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

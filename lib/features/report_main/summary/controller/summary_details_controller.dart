@@ -231,6 +231,18 @@ class SummaryController extends GetxController {
 
   Future<void> fetchReports({int? customTtl}) async {
     isLoading.value = true;
+
+    // Load from cache instantly if available
+    try {
+      final cacheService = Get.find<OfflineCacheService>();
+      final cachedData = await cacheService.getCache("region_reports", ignoreExpiry: true);
+      if (cachedData != null && cachedData is Map && cachedData['data'] is List) {
+        _parseReportsList(cachedData['data'] as List);
+      }
+    } catch (e) {
+      debugPrint("Instant local cache load error (reports): $e");
+    }
+
     try {
       final network = NetworkCaller();
       var accessToken = StorageService.token;
@@ -254,45 +266,7 @@ class SummaryController extends GetxController {
         );
         final data = response.responseData['data'] as List?;
         if (data != null) {
-          final List<FishingReport> fetchedList = [];
-          for (var item in data) {
-            try {
-              final speciesList = item['species'] as List?;
-              final title = (speciesList != null && speciesList.isNotEmpty)
-                  ? speciesList.map((s) => s['speciesName']).join(', ')
-                  : 'Unknown';
-
-              final catchTimestamp = item['catchTimestamp'] as String?;
-              final timeAgo = _formatTimeAgo(catchTimestamp);
-
-              final depth = "${item['waterDepthFt'] ?? 0}ft";
-              final zone = item['zoneId'] ?? item['zone']?['zoneId'] ?? 'Unknown';
-              final technique = _mapBackendMethodToUser(item['fishingMethod']);
-              final bait = _mapBackendBaitToUser(item['baitLureType']);
-              final note = item['notes'];
-              final confirms = item['biteConfirmations']?['confirmed'] ?? 0;
-              final author = item['user']?['name'];
-              final type = item['visibility']?.toString().toLowerCase() ?? 'public';
-              final id = item['id']?.toString() ?? item['reportId']?.toString() ?? item['_id']?.toString();
-
-              fetchedList.add(FishingReport(
-                id: id,
-                title: title,
-                timeAgo: timeAgo,
-                depth: depth,
-                zone: zone,
-                technique: technique,
-                bait: bait,
-                note: note,
-                confirms: confirms,
-                author: author,
-                type: type,
-              ));
-            } catch (e) {
-              debugPrint("Error parsing report item: $e");
-            }
-          }
-          reports.assignAll(fetchedList);
+          _parseReportsList(data);
         }
         final timestampStr = response.responseData['timestamp'] as String?;
         if (timestampStr != null) {
@@ -308,6 +282,48 @@ class SummaryController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void _parseReportsList(List data) {
+    final List<FishingReport> fetchedList = [];
+    for (var item in data) {
+      try {
+        final speciesList = item['species'] as List?;
+        final title = (speciesList != null && speciesList.isNotEmpty)
+            ? speciesList.map((s) => s['speciesName']).join(', ')
+            : 'Unknown';
+
+        final catchTimestamp = item['catchTimestamp'] as String?;
+        final timeAgo = _formatTimeAgo(catchTimestamp);
+
+        final depth = "${item['waterDepthFt'] ?? 0}ft";
+        final zone = item['zoneId'] ?? item['zone']?['zoneId'] ?? 'Unknown';
+        final technique = _mapBackendMethodToUser(item['fishingMethod']);
+        final bait = _mapBackendBaitToUser(item['baitLureType']);
+        final note = item['notes'];
+        final confirms = item['biteConfirmations']?['confirmed'] ?? 0;
+        final author = item['user']?['name'];
+        final type = item['visibility']?.toString().toLowerCase() ?? 'public';
+        final id = item['id']?.toString() ?? item['reportId']?.toString() ?? item['_id']?.toString();
+
+        fetchedList.add(FishingReport(
+          id: id,
+          title: title,
+          timeAgo: timeAgo,
+          depth: depth,
+          zone: zone,
+          technique: technique,
+          bait: bait,
+          note: note,
+          confirms: confirms,
+          author: author,
+          type: type,
+        ));
+      } catch (e) {
+        debugPrint("Error parsing report item: $e");
+      }
+    }
+    reports.assignAll(fetchedList);
   }
 
   String _formatTimeAgo(String? timestampStr) {
@@ -566,8 +582,19 @@ class SummaryController extends GetxController {
   var selectedDay = "Today".obs;
   var selectedTimePeriod = "Morning".obs; // Morning, Afternoon, Evening
 
-  var days = <String>["Today", "Sat 19", "Sun 20", "Mon 21", "Tue 22"].obs;
+  var days = RxList<String>(_generateInitialDays());
   final List<String> timePeriods = ["Morning", "Afternoon", "Evening"];
+
+  static List<String> _generateInitialDays() {
+    final List<String> list = ["Today"];
+    final List<String> weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    for (int i = 1; i <= 4; i++) {
+      final futureDate = DateTime.now().add(Duration(days: i));
+      final label = "${weekdays[futureDate.weekday % 7]} ${futureDate.day}";
+      list.add(label);
+    }
+    return list;
+  }
 
   // StormGlass Weather API States
   var isWeatherLoading = false.obs;
@@ -575,6 +602,22 @@ class SummaryController extends GetxController {
 
   Future<void> fetchSummary({int? customTtl}) async {
     isSummaryLoading.value = true;
+    
+    final cacheKey = selectedZone.value != null
+        ? "zone_summary_${selectedZone.value!.name}"
+        : "zone_summary_region";
+
+    // Load from cache instantly if available
+    try {
+      final cacheService = Get.find<OfflineCacheService>();
+      final cachedData = await cacheService.getCache(cacheKey, ignoreExpiry: true);
+      if (cachedData != null && cachedData is Map && cachedData['data'] is Map<String, dynamic>) {
+        parseSummaryData(cachedData['data'] as Map<String, dynamic>);
+      }
+    } catch (e) {
+      debugPrint("Instant local cache load error (summary): $e");
+    }
+
     try {
       final network = NetworkCaller();
       var accessToken = StorageService.token;
@@ -589,10 +632,6 @@ class SummaryController extends GetxController {
       } else {
         url = "${ApiConstants.getZoneSummaryApi}?regionCode=GOM&page=1&limit=20";
       }
-
-      final cacheKey = selectedZone.value != null
-          ? "zone_summary_${selectedZone.value!.name}"
-          : "zone_summary_region";
 
       final ttl = customTtl ?? (isCurrentZoneOffline ? 52560000 : 1440);
 
@@ -744,11 +783,27 @@ class SummaryController extends GetxController {
 
   Future<void> fetchWeather({int? customTtl}) async {
     isWeatherLoading.value = true;
+    final lat = selectedZone.value?.location.latitude ?? 28.375;
+    final lng = selectedZone.value?.location.longitude ?? -89.125;
+    final cacheKey = "weather_${lat.toStringAsFixed(3)}_${lng.toStringAsFixed(3)}";
+
+    // Load from cache instantly if available
+    try {
+      final cacheService = Get.find<OfflineCacheService>();
+      final cachedData = await cacheService.getCache(cacheKey, ignoreExpiry: true);
+      if (cachedData != null && cachedData is Map<String, dynamic>) {
+        weatherData.value = cachedData;
+        final hours = cachedData['hours'] as List?;
+        if (hours != null) {
+          _populateDaysList(hours);
+        }
+      }
+    } catch (e) {
+      debugPrint("Instant local cache load error (weather): $e");
+    }
+
     try {
       final network = NetworkCaller();
-      final lat = selectedZone.value?.location.latitude ?? 28.375;
-      final lng = selectedZone.value?.location.longitude ?? -89.125;
-
       final url = "https://api.stormglass.io/v2/weather/point?lat=$lat&lng=$lng&params=windSpeed,windDirection,waveHeight,waterTemperature,airTemperature,cloudCover,swellDirection,swellPeriod";
 
       final ttl = customTtl ?? (isCurrentZoneOffline ? 52560000 : 1440);
@@ -756,7 +811,7 @@ class SummaryController extends GetxController {
       final response = await network.cachedGetRequest(
         url,
         token: ApiConstants.stormGlassApiKey,
-        cacheKey: "weather_${lat.toStringAsFixed(3)}_${lng.toStringAsFixed(3)}",
+        cacheKey: cacheKey,
         ttlMinutes: ttl,
       );
 
@@ -804,6 +859,9 @@ class SummaryController extends GetxController {
     }
 
     days.assignAll(computed.take(5).toList());
+    if (!days.contains(selectedDay.value)) {
+      selectedDay.value = "Today";
+    }
   }
 
   Map<String, dynamic>? getSelectedDayNowEntry(String dayLabel) {

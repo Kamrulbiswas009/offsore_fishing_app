@@ -92,8 +92,8 @@ class OfflineCacheService extends GetxService {
   // ── Read ──────────────────────────────────────────────────────────────
 
   /// Retrieve cached data for [key]. Returns `null` if missing **or** if the
-  /// entry's TTL has expired. Expired entries are deleted lazily.
-  Future<dynamic> getCache(String key) async {
+  /// entry's TTL has expired (unless [ignoreExpiry] is true). Expired entries are deleted lazily.
+  Future<dynamic> getCache(String key, {bool ignoreExpiry = false}) async {
     try {
       final db = await database;
       final rows = await db.query(
@@ -110,7 +110,7 @@ class OfflineCacheService extends GetxService {
       final ttl = row['ttl_minutes'] as int;
       final expiry = cachedAt.add(Duration(minutes: ttl));
 
-      if (DateTime.now().toUtc().isAfter(expiry)) {
+      if (!ignoreExpiry && DateTime.now().toUtc().isAfter(expiry)) {
         // Expired → delete and return null.
         await db.delete(
           'cached_responses',
@@ -121,7 +121,7 @@ class OfflineCacheService extends GetxService {
         return null;
       }
 
-      debugPrint('[OfflineCacheService] Cache hit: $key');
+      debugPrint('[OfflineCacheService] Cache hit (ignoreExpiry: $ignoreExpiry): $key');
       return jsonDecode(row['response_json'] as String);
     } catch (e) {
       debugPrint('[OfflineCacheService] getCache error: $e');

@@ -59,76 +59,17 @@ class FilterController extends GetxController {
   Future<void> applyFilters() async {
     await EasyLoading.show(status: 'Applying filters...');
     try {
-      final network = NetworkCaller();
-      var accessToken = StorageService.token;
-      // Fallback to test token if token is missing
-      if (accessToken == null || accessToken.isEmpty) {
-        accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhMDYxM2ViMC0zY2E4LTQ1MjItOTA4MC1hODM1NzFkZDdkODAiLCJlbWFpbCI6InVzZXJAZ21haWwuY29tIiwiaWF0IjoxNzgzMzAyMzM0LCJleHAiOjE3ODM5MDcxMzR9.3d1C44JOmw7aIpq6gna6kIrzXNfwVlaWkFfZxuaHYFo";
-      }
-      final token = 'Bearer $accessToken';
-
-      final speciesParam = selectedSpecies.isEmpty ? null : selectedSpecies.join(',');
-      final depthMin = 0;
-      final depthMax = depthValue.value.toInt();
-
-      final mappedMethods = selectedMethods.map((m) {
-        final clean = m.trim().toUpperCase();
-        if (clean == "ANCHOR/SPOT FISHING" || clean == "ANCHOR SPOT FISHING") return "ANCHOR_SPOT_FISHING";
-        if (clean == "CASTING") return "CASTING";
-        if (clean == "CHUNKING") return "CHUNKING";
-        if (clean == "JIGGING") return "JIGGING";
-        if (clean == "SPEARING") return "SPEARING";
-        if (clean == "TROLLING") return "TROLLING";
-        return clean.replaceAll(" ", "_");
-      }).toList();
-      final methodParam = mappedMethods.isEmpty ? null : mappedMethods.join(',');
-
-      String? visibilityParam;
-      final upperVis = selectedVisibilities.map((v) => v.trim().toUpperCase()).toList();
-      if (upperVis.contains("PUBLIC") && !upperVis.contains("GROUP")) {
-        visibilityParam = "PUBLIC";
-      } else if (upperVis.contains("GROUP") && !upperVis.contains("PUBLIC")) {
-        visibilityParam = "GROUP";
-      } else if (upperVis.contains("PUBLIC") && upperVis.contains("GROUP")) {
-        visibilityParam = "PUBLIC,GROUP";
+      // Trigger map refresh with filters directly to avoid duplicate fetches and latency
+      if (Get.isRegistered<MapScreenController>()) {
+        final mapController = Get.find<MapScreenController>();
+        await mapController.refreshMapWithFilters();
       }
 
-      final url = ApiConstants.getFilteredZoneSummaryApi(
-        regionCode: "GOM",
-        species: speciesParam,
-        depthMinFt: depthMin,
-        depthMaxFt: depthMax,
-        fishingMethod: methodParam,
-        visibility: visibilityParam,
-        timeRange: selectedTime.value,
-        page: 1,
-        limit: 20,
+      await EasyLoading.showSuccess(
+        "Filters applied successfully!",
+        duration: const Duration(seconds: 1),
       );
-
-      final response = await network.getRequest(url, token: token);
-
-      if (response.isSuccess) {
-        await EasyLoading.dismiss();
-        final data = response.responseData['data'];
-        final overview = data != null ? data['activityOverview'] : null;
-        final reportsCount = overview != null ? (overview['reportsCount'] ?? 0) : 0;
-        final hitRate = overview != null ? (overview['hitRate'] ?? 0) : 0;
-
-        // Trigger map refresh with filters
-        if (Get.isRegistered<MapScreenController>()) {
-          final mapController = Get.find<MapScreenController>();
-          mapController.refreshMapWithFilters();
-        }
-
-        await EasyLoading.showSuccess(
-          "Filters applied successfully!",
-          duration: const Duration(seconds: 2),
-        );
-        Get.back();
-      } else {
-        await EasyLoading.dismiss();
-        await EasyLoading.showError("Failed to apply filters: ${response.errorMessage}");
-      }
+      Get.back();
     } catch (e) {
       await EasyLoading.dismiss();
       await EasyLoading.showError("An error occurred while applying filters.");

@@ -8,6 +8,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:paytonpieper/core/services/network_caller.dart';
 import 'package:paytonpieper/core/services/storage_service.dart';
+import 'package:paytonpieper/core/services/offline_cache_service.dart';
 import 'package:paytonpieper/core/utils/constants/api_constants.dart';
 
 class SyncService extends GetxService {
@@ -24,6 +25,7 @@ class SyncService extends GetxService {
   
   StreamSubscription? _connectivitySubscription;
   Timer? _retryTimer;
+  Timer? _connectivityDebounce;
 
   // Asynchronous database getter with thread-safe Completer
   Future<Database> get db async {
@@ -76,6 +78,10 @@ class SyncService extends GetxService {
     await checkConnectivityAndSync();
     _startConnectivityListener();
     _startPeriodicRetryTimer();
+    
+    if (isOnline.value) {
+      prefetchAppData();
+    }
   }
 
   // True internet check: verifies connection to API IP or generic DNS lookup
@@ -118,21 +124,29 @@ class SyncService extends GetxService {
   }
 
   void _startConnectivityListener() {
-    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((result) async {
-      final hasConn = _isConnected(result);
-      final wasOffline = !isOnline.value;
-      
-      if (hasConn) {
-        final online = await hasActualInternet();
-        isOnline.value = online;
-      } else {
-        isOnline.value = false;
-      }
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((result) {
+      _connectivityDebounce?.cancel();
+      _connectivityDebounce = Timer(const Duration(seconds: 2), () async {
+        final hasConn = _isConnected(result);
+        final wasOffline = !isOnline.value;
+        
+        if (hasConn) {
+          final online = await hasActualInternet();
+          if (isOnline.value != online) {
+            isOnline.value = online;
+          }
+        } else {
+          if (isOnline.value != false) {
+            isOnline.value = false;
+          }
+        }
 
-      if (isOnline.value && wasOffline) {
-        // Trigger auto-sync when network is restored
-        triggerBackgroundSync();
-      }
+        if (isOnline.value && wasOffline) {
+          // Trigger auto-sync and prefetch when network is restored
+          triggerBackgroundSync();
+          prefetchAppData();
+        }
+      });
     });
   }
 
@@ -358,10 +372,85 @@ class SyncService extends GetxService {
     }
   }
 
+  Future<void> prefetchAppData() async {
+    final token = StorageService.token;
+    if (token == null || token.isEmpty) {
+      debugPrint('[SyncService] Prefetch skipped: No auth token found.');
+      return;
+    }
+    
+    final online = await hasActualInternet();
+    if (!online) {
+      debugPrint('[SyncService] Prefetch skipped: Device is offline.');
+      return;
+    }
+
+    debugPrint('[SyncService] Starting foreground prefetch of all key app data...');
+    
+    final bearerToken = 'Bearer $token';
+    
+    try {
+      // 1. User Profile
+      await _networkCaller.cachedGetRequest(
+        ApiConstants.authMeApi,
+        token: bearerToken,
+        cacheKey: "auth_me",
+      );
+
+      // 2. Group List
+      await _networkCaller.cachedGetRequest(
+        ApiConstants.featchGroupListApi,
+        token: bearerToken,
+        cacheKey: "group_list",
+      );
+
+      // 3. Region Reports
+      await _networkCaller.cachedGetRequest(
+        ApiConstants.getRegionReportsApi,
+        token: bearerToken,
+        cacheKey: "region_reports",
+      );
+
+      // 4. Region Summary
+      await _networkCaller.cachedGetRequest(
+        "${ApiConstants.getZoneSummaryApi}?regionCode=GOM&page=1&limit=20",
+        token: bearerToken,
+        cacheKey: "zone_summary_region",
+      );
+
+      // 5. Default Zone Map bounds (south: 28.0, north: 29.0, west: -90.0, east: -88.0)
+      final defaultZonesUrl = ApiConstants.getZonesApi(
+        south: 28.0,
+        north: 29.0,
+        west: -90.0,
+        east: -88.0,
+      );
+      final defaultZonesCacheKey = "zones_bounds_28.00_29.00_-90.00_-88.00_filtering_false_sp_null_time_24h_m_null_d_0_250_v_PUBLIC";
+      await _networkCaller.cachedGetRequest(
+        defaultZonesUrl,
+        token: bearerToken,
+        cacheKey: defaultZonesCacheKey,
+      );
+
+      // 6. Default Weather (lat: 28.375, lng: -89.125)
+      final defaultWeatherUrl = "https://api.stormglass.io/v2/weather/point?lat=28.375&lng=-89.125&params=windSpeed,windDirection,waveHeight,waterTemperature,airTemperature,cloudCover,swellDirection,swellPeriod";
+      await _networkCaller.cachedGetRequest(
+        defaultWeatherUrl,
+        token: ApiConstants.stormGlassApiKey,
+        cacheKey: "weather_28.375_-89.125",
+      );
+
+      debugPrint('[SyncService] Foreground prefetch completed successfully.');
+    } catch (e) {
+      debugPrint('[SyncService] Error during prefetch: $e');
+    }
+  }
+
   @override
   void onClose() {
     _connectivitySubscription?.cancel();
     _retryTimer?.cancel();
+    _connectivityDebounce?.cancel();
     super.onClose();
   }
 }
