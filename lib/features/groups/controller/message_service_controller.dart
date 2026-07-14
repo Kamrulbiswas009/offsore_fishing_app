@@ -68,13 +68,23 @@ class MessageServiceController extends GetxController {
     _isLoadingMore = true;
     isLoadingMessages.value = true;
 
+    final payload = <String, dynamic>{
+      'groupId': groupId,
+      'take': _pageSize,
+      if (_nextCursor != null && _nextCursor!.isNotEmpty) 'cursor': _nextCursor,
+    };
+
+    AppLoggerHelper.info('[MessageService] getMessages payload: $payload');
+
     socket.emitWithAck(
       'getMessages',
-      {'groupId': groupId, 'cursor': _nextCursor, 'take': _pageSize},
+      payload,
       ack: (response) {
         try {
+          AppLoggerHelper.info('[MessageService] getMessages ACK: $response');
+
           final ackData = _asMap(response);
-          if (ackData['success'] == true) {
+          if (_isSuccessfulAck(ackData)) {
             final data = _asMap(ackData['data']);
             final rawMessages = data['messages'] as List<dynamic>? ?? [];
             final loadedMessages = rawMessages
@@ -86,13 +96,20 @@ class MessageServiceController extends GetxController {
                 )
                 .toList();
 
-            _nextCursor = data['nextCursor'] as String?;
-            hasMoreMessages.value = data['hasMore'] == true;
+            final nextCursor = data['nextCursor'];
+            _nextCursor = nextCursor == null
+                ? (loadedMessages.isEmpty
+                      ? null
+                      : loadedMessages.last.messageId)
+                : nextCursor.toString();
+            hasMoreMessages.value = data['hasMore'] is bool
+                ? data['hasMore'] == true
+                : rawMessages.length >= _pageSize;
             _prependMessages(loadedMessages);
           } else {
             AppLoggerHelper.error(
-              '[MessageService] getMessages failed',
-              ackData['error'],
+              '[MessageService] getMessages failed: $ackData',
+              ackData['error'] ?? ackData['message'] ?? response,
             );
           }
         } catch (error) {
@@ -150,7 +167,7 @@ class MessageServiceController extends GetxController {
       ack: (response) {
         try {
           final ackData = _asMap(response);
-          if (ackData['success'] == true) {
+          if (_isSuccessfulAck(ackData)) {
             messageController.clear();
             replyingTo.value = null;
             final data = ackData['data'];
@@ -201,7 +218,7 @@ class MessageServiceController extends GetxController {
       ack: (response) {
         try {
           final ackData = _asMap(response);
-          if (ackData['success'] != true) {
+          if (!_isSuccessfulAck(ackData)) {
             CommonMessage.showMessage(
               title: 'Message',
               message: (ackData['error'] ?? 'Unable to delete message.')
@@ -229,7 +246,7 @@ class MessageServiceController extends GetxController {
       ack: (response) {
         try {
           final ackData = _asMap(response);
-          if (ackData['success'] == true && ackData['data'] is List) {
+          if (_isSuccessfulAck(ackData) && ackData['data'] is List) {
             onlineUserIds.assignAll(List<String>.from(ackData['data'] as List));
           }
         } catch (error) {
@@ -259,9 +276,12 @@ class MessageServiceController extends GetxController {
       socketUrl,
       io.OptionBuilder()
           .setTransports(['websocket'])
-          .setAuth({'token': 'Bearer $token'})
-          .setExtraHeaders({'authorization': 'Bearer $token'})
-          .setQuery({'token': 'Bearer $token'})
+          // Socket.IO auth normally expects the JWT itself. The HTTP header
+          // keeps the Bearer scheme for servers that authenticate from the
+          // upgrade request instead of `handshake.auth`.
+          .setAuth({'token': token, 'authorization': 'Bearer $token'})
+          .setExtraHeaders({'Authorization': 'Bearer $token'})
+          .setQuery({'token': token})
           .enableReconnection()
           .setReconnectionAttempts(5)
           .setReconnectionDelay(1000)
@@ -556,6 +576,18 @@ class MessageServiceController extends GetxController {
     if (data is Map<String, dynamic>) return data;
     if (data is Map) return Map<String, dynamic>.from(data);
     return <String, dynamic>{};
+  }
+
+  bool _isSuccessfulAck(Map<String, dynamic> ackData) {
+    if (ackData['success'] is bool) return ackData['success'] == true;
+
+    final statusCode = ackData['statusCode'];
+    final parsedStatusCode = statusCode is num
+        ? statusCode.toInt()
+        : int.tryParse(statusCode?.toString() ?? '');
+    return parsedStatusCode != null &&
+        parsedStatusCode >= 200 &&
+        parsedStatusCode < 300;
   }
 
   Map<String, dynamic>? _asNullableMap(dynamic data) {
