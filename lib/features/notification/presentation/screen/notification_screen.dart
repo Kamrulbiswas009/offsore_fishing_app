@@ -52,11 +52,14 @@ class NotificationScreen extends GetView<NotificationScreenController> {
                   final notifications = controller.filteredNotifications;
 
                   return ListView.builder(
+                    controller: controller.scrollController,
                     itemCount: notifications.length,
                     padding: EdgeInsets.zero,
                     itemBuilder: (context, index) {
                       return NotificationItemWidget(
                         item: notifications[index],
+                        onTap: () =>
+                            controller.markAsRead(notifications[index]),
                         showDivider: index != notifications.length - 1,
                       );
                     },

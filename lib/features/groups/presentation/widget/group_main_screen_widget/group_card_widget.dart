@@ -10,6 +10,7 @@ class GroupCardWidget extends StatelessWidget {
   final String description;
   final bool isLocked;
   final String groupPhoto;
+  final int unreadCount;
   final VoidCallback? onTap;
   const GroupCardWidget({
     super.key,
@@ -18,6 +19,7 @@ class GroupCardWidget extends StatelessWidget {
     required this.description,
     required this.isLocked,
     required this.groupPhoto,
+    this.unreadCount = 0,
     this.onTap,
   });
 
@@ -40,7 +42,9 @@ class GroupCardWidget extends StatelessWidget {
             Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: AppColors.orangeColor.withValues(alpha: 0.20),
+                  backgroundColor: AppColors.orangeColor.withValues(
+                    alpha: 0.20,
+                  ),
                   child: ClipOval(
                     child: groupPhoto.isNotEmpty
                         ? Image.network(
@@ -91,6 +95,28 @@ class GroupCardWidget extends StatelessWidget {
                 ),
                 if (isLocked == true)
                   Image.asset(IconPath.lockIcon, width: 12.r, height: 12.r),
+                if (unreadCount > 0) ...[
+                  SizedBox(width: 8.w),
+                  Container(
+                    constraints: BoxConstraints(minWidth: 20.r),
+                    height: 20.r,
+                    padding: EdgeInsets.symmetric(horizontal: 5.w),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.orangeFF6B35Color,
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Text(
+                      unreadCount > 99 ? '99+' : '$unreadCount',
+                      style: getTextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.whiteColor,
+                        lineHeight: 10,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
             SizedBox(height: 12.h),
