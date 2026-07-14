@@ -200,4 +200,8 @@ class ApiConstants {
       "$baseUrl/reports",
     ).replace(queryParameters: queryParameters).toString();
   }
+
+
+  //profile stat card -->
+  static const String featchProfileStatApi = "$baseUrl/user/stats";
 }

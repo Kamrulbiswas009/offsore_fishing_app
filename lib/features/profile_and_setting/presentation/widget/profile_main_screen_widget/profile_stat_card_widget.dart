@@ -14,19 +14,34 @@ class ProfileStatCardWidget extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 18.h),
       decoration: BoxDecoration(
-        color: AppColors.containerBackgroundColor,// AppColors.black2A2F3AColor.withValues(alpha: 0.30),
+        color: AppColors
+            .containerBackgroundColor, // AppColors.black2A2F3AColor.withValues(alpha: 0.30),
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: item.borderColor),
       ),
       child: Column(
         children: [
+          Align(
+            alignment: Alignment.topRight,
+            child: Tooltip(
+              margin: EdgeInsets.symmetric(horizontal: 16.w),
+              message: item.description,
+              triggerMode: TooltipTriggerMode.tap,
+              child: Icon(
+                Icons.info,
+                size: 16.sp,
+                color: Colors.white.withValues(alpha: 0.76),
+              ),
+            ),
+          ),
+          SizedBox(height: 4.h),
           Container(
             padding: EdgeInsets.all(10.r),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: item.iconBackgroundColor,
             ),
-            child: Image.asset(item.iconPath,height: 18.r,width: 18.r,),
+            child: Image.asset(item.iconPath, height: 18.r, width: 18.r),
           ),
           SizedBox(height: 8.h),
           Text(
