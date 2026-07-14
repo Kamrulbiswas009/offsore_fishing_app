@@ -85,6 +85,9 @@ class ReportCatchStep1Screen extends GetView<ReportCatchController> {
                   icon: Icons.map,
                   isSelected: !controller.isGpsSelected.value,
                   onTap: controller.selectManual,
+                  footer: controller.selectedManualGrid.value.isNotEmpty
+                      ? "Selected Grid: ${controller.selectedManualGrid.value}"
+                      : null,
                 ),
               ),
 
@@ -284,16 +287,11 @@ class ReportCatchStep1Screen extends GetView<ReportCatchController> {
                 color: AppColors.grey3A4B62Color.withValues(alpha: 0.3),
                 thickness: 1,
               ),
-              // SizedBox(height: 5.h),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "Detected Grid: ",
-                    style: getTextStyle(fontSize: 14, color: Colors.white),
-                  ),
-                  Text(
-                    controller.detectedGrid.value,
+                    footer,
                     style: getTextStyle(
                       fontSize: 14,
                       color: AppColors.blue00F0FFColor,

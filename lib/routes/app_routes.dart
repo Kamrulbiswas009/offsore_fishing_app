@@ -21,6 +21,7 @@ import 'package:paytonpieper/features/splash_screen/presentation/screen/splash_s
 import 'package:paytonpieper/features/report_main/summary/screen/summary_details.dart';
 import 'package:paytonpieper/features/report_main/summary/controller/summary_details_controller.dart';
 import 'package:paytonpieper/features/success_submit_report/screen/report_details_screen.dart';
+import 'package:paytonpieper/features/success_submit_report/controller/report_details_controller.dart';
 import 'package:paytonpieper/features/main_screen/screen/home_main_screen.dart';
 import 'package:paytonpieper/features/profile_and_setting/presentation/screen/profile_main_screen.dart';
 import 'package:paytonpieper/features/groups/presentation/screen/group_main_screen.dart';
@@ -152,6 +153,9 @@ class AppRoute {
     GetPage(
       name: reportDetailsScreen,
       page: () => const ReportDetailsScreen(),
+      binding: BindingsBuilder(() {
+        Get.put(ReportDetailsController());
+      }),
       transition: Transition.leftToRight,
     ),
     GetPage(

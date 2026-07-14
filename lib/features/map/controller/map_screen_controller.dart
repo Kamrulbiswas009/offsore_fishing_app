@@ -92,6 +92,10 @@ class MapScreenController extends GetxController {
   // ── Map layer setup (called once after style loads) ───────────────────
 
   Future<void> setupMapLayers(mapbox.MapboxMap map) async {
+    // Clear viewport rendering cache to force redraw on the new map instance
+    _lastRenderedZoneIds = [];
+    _lastActiveStateSignature = '';
+
     // Disable built-in ornaments
     await map.compass.updateSettings(mapbox.CompassSettings(enabled: false));
     await map.scaleBar.updateSettings(mapbox.ScaleBarSettings(enabled: false));

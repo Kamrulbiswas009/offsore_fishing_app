@@ -6,7 +6,6 @@ import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/features/report_main/offline_report/screen/offline_report_screen.dart';
 import 'package:paytonpieper/features/submit_report/screen/submit_report_screen.dart';
 import 'package:paytonpieper/core/services/sync_service.dart';
-import 'package:paytonpieper/features/report_main/report_catch/controller/report_catch_step1_screen.dart';
 import 'package:paytonpieper/core/models/species_node.dart';
 import 'package:paytonpieper/utils/zone_calculator.dart';
 
@@ -143,6 +142,9 @@ class ReportCatch2Controller extends GetxController {
     } else {
       if (!selectedSpeciesList.contains(name)) {
         selectedSpeciesList.add(name);
+      }
+      if (!quantities.containsKey(name)) {
+        quantities[name] = 1;
       }
     }
   }

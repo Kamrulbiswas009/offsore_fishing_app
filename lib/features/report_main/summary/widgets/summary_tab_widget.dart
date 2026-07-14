@@ -676,7 +676,7 @@ class SummaryTabWidget extends StatelessWidget {
             label,
             style: getTextStyle(
               fontSize: 10,
-              color: AppColors.whiteColor.withOpacity(0.6),
+              color: AppColors.whiteColor.withValues(alpha: 0.6),
               fontWeight: FontWeight.w500,
             ),
           ),

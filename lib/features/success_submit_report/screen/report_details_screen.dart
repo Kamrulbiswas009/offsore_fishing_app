@@ -4,30 +4,22 @@ import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
+import 'package:paytonpieper/core/utils/helpers/app_helper.dart';
+import 'package:paytonpieper/features/success_submit_report/controller/report_details_controller.dart';
 
-class ReportDetailsScreen extends StatelessWidget {
+class ReportDetailsScreen extends GetView<ReportDetailsController> {
   const ReportDetailsScreen({super.key});
+
+  String _capitalizeAndFormat(String val) {
+    if (val.isEmpty) return "";
+    return val.replaceAll('_', ' ').toLowerCase().split(' ').map((word) {
+      if (word.isEmpty) return '';
+      return word[0].toUpperCase() + word.substring(1);
+    }).join(' ');
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Get arguments passed, or fallback to beautiful default values from the UI mockup
-    final Map<String, dynamic> args = Get.arguments as Map<String, dynamic>? ?? {};
-
-    final String username = args['username'] ?? "CaptJohn_87";
-    final String timestamp = args['time'] ?? "10:30 AM";
-    final String zone = args['zone'] ?? "Z1";
-    final List<dynamic>? speciesListArg = args['speciesList'] as List<dynamic>?;
-    final List<Map<String, String>> speciesList = speciesListArg != null
-        ? speciesListArg.map((e) => Map<String, String>.from(e as Map)).toList()
-        : [
-            {"name": "Tuna", "qty": "3"},
-            {"name": "Mahi", "qty": "2"},
-          ];
-    final String depth = args['depth'] ?? "120 ft";
-    final String position = args['position'] ?? "Suspended";
-    final String method = args['method'] ?? "Trolling";
-    final String bait = args['bait'] ?? "Ballyhoo";
-
     return Scaffold(
       backgroundColor: AppColors.backgroundDarkColor,
       body: SafeArea(
@@ -38,30 +30,140 @@ class ReportDetailsScreen extends StatelessWidget {
             
             // Scrollable Content
             Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
-                child: Column(
-                  children: [
-                    SizedBox(height: 10.h),
-                    
-                    // Card 1: Reported By
-                    _buildReportedByCard(username, timestamp),
-                    
-                    SizedBox(height: 20.h),
-                    
-                    // Card 2: Catch Information
-                    _buildCatchInfoCard(zone, speciesList),
-                    
-                    SizedBox(height: 20.h),
-                    
-                    // Card 3: Fishing Details
-                    _buildFishingDetailsCard(depth, position, method, bait),
-                    
-                    SizedBox(height: 30.h),
-                  ],
-                ),
-              ),
+              child: Obx(() {
+                if (controller.isLoading.value) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.blue00F0FFColor,
+                    ),
+                  );
+                }
+
+                final report = controller.reportData.value;
+
+                final String username = controller.username;
+                String timestamp = controller.fallbackTime;
+                String zone = controller.fallbackZone;
+                List<Map<String, String>> speciesList = controller.fallbackSpeciesList;
+                String depth = controller.fallbackDepth;
+                String position = controller.fallbackPosition;
+                String method = controller.fallbackMethod;
+                String bait = controller.fallbackBait;
+
+                if (report != null) {
+                  // Format timestamp
+                  final catchTimestampStr = report['catchTimestamp']?.toString();
+                  if (catchTimestampStr != null) {
+                    final parsed = DateTime.tryParse(catchTimestampStr)?.toLocal();
+                    if (parsed != null) {
+                      timestamp = "${AppHelperFunctions.getFormattedDate(parsed, format: 'hh:mm a')} (${AppHelperFunctions.getFormattedDate(parsed, format: 'MM/dd/yyyy')})";
+                    }
+                  }
+
+                  // Zone details
+                  final zoneId = report['zoneId']?.toString() ?? "";
+                  final zoneData = report['zone'] as Map?;
+                  final displayName = zoneData?['displayName']?.toString();
+                  zone = (displayName != null && displayName.isNotEmpty) ? displayName : zoneId;
+
+                  // Species
+                  final speciesArg = report['species'] as List?;
+                  if (speciesArg != null) {
+                    speciesList = speciesArg.map((e) {
+                      final m = e as Map;
+                      return {
+                        "name": (m['speciesName'] ?? "").toString(),
+                        "qty": (m['quantity'] ?? "1").toString(),
+                      };
+                    }).toList();
+                  }
+
+                  // Depth
+                  final waterDepth = report['waterDepthFt'];
+                  if (waterDepth != null) {
+                    depth = "$waterDepth ft";
+                  }
+
+                  // Position (waterColumn)
+                  final waterCol = report['waterColumn']?.toString();
+                  if (waterCol != null) {
+                    position = _capitalizeAndFormat(waterCol);
+                  }
+
+                  // Method (fishingMethod)
+                  final fMethod = report['fishingMethod']?.toString();
+                  if (fMethod != null) {
+                    method = _capitalizeAndFormat(fMethod);
+                  }
+
+                  // Bait (baitLureType)
+                  final bLure = report['baitLureType']?.toString();
+                  if (bLure != null) {
+                    bait = _capitalizeAndFormat(bLure);
+                  }
+                }
+
+                return SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+                  child: Column(
+                    children: [
+                      if (controller.errorMessage.value.isNotEmpty) ...[
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.all(12.w),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.error_outline, color: Colors.red),
+                              SizedBox(width: 10.w),
+                              Expanded(
+                                child: Text(
+                                  controller.errorMessage.value,
+                                  style: getTextStyle(
+                                    fontSize: 13,
+                                    color: Colors.redAccent,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.refresh, color: Colors.white),
+                                onPressed: () {
+                                  if (controller.reportId != null) {
+                                    controller.fetchReportDetails(controller.reportId!);
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 15.h),
+                      ],
+
+                      SizedBox(height: 10.h),
+                      
+                      // Card 1: Reported By
+                      _buildReportedByCard(username, timestamp),
+                      
+                      SizedBox(height: 20.h),
+                      
+                      // Card 2: Catch Information
+                      _buildCatchInfoCard(zone, speciesList),
+                      
+                      SizedBox(height: 20.h),
+                      
+                      // Card 3: Fishing Details
+                      _buildFishingDetailsCard(depth, position, method, bait),
+                      
+                      SizedBox(height: 30.h),
+                    ],
+                  ),
+                );
+              }),
             ),
           ],
         ),
