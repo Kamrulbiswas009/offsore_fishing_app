@@ -64,7 +64,10 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
 
     // Reactively refresh grid when zones are loaded/updated from API
     ever(controller.activeZones, (_) {
-      _updateGridForViewport();
+      final map = _mapboxMap;
+      if (map != null && _layersReady) {
+        controller.refreshGridOnMap(map);
+      }
     });
   }
 

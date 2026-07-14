@@ -130,6 +130,17 @@ class VisibilitySharingController extends GetxController {
                   : 'Catch Report';
               final zone = payload['zoneId'] ?? 'Unknown Zone';
 
+              final resData = response.responseData;
+              String? reportId;
+              if (resData is Map) {
+                final dataMap = resData['data'];
+                if (dataMap is Map) {
+                  reportId = dataMap['reportId']?.toString() ?? dataMap['id']?.toString();
+                } else {
+                  reportId = resData['reportId']?.toString() ?? resData['id']?.toString();
+                }
+              }
+
               Get.offAll(
                 () => const ReportSuccessScreen(),
                 arguments: {
@@ -138,6 +149,7 @@ class VisibilitySharingController extends GetxController {
                   "sharingInfo": visibility == "PUBLIC"
                       ? "Public Feed"
                       : "Private Group",
+                  "reportId": reportId,
                 },
               );
             } else {

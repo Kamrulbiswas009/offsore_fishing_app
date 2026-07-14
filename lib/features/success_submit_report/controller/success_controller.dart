@@ -8,6 +8,7 @@ class ReportSuccessController extends GetxController {
   late String species;
   late String zone;
   late String sharingInfo;
+  String? reportId;
 
   @override
   void onInit() {
@@ -16,6 +17,7 @@ class ReportSuccessController extends GetxController {
     species = args?['species'] ?? "Wahoo";
     zone = args?['zone'] ?? "Zone A-7";
     sharingInfo = args?['sharingInfo'] ?? "1 Group";
+    reportId = args?['reportId'];
   }
 
   void viewReport() {
@@ -27,6 +29,7 @@ class ReportSuccessController extends GetxController {
         "speciesList": [
           {"name": species, "qty": "1"},
         ],
+        "reportId": reportId,
       },
     );
   }

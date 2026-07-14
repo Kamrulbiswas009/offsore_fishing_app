@@ -8,6 +8,7 @@ import 'package:paytonpieper/core/common/widgets/custom_button.dart';
 import '../../../../core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/services/sync_service.dart';
 import 'package:paytonpieper/features/report_main/report_catch2/screen/species_drill_down_bottom_sheet.dart';
+import 'package:paytonpieper/utils/zone_calculator.dart';
 
 class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
   /// Optional coordinates passed from manual map location picker.
@@ -158,6 +159,8 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
 
   /// Displays the manually selected lat/lng coordinates as a styled info chip.
   Widget _buildLocationChip(double lat, double lng) {
+    final zoneInfo = ZoneCalculator.fromLatLng(lat, lng);
+    final zoneSuffix = zoneInfo != null ? " (${zoneInfo.zoneId})" : "";
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
@@ -175,12 +178,15 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
             size: 16.sp,
           ),
           SizedBox(width: 8.w),
-          Text(
-            "Selected: ${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}",
-            style: getTextStyle(
-              fontSize: 13,
-              color: AppColors.blue00F0FFColor,
-              fontWeight: FontWeight.w600,
+          Expanded(
+            child: Text(
+              "Selected: ${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}$zoneSuffix",
+              textAlign: TextAlign.center,
+              style: getTextStyle(
+                fontSize: 13,
+                color: AppColors.blue00F0FFColor,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -435,28 +441,12 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(height: 12.h),
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          return Wrap(
-                            spacing: 10.w,
-                            runSpacing: 5.h,
-                            children: controller.selectedSpeciesList
-                                .map(
-                                  (s) => SizedBox(
-                                    width: (constraints.maxWidth - 10.w) / 2,
-                                    child: _speciesChip(s),
-                                  ),
-                                )
-                                .toList(),
-                          );
-                        },
-                      ),
+                      ...controller.selectedSpeciesList
+                          .map((s) => _buildSelectedSpeciesRow(s)),
                     ],
                   )
                 : const SizedBox.shrink(),
           ),
-          SizedBox(height: 20.h),
-          _buildFishingDetailsCard(),
           SizedBox(height: 20.h),
           _buildFishingPatternsSection(),
         ],
@@ -464,224 +454,93 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
     );
   }
 
-  Widget _speciesChip(String name) {
+  Widget _buildSelectedSpeciesRow(String name) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+      margin: EdgeInsets.only(top: 10.h),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
       decoration: BoxDecoration(
         color: AppColors.blue1B2134Color,
         borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(color: AppColors.blue00F0FFColor),
+        border: Border.all(color: AppColors.blue153A56Color),
       ),
       child: Row(
         children: [
           Image.asset(IconPath.fishRealIcon, height: 20.h, width: 20.w),
-          SizedBox(width: 5.w),
+          SizedBox(width: 8.w),
           Expanded(
             child: Text(
               name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: getTextStyle(fontSize: 12, color: Colors.white),
+              style: getTextStyle(fontSize: 14, color: Colors.white),
             ),
           ),
-          SizedBox(width: 5.w),
+          SizedBox(width: 8.w),
+          _buildQuantityCounter(name),
+          SizedBox(width: 12.w),
           GestureDetector(
             onTap: () => controller.removeSpecies(name),
-            child: Icon(Icons.close, color: Colors.white, size: 14.sp),
+            child: Icon(Icons.close, color: Colors.white, size: 18.sp),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFishingDetailsCard() {
-    return Container(
-      padding: EdgeInsets.all(12.w),
-      decoration: BoxDecoration(
-        color: AppColors.blue1B2134Color,
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Fishing Details",
-            style: getTextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.white,
-              lineHeight: 15,
-            ),
-          ),
-          Obx(
-            () => Column(
-              children: controller.quantities.entries
-                  .map(
-                    (e) =>
-                        _quantityRow(e.key, e.value.toString().padLeft(2, '0')),
-                  )
-                  .toList(),
-            ),
-          ),
-          Obx(() {
-            final showAddButton =
-                controller.isSamePattern.value || controller.quantities.isEmpty;
-            if (!showAddButton) return const SizedBox.shrink();
-            return Align(
-              alignment: Alignment.centerRight,
-              child: GestureDetector(
-                onTap: () {
-                  if (controller.speciesOptions.isNotEmpty) {
-                    final nextSpecies = controller.speciesOptions.firstWhere(
-                      (s) => !controller.quantities.containsKey(s),
-                      orElse: () => controller.speciesOptions.first,
-                    );
-                    controller.quantities[nextSpecies] = 1;
-                  }
-                },
+  Widget _buildQuantityCounter(String name) {
+    return Obx(() {
+      final qty = controller.quantities[name] ?? 1;
+      return Container(
+        decoration: BoxDecoration(
+          color: AppColors.blue0D2B43Color,
+          borderRadius: BorderRadius.circular(6.r),
+        ),
+        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GestureDetector(
+              onTap: () {
+                if (qty > 1) {
+                  controller.updateQuantity(name, qty - 1);
+                }
+              },
+              child: Padding(
+                padding: EdgeInsets.all(4.w),
                 child: Icon(
-                  Icons.add_circle,
-                  color: AppColors.orangeColor,
-                  size: 28.sp,
+                  Icons.remove,
+                  color: qty > 1 ? Colors.white : Colors.white.withValues(alpha: 0.3),
+                  size: 16.sp,
                 ),
               ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _quantityRow(String species, String qty) {
-    return Padding(
-      padding: EdgeInsets.only(top: 10.h),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Quantity",
-                style: getTextStyle(fontSize: 12, color: AppColors.whiteColor),
-              ),
-              GestureDetector(
-                onTap: () {
-                  controller.quantities.remove(species);
-                },
-                child: Icon(Icons.close, color: Colors.redAccent, size: 18.sp),
-              ),
-            ],
-          ),
-          SizedBox(height: 7.h),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-            decoration: BoxDecoration(
-              color: AppColors.blue0D2B43Color,
-              borderRadius: BorderRadius.circular(8.r),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: species,
-                      dropdownColor: AppColors.blue0D2B43Color,
-                      icon: Icon(
-                        Icons.keyboard_arrow_down,
-                        color: Colors.white,
-                        size: 20.sp,
-                      ),
-                      style: getTextStyle(color: Colors.white),
-                      isExpanded: true,
-                      items: controller.speciesOptions.map((s) {
-                        return DropdownMenuItem(
-                          value: s,
-                          child: Row(
-                            children: [
-                              Image.asset(
-                                IconPath.fishRealIcon,
-                                height: 18.h,
-                                width: 18.w,
-                              ),
-                              SizedBox(width: 8.w),
-                              Text(
-                                s,
-                                style: getTextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null && val != species) {
-                          final currentQty =
-                              controller.quantities[species] ?? 1;
-                          controller.quantities.remove(species);
-                          controller.quantities[val] = currentQty;
-                          if (!controller.isSamePattern.value) {
-                            controller.selectedSpeciesList.value = [val];
-                          }
-                        }
-                      },
-                    ),
-                  ),
-                ),
-                SizedBox(width: 10.w),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      qty,
-                      style: getTextStyle(color: Colors.white, fontSize: 14),
-                    ),
-                    SizedBox(width: 8.w),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            final currentQty =
-                                controller.quantities[species] ?? 1;
-                            controller.updateQuantity(species, currentQty + 1);
-                          },
-                          child: Icon(
-                            Icons.keyboard_arrow_up,
-                            color: Colors.white,
-                            size: 20.sp,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            final currentQty =
-                                controller.quantities[species] ?? 1;
-                            if (currentQty > 0) {
-                              controller.updateQuantity(
-                                species,
-                                currentQty - 1,
-                              );
-                            }
-                          },
-                          child: Icon(
-                            Icons.keyboard_arrow_down,
-                            color: Colors.white,
-                            size: 20.sp,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
+            SizedBox(width: 8.w),
+            Text(
+              qty.toString().padLeft(2, '0'),
+              style: getTextStyle(
+                fontSize: 14,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+            SizedBox(width: 8.w),
+            GestureDetector(
+              onTap: () {
+                controller.updateQuantity(name, qty + 1);
+              },
+              child: Padding(
+                padding: EdgeInsets.all(4.w),
+                child: Icon(
+                  Icons.add,
+                  color: Colors.white,
+                  size: 16.sp,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildFishingPatternsSection() {
