@@ -32,13 +32,15 @@ class GroupMainScreenController extends GetxController {
     try {
       final syncService = Get.find<SyncService>();
       ever(syncService.isOnline, (bool online) {
-        fetchGroupList();
+        if (online) {
+          fetchGroupList();
+        }
       });
     } catch (_) {}
   }
 
   // ── Fetch group list ────────────────────────────────────────────────
-  Future<void> fetchGroupList() async {
+  Future<void> fetchGroupList({bool forceRefresh = false}) async {
     isLoading.value = true;
 
     try {
@@ -52,6 +54,7 @@ class GroupMainScreenController extends GetxController {
         ApiConstants.featchGroupListApi,
         token: token,
         cacheKey: "group_list",
+        forceRefresh: forceRefresh,
       );
 
       if (response.isSuccess) {
@@ -139,7 +142,7 @@ class GroupMainScreenController extends GetxController {
         hasJoinedGroup.value = true;
 
         // Refresh group list so the newly joined group appears immediately.
-        await fetchGroupList();
+        await fetchGroupList(forceRefresh: true);
       } else {
         AppLoggerHelper.error(
           '[GroupMain] joinGroupWithCode failed | '
@@ -198,7 +201,7 @@ class GroupMainScreenController extends GetxController {
         );
 
         // Refresh group list on GroupMainScreen
-        await fetchGroupList();
+        await fetchGroupList(forceRefresh: true);
 
         // Close the dialog automatically
         if (Get.isOverlaysOpen) {

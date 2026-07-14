@@ -19,9 +19,12 @@ class SyncService extends GetxService {
   final NetworkCaller _networkCaller = NetworkCaller();
   
   // Reactive sync states
-  final RxBool isOnline = false.obs;
+  final RxBool isOnline = true.obs;
   final RxInt pendingCount = 0.obs;
   final RxBool isSyncing = false.obs; // Initialized to false to prevent stuck states on launch
+
+  // Last prefetch timestamp to throttle back-to-back executions
+  DateTime? _lastPrefetchTime;
   
   StreamSubscription? _connectivitySubscription;
   Timer? _retryTimer;
@@ -384,6 +387,13 @@ class SyncService extends GetxService {
       debugPrint('[SyncService] Prefetch skipped: Device is offline.');
       return;
     }
+
+    if (_lastPrefetchTime != null && 
+        DateTime.now().difference(_lastPrefetchTime!) < const Duration(seconds: 30)) {
+      debugPrint('[SyncService] Prefetch skipped: run within last 30 seconds.');
+      return;
+    }
+    _lastPrefetchTime = DateTime.now();
 
     debugPrint('[SyncService] Starting foreground prefetch of all key app data...');
     

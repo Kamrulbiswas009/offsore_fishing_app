@@ -13,8 +13,29 @@ import 'sync_service.dart';
 class NetworkCaller {
   final int timeoutDuration = 30;
 
+  // Static map to keep track of active, in-flight GET requests to prevent duplicates
+  static final Map<String, Future<ResponseData>> _inFlightRequests = {};
+
   // GET method
   Future<ResponseData> getRequest(String url, {String? token}) async {
+    final String requestKey = 'GET:$url|Token:${token ?? ""}';
+
+    if (_inFlightRequests.containsKey(requestKey)) {
+      log('Coalescing duplicate concurrent GET request for: $url');
+      return _inFlightRequests[requestKey]!;
+    }
+
+    final Future<ResponseData> future = _executeGetRequest(url, token);
+    _inFlightRequests[requestKey] = future;
+
+    try {
+      return await future;
+    } finally {
+      _inFlightRequests.remove(requestKey);
+    }
+  }
+
+  Future<ResponseData> _executeGetRequest(String url, String? token) async {
     log('GET Request: $url');
     log('GET Token: ${token == null || token.isEmpty ? '[MISSING]' : '[PRESENT]'}');
     try {
@@ -38,12 +59,38 @@ class NetworkCaller {
     String? token,
     required String cacheKey,
     int ttlMinutes = 1440,
+    Duration? onlineCacheMaxAge = const Duration(seconds: 30),
+    bool forceRefresh = false,
   }) async {
     // Check if device is online according to SyncService
     bool isOnline = true;
     try {
       isOnline = Get.find<SyncService>().isOnline.value;
     } catch (_) {}
+
+    // Check online cache first if we have onlineCacheMaxAge and we are online and not forcing refresh
+    if (isOnline && !forceRefresh && onlineCacheMaxAge != null) {
+      try {
+        final cacheService = Get.find<OfflineCacheService>();
+        final cachedData = await cacheService.getCache(
+          cacheKey,
+          ignoreExpiry: false,
+          maxAge: onlineCacheMaxAge,
+        );
+        if (cachedData != null) {
+          log('Returning unexpired online cached data for key: $cacheKey');
+          return ResponseData(
+            isSuccess: true,
+            statusCode: 200,
+            errorMessage: '',
+            responseData: cachedData,
+            isFromCache: true,
+          );
+        }
+      } catch (e) {
+        log('Failed to read from cache in online cache check: $e');
+      }
+    }
 
     if (!isOnline) {
       try {

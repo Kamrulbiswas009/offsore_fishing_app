@@ -38,7 +38,7 @@ class GroupDetailsMembersTab extends GetView<GroupDetailsScreenController> {
           final id = controller.groupId;
           if (id != null && id.isNotEmpty) {
             final List<Future<dynamic>> futures = [
-              controller.fetchGroupDetails(id, showHUD: false),
+              controller.fetchGroupDetails(id, showHUD: false, forceRefresh: true),
             ];
             if (isOwner) {
               futures.add(controller.fetchPendingGroupInvites(showHUD: false));

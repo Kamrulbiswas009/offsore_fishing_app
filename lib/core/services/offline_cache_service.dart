@@ -93,7 +93,7 @@ class OfflineCacheService extends GetxService {
 
   /// Retrieve cached data for [key]. Returns `null` if missing **or** if the
   /// entry's TTL has expired (unless [ignoreExpiry] is true). Expired entries are deleted lazily.
-  Future<dynamic> getCache(String key, {bool ignoreExpiry = false}) async {
+  Future<dynamic> getCache(String key, {bool ignoreExpiry = false, Duration? maxAge}) async {
     try {
       final db = await database;
       final rows = await db.query(
@@ -107,21 +107,30 @@ class OfflineCacheService extends GetxService {
 
       final row = rows.first;
       final cachedAt = DateTime.parse(row['cached_at'] as String);
-      final ttl = row['ttl_minutes'] as int;
-      final expiry = cachedAt.add(Duration(minutes: ttl));
 
-      if (!ignoreExpiry && DateTime.now().toUtc().isAfter(expiry)) {
-        // Expired → delete and return null.
-        await db.delete(
-          'cached_responses',
-          where: 'cache_key = ?',
-          whereArgs: [key],
-        );
-        debugPrint('[OfflineCacheService] Cache expired: $key');
-        return null;
+      if (maxAge != null) {
+        final expiry = cachedAt.add(maxAge);
+        if (DateTime.now().toUtc().isAfter(expiry)) {
+          debugPrint('[OfflineCacheService] Cache is older than maxAge ($maxAge): $key');
+          return null;
+        }
+      } else {
+        final ttl = row['ttl_minutes'] as int;
+        final expiry = cachedAt.add(Duration(minutes: ttl));
+
+        if (!ignoreExpiry && DateTime.now().toUtc().isAfter(expiry)) {
+          // Expired → delete and return null.
+          await db.delete(
+            'cached_responses',
+            where: 'cache_key = ?',
+            whereArgs: [key],
+          );
+          debugPrint('[OfflineCacheService] Cache expired: $key');
+          return null;
+        }
       }
 
-      debugPrint('[OfflineCacheService] Cache hit (ignoreExpiry: $ignoreExpiry): $key');
+      debugPrint('[OfflineCacheService] Cache hit (ignoreExpiry: $ignoreExpiry, maxAge: $maxAge): $key');
       return jsonDecode(row['response_json'] as String);
     } catch (e) {
       debugPrint('[OfflineCacheService] getCache error: $e');

@@ -109,9 +109,11 @@ class SummaryController extends GetxController {
     try {
       final syncService = Get.find<SyncService>();
       ever(syncService.isOnline, (bool online) {
-        fetchReports();
-        fetchSummary();
-        fetchWeather();
+        if (online) {
+          fetchReports();
+          fetchSummary();
+          fetchWeather();
+        }
       });
     } catch (_) {}
   }
@@ -229,7 +231,7 @@ class SummaryController extends GetxController {
     ),
   ].obs;
 
-  Future<void> fetchReports({int? customTtl}) async {
+  Future<void> fetchReports({int? customTtl, bool forceRefresh = false}) async {
     isLoading.value = true;
 
     // Load from cache instantly if available
@@ -258,6 +260,7 @@ class SummaryController extends GetxController {
         token: token,
         cacheKey: "region_reports",
         ttlMinutes: ttl,
+        forceRefresh: forceRefresh,
       );
 
       if (response.isSuccess) {
@@ -600,7 +603,7 @@ class SummaryController extends GetxController {
   var isWeatherLoading = false.obs;
   var weatherData = Rxn<Map<String, dynamic>>();
 
-  Future<void> fetchSummary({int? customTtl}) async {
+  Future<void> fetchSummary({int? customTtl, bool forceRefresh = false}) async {
     isSummaryLoading.value = true;
     
     final cacheKey = selectedZone.value != null
@@ -640,6 +643,7 @@ class SummaryController extends GetxController {
         token: token,
         cacheKey: cacheKey,
         ttlMinutes: ttl,
+        forceRefresh: forceRefresh,
       );
 
       if (response.isSuccess) {
@@ -781,7 +785,7 @@ class SummaryController extends GetxController {
     }).join(' ');
   }
 
-  Future<void> fetchWeather({int? customTtl}) async {
+  Future<void> fetchWeather({int? customTtl, bool forceRefresh = false}) async {
     isWeatherLoading.value = true;
     final lat = selectedZone.value?.location.latitude ?? 28.375;
     final lng = selectedZone.value?.location.longitude ?? -89.125;
@@ -813,6 +817,7 @@ class SummaryController extends GetxController {
         token: ApiConstants.stormGlassApiKey,
         cacheKey: cacheKey,
         ttlMinutes: ttl,
+        forceRefresh: forceRefresh,
       );
 
       if (response.isSuccess) {

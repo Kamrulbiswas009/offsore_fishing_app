@@ -288,9 +288,9 @@ class SummaryTabWidget extends StatelessWidget {
         ),
         GestureDetector(
           onTap: () {
-            controller.fetchReports();
-            controller.fetchSummary();
-            controller.fetchWeather();
+            controller.fetchReports(forceRefresh: true);
+            controller.fetchSummary(forceRefresh: true);
+            controller.fetchWeather(forceRefresh: true);
           },
           child: Row(
             children: [

@@ -55,7 +55,7 @@ class GroupMainScreen extends StatelessWidget {
         child: RefreshIndicator(
           onRefresh: () async {
             await Future.wait([
-              controller.fetchGroupList(),
+              controller.fetchGroupList(forceRefresh: true),
               seeMyInvitationController.seeMyInvitations(showHUD: false),
             ]);
           },

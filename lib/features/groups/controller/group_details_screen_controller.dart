@@ -344,7 +344,7 @@ class GroupDetailsScreenController extends GetxController {
   }
 
   // ── Fetch single group details ──────────────────────────────────────
-  Future<void> fetchGroupDetails(String groupId, {bool showHUD = true}) async {
+  Future<void> fetchGroupDetails(String groupId, {bool showHUD = true, bool forceRefresh = false}) async {
     _groupId = groupId;
     groupDetail.value =
         null; // Clear previous details to avoid leaking old data
@@ -368,6 +368,7 @@ class GroupDetailsScreenController extends GetxController {
         ApiConstants.featchSingleGroupDetailsApi(groupId),
         token: token,
         cacheKey: "group_details_$groupId",
+        forceRefresh: forceRefresh,
       );
 
       if (response.isSuccess) {
@@ -559,11 +560,11 @@ class GroupDetailsScreenController extends GetxController {
         );
 
         // Fetch/update the group details again to refresh UI
-        await fetchGroupDetails(id);
+        await fetchGroupDetails(id, forceRefresh: true);
 
         // Refresh group list on GroupMainScreen if registered
         if (Get.isRegistered<GroupMainScreenController>()) {
-          Get.find<GroupMainScreenController>().fetchGroupList();
+          Get.find<GroupMainScreenController>().fetchGroupList(forceRefresh: true);
         }
 
         // Close the dialog
@@ -636,7 +637,7 @@ class GroupDetailsScreenController extends GetxController {
 
         // Refresh group list on GroupMainScreen if registered
         if (Get.isRegistered<GroupMainScreenController>()) {
-          Get.find<GroupMainScreenController>().fetchGroupList();
+          Get.find<GroupMainScreenController>().fetchGroupList(forceRefresh: true);
         }
 
         // Close the dialog then navigate back to the previous screen

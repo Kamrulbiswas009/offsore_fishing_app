@@ -640,7 +640,9 @@ class MapScreenController extends GetxController {
         );
       }
 
-      final cacheKey = "zones_bounds_${southParam.toStringAsFixed(2)}_${northParam.toStringAsFixed(2)}_${westParam.toStringAsFixed(2)}_${eastParam.toStringAsFixed(2)}_filtering_${isFiltering}_sp_${speciesParam}_time_${timeRange}_m_${methodParam}_d_${depthMin}_${depthMax}_v_${visibilityParam}";
+      final cacheKey = isFiltering
+          ? "zones_filtering_true_sp_${speciesParam}_time_${timeRange}_m_${methodParam}_d_${depthMin}_${depthMax}_v_${visibilityParam}"
+          : "zones_bounds_${southParam.toStringAsFixed(2)}_${northParam.toStringAsFixed(2)}_${westParam.toStringAsFixed(2)}_${eastParam.toStringAsFixed(2)}_filtering_false";
 
       // 1. Load from cache instantly if available
       try {
