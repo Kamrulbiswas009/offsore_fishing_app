@@ -12,6 +12,7 @@ import 'package:paytonpieper/core/services/offline_cache_service.dart';
 import 'package:paytonpieper/core/utils/constants/api_constants.dart';
 import 'package:paytonpieper/core/utils/logging/logger.dart';
 import 'package:paytonpieper/features/profile_and_setting/model/auth_me_model.dart';
+import 'package:paytonpieper/features/profile_and_setting/model/profile_stat_model.dart';
 import 'package:paytonpieper/routes/app_routes.dart';
 import 'package:paytonpieper/core/common/widgets/common_message.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
@@ -25,6 +26,8 @@ class ProfileMainScreenController extends GetxController {
   final NetworkCaller _networkCaller = NetworkCaller();
   final Rxn<AuthMeModel> authMe = Rxn<AuthMeModel>();
 
+  //
+
   // --- Edit Profile State ---
   final Rxn<File> selectedImageFile = Rxn<File>();
   final TextEditingController editNameController = TextEditingController();
@@ -37,7 +40,12 @@ class ProfileMainScreenController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    getAuthMe();
+    _loadProfileScreenData();
+  }
+
+  Future<void> _loadProfileScreenData() async {
+    await getAuthMe();
+    await featchProfileState();
   }
 
   @override
@@ -172,29 +180,98 @@ class ProfileMainScreenController extends GetxController {
     }
   }
 
-  late final List<ProfileStatModel> stats = <ProfileStatModel>[
+  final RxList<ProfileStatModel> stats = <ProfileStatModel>[
     ProfileStatModel(
-      value: '127',
+      value: '--',
       label: 'Reports Submitted',
       iconPath: IconPath.fishIcon,
       borderColor: AppColors.tealColor117A88.withValues(alpha: 0.15),
       iconBackgroundColor: AppColors.teal163A42Color,
+      description: 'Total number of reports you have submitted.',
     ),
     ProfileStatModel(
-      value: '18',
+      value: '--',
       label: 'confirmed reports',
       iconPath: IconPath.locationIcon,
       borderColor: AppColors.orangeFF6B35Color.withValues(alpha: 0.30),
       iconBackgroundColor: AppColors.orange3F2B27Color,
+      description:
+          'Your reports that received at least one positive bite confirmation.',
     ),
     ProfileStatModel(
-      value: '42',
-      label: 'Pattern Matches',
+      value: '--',
+      label: 'Confirm bite',
       iconPath: IconPath.curveArrowIcon,
       borderColor: AppColors.tealColor117A88,
       iconBackgroundColor: AppColors.green10B981Color.withValues(alpha: 0.15),
+      description:
+          'Total positive bite confirmations received across all your reports.',
     ),
-  ];
+  ].obs;
+
+  Future<void> featchProfileState() async {
+    AppLoggerHelper.info('Fetching user profile statistics.');
+
+    try {
+      var response = await _requestProfileStats();
+
+      if (!response.isSuccess) {
+        final didRefresh = await _refreshAccessToken();
+        if (!didRefresh) {
+          AppLoggerHelper.error(
+            'Profile statistics fetch failed because the access token could not be refreshed.',
+          );
+          return;
+        }
+        response = await _requestProfileStats();
+      }
+
+      if (!response.isSuccess) {
+        AppLoggerHelper.error(
+          'Profile statistics fetch failed: ${response.errorMessage}',
+        );
+        return;
+      }
+
+      final responseBody = response.responseData;
+      final data = responseBody is Map ? responseBody['data'] : null;
+      if (data is! Map) {
+        AppLoggerHelper.error(
+          'Profile statistics response did not contain valid data.',
+        );
+        return;
+      }
+
+      final profileStats = ProfileStatDataModel.fromJson(
+        Map<String, dynamic>.from(data),
+      );
+      final values = <int>[
+        profileStats.reportsSubmitted,
+        profileStats.confirmedReports,
+        profileStats.confirmationsReceived,
+      ];
+
+      for (var index = 0; index < stats.length; index++) {
+        stats[index] = stats[index].copyWith(value: values[index].toString());
+      }
+      AppLoggerHelper.info('User profile statistics fetched successfully.');
+    } catch (error) {
+      AppLoggerHelper.error(
+        'Profile statistics fetch failed unexpectedly.',
+        error,
+      );
+    }
+  }
+
+  Future<ResponseData> _requestProfileStats() {
+    final accessToken = StorageService.token;
+    return _networkCaller.getRequest(
+      ApiConstants.featchProfileStatApi,
+      token: accessToken == null || accessToken.isEmpty
+          ? null
+          : 'Bearer $accessToken',
+    );
+  }
 
   late final SubscriptionPlanModel subscriptionPlan =
       const SubscriptionPlanModel(
@@ -256,10 +333,9 @@ class ProfileMainScreenController extends GetxController {
 
     try {
       final accessToken = StorageService.token;
-      final token =
-          (accessToken != null && accessToken.isNotEmpty)
-              ? 'Bearer $accessToken'
-              : null;
+      final token = (accessToken != null && accessToken.isNotEmpty)
+          ? 'Bearer $accessToken'
+          : null;
 
       final response = await _networkCaller.patchMultipartRequest(
         ApiConstants.updateProfileApi,
@@ -362,6 +438,7 @@ class ProfileStatModel {
   final String iconPath;
   final Color borderColor;
   final Color iconBackgroundColor;
+  final String description;
 
   const ProfileStatModel({
     required this.value,
@@ -369,7 +446,19 @@ class ProfileStatModel {
     required this.iconPath,
     required this.borderColor,
     required this.iconBackgroundColor,
+    required this.description,
   });
+
+  ProfileStatModel copyWith({String? value}) {
+    return ProfileStatModel(
+      value: value ?? this.value,
+      label: label,
+      iconPath: iconPath,
+      borderColor: borderColor,
+      iconBackgroundColor: iconBackgroundColor,
+      description: description,
+    );
+  }
 }
 
 class SubscriptionPlanModel {

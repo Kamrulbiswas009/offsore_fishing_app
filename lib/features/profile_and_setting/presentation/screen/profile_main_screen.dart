@@ -75,22 +75,24 @@ class ProfileMainScreen extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 22.h),
-              Row(
-                children: [
-                  for (
-                    int index = 0;
-                    index < controller.stats.length;
-                    index++
-                  ) ...[
-                    Expanded(
-                      child: ProfileStatCardWidget(
-                        item: controller.stats[index],
+              Obx(
+                () => Row(
+                  children: [
+                    for (
+                      int index = 0;
+                      index < controller.stats.length;
+                      index++
+                    ) ...[
+                      Expanded(
+                        child: ProfileStatCardWidget(
+                          item: controller.stats[index],
+                        ),
                       ),
-                    ),
-                    if (index != controller.stats.length - 1)
-                      SizedBox(width: 12.w),
+                      if (index != controller.stats.length - 1)
+                        SizedBox(width: 12.w),
+                    ],
                   ],
-                ],
+                ),
               ),
               SizedBox(height: 24.h),
               Text(
