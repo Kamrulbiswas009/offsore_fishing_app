@@ -205,4 +205,5 @@ class ApiConstants {
 
   //profile stat card -->
   static const String featchProfileStatApi = "$baseUrl/user/stats";
+  static const String deleteAccountApi = "$baseUrl/user/delete";
 }

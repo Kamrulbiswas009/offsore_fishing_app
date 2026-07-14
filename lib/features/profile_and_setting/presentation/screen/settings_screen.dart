@@ -76,7 +76,7 @@ class SettingsScreen extends StatelessWidget {
                       color: AppColors.grey516173Color.withValues(alpha: 0.45),
                       height: 26.h,
                     ),
-                     Obx(() {
+                    Obx(() {
                       final isDownloading = controller.isDownloadingMap;
                       final progress = controller.downloadProgress;
                       final status = controller.downloadStatusMessage;
@@ -88,7 +88,9 @@ class SettingsScreen extends StatelessWidget {
                                 ? 'Downloading Map... (${progress.toStringAsFixed(0)}%)'
                                 : 'Download Map Area',
                             leadingIcon: IconPath.downloadIcon,
-                            onTap: isDownloading ? () {} : controller.downloadMapArea,
+                            onTap: isDownloading
+                                ? () {}
+                                : controller.downloadMapArea,
                           ),
                           if (isDownloading) ...[
                             SizedBox(height: 6.h),
@@ -148,8 +150,69 @@ class SettingsScreen extends StatelessWidget {
                         padding: EdgeInsets.symmetric(vertical: 12.h),
                         prefixIcon: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Image.asset(IconPath.deleteIcon,
-                              width: 16.r, height: 16.r),
+                          child: Image.asset(
+                            IconPath.deleteIcon,
+                            width: 16.r,
+                            height: 16.r,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 18.h),
+              const SettingsSectionHeaderWidget(
+                title: 'Account',
+                iconPath: IconPath.deleteIcon,
+              ),
+              SizedBox(height: 10.h),
+              Container(
+                padding: EdgeInsets.all(14.r),
+                decoration: BoxDecoration(
+                  color: AppColors.containerBackgroundColor,
+                  borderRadius: BorderRadius.circular(16.r),
+                  border: Border.all(
+                    color: AppColors.redDA605CColor.withValues(alpha: 0.65),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Delete Account',
+                      style: getTextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.whiteColor,
+                      ),
+                    ),
+                    SizedBox(height: 5.h),
+                    Text(
+                      'Permanently delete your account and associated data.',
+                      style: getTextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.grey8B95A5Color,
+                      ),
+                    ),
+                    SizedBox(height: 14.h),
+                    CustomButton(
+                      fontSize: 14,
+                      lineHeight: 10,
+                      borderColor: AppColors.redDA605CColor,
+                      ontap: controller.confirmAndDeleteAccount,
+                      title: 'Delete Account',
+                      bgColor: AppColors.redDA605CColor.withValues(alpha: 0.10),
+                      titleColor: AppColors.redDA605CColor,
+                      borderRadius: 12.r,
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      prefixIcon: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8.w),
+                        child: Image.asset(
+                          IconPath.deleteIcon,
+                          width: 16.r,
+                          height: 16.r,
                         ),
                       ),
                     ),
@@ -179,10 +242,7 @@ class SettingsScreen extends StatelessWidget {
                         onChanged: controller.toggleNotifications,
                       ),
                     ),
-                    Divider(
-                      color: Color(0xFF055467),
-                      height: 26.h,
-                    ),
+                    Divider(color: Color(0xFF055467), height: 26.h),
                     Obx(
                       () => SettingsSwitchTileWidget(
                         title: 'Hot Zone Alerts',
@@ -191,10 +251,7 @@ class SettingsScreen extends StatelessWidget {
                         onChanged: controller.toggleHotZoneAlerts,
                       ),
                     ),
-                    Divider(
-                      color: Color(0xFF055467),
-                      height: 26.h,
-                    ),
+                    Divider(color: Color(0xFF055467), height: 26.h),
                     //SizedBox(height: 14.h),
                     Obx(
                       () => SettingsSwitchTileWidget(
@@ -237,7 +294,7 @@ class SettingsScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              SizedBox(height: 25.h,),
+              SizedBox(height: 25.h),
             ],
           ),
         ),
