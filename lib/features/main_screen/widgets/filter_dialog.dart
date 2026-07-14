@@ -62,18 +62,134 @@ class FilterDialog extends StatelessWidget {
 
               _sectionHeader(IconPath.fishIcon, "Species"),
               Obx(
-                () => Wrap(
-                  spacing: 10.w,
-                  runSpacing: 10.h,
-                  children: controller.speciesList
-                      .map(
-                        (s) => _choiceChip(
-                          s,
-                          controller.selectedSpecies.contains(s),
-                          () => controller.toggleSpecies(s),
+                () => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      decoration: BoxDecoration(
+                        color: AppColors.blue1B2134Color,
+                        borderRadius: BorderRadius.circular(15.r),
+                        border: Border.all(
+                          color: AppColors.blue00F0FFColor.withValues(alpha: 0.2),
+                          width: 1,
                         ),
-                      )
-                      .toList(),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: null,
+                          hint: Text(
+                            "Select Species",
+                            style: getTextStyle(
+                              fontSize: 14,
+                              color: AppColors.grey8B95A5Color,
+                            ),
+                          ),
+                          dropdownColor: AppColors.backgroundDarkColor,
+                          icon: Icon(
+                            Icons.keyboard_arrow_down,
+                            color: AppColors.blue00F0FFColor,
+                            size: 20.sp,
+                          ),
+                          isExpanded: true,
+                          style: getTextStyle(
+                            fontSize: 14,
+                            color: Colors.white,
+                          ),
+                          items: [
+                            DropdownMenuItem<String>(
+                              value: "all_species",
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "All Species (Select All)",
+                                    style: getTextStyle(
+                                      fontSize: 14,
+                                      color: controller.isAllSpeciesSelected
+                                          ? AppColors.blue00F0FFColor
+                                          : Colors.white,
+                                      fontWeight: controller.isAllSpeciesSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                  if (controller.isAllSpeciesSelected)
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: AppColors.blue00F0FFColor,
+                                      size: 18.sp,
+                                    ),
+                                ],
+                              ),
+                            ),
+                            ...controller.speciesList.map((String value) {
+                              final isSelected = controller.selectedSpecies.contains(value);
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      value,
+                                      style: getTextStyle(
+                                        fontSize: 14,
+                                        color: isSelected
+                                            ? AppColors.blue00F0FFColor
+                                            : Colors.white,
+                                        fontWeight: isSelected
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                      ),
+                                    ),
+                                    if (isSelected)
+                                      Icon(
+                                        Icons.check_circle,
+                                        color: AppColors.blue00F0FFColor,
+                                        size: 18.sp,
+                                      ),
+                                  ],
+                                ),
+                              );
+                            }),
+                          ],
+                          onChanged: (value) {
+                            if (value == "all_species") {
+                              controller.toggleSelectAllSpecies();
+                            } else if (value != null) {
+                              controller.toggleSpecies(value);
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                    if (controller.selectedSpecies.isNotEmpty) ...[
+                      SizedBox(height: 15.h),
+                      Wrap(
+                        spacing: 10.w,
+                        runSpacing: 10.h,
+                        children: controller.isAllSpeciesSelected
+                            ? [
+                                _choiceChip(
+                                  "All Species",
+                                  true,
+                                  () => controller.clearAllSpecies(),
+                                  showCloseIcon: true,
+                                ),
+                              ]
+                            : controller.selectedSpecies
+                                .map(
+                                  (s) => _choiceChip(
+                                    s,
+                                    true,
+                                    () => controller.toggleSpecies(s),
+                                    showCloseIcon: true,
+                                  ),
+                                )
+                                .toList(),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               SizedBox(height: 25.h),
@@ -114,18 +230,134 @@ class FilterDialog extends StatelessWidget {
 
               _sectionHeader(IconPath.hookIcon, "Method", Color(0xFF00D4FF)),
               Obx(
-                () => Wrap(
-                  spacing: 10.w,
-                  runSpacing: 10.h,
-                  children: controller.methods
-                      .map(
-                        (m) => _choiceChip(
-                          m,
-                          controller.selectedMethods.contains(m),
-                          () => controller.toggleMethod(m),
+                () => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      decoration: BoxDecoration(
+                        color: AppColors.blue1B2134Color,
+                        borderRadius: BorderRadius.circular(15.r),
+                        border: Border.all(
+                          color: AppColors.blue00F0FFColor.withValues(alpha: 0.2),
+                          width: 1,
                         ),
-                      )
-                      .toList(),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: null,
+                          hint: Text(
+                            "Select Method",
+                            style: getTextStyle(
+                              fontSize: 14,
+                              color: AppColors.grey8B95A5Color,
+                            ),
+                          ),
+                          dropdownColor: AppColors.backgroundDarkColor,
+                          icon: Icon(
+                            Icons.keyboard_arrow_down,
+                            color: AppColors.blue00F0FFColor,
+                            size: 20.sp,
+                          ),
+                          isExpanded: true,
+                          style: getTextStyle(
+                            fontSize: 14,
+                            color: Colors.white,
+                          ),
+                          items: [
+                            DropdownMenuItem<String>(
+                              value: "all_methods",
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "All Methods (Select All)",
+                                    style: getTextStyle(
+                                      fontSize: 14,
+                                      color: controller.isAllMethodsSelected
+                                          ? AppColors.blue00F0FFColor
+                                          : Colors.white,
+                                      fontWeight: controller.isAllMethodsSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                  if (controller.isAllMethodsSelected)
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: AppColors.blue00F0FFColor,
+                                      size: 18.sp,
+                                    ),
+                                ],
+                              ),
+                            ),
+                            ...controller.methods.map((String value) {
+                              final isSelected = controller.selectedMethods.contains(value);
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      value,
+                                      style: getTextStyle(
+                                        fontSize: 14,
+                                        color: isSelected
+                                            ? AppColors.blue00F0FFColor
+                                            : Colors.white,
+                                        fontWeight: isSelected
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                      ),
+                                    ),
+                                    if (isSelected)
+                                      Icon(
+                                        Icons.check_circle,
+                                        color: AppColors.blue00F0FFColor,
+                                        size: 18.sp,
+                                      ),
+                                  ],
+                                ),
+                              );
+                            }),
+                          ],
+                          onChanged: (value) {
+                            if (value == "all_methods") {
+                              controller.toggleSelectAllMethods();
+                            } else if (value != null) {
+                              controller.toggleMethod(value);
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                    if (controller.selectedMethods.isNotEmpty) ...[
+                      SizedBox(height: 15.h),
+                      Wrap(
+                        spacing: 10.w,
+                        runSpacing: 10.h,
+                        children: controller.isAllMethodsSelected
+                            ? [
+                                _choiceChip(
+                                  "All Methods",
+                                  true,
+                                  () => controller.clearAllMethods(),
+                                  showCloseIcon: true,
+                                ),
+                              ]
+                            : controller.selectedMethods
+                                .map(
+                                  (m) => _choiceChip(
+                                    m,
+                                    true,
+                                    () => controller.toggleMethod(m),
+                                    showCloseIcon: true,
+                                  ),
+                                )
+                                .toList(),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               SizedBox(height: 25.h),
@@ -238,7 +470,7 @@ class FilterDialog extends StatelessWidget {
     );
   }
 
-  Widget _choiceChip(String label, bool isSelected, VoidCallback onTap) {
+  Widget _choiceChip(String label, bool isSelected, VoidCallback onTap, {bool showCloseIcon = false}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -252,12 +484,25 @@ class FilterDialog extends StatelessWidget {
               ? Border.all(color: AppColors.blue00F0FFColor)
               : null,
         ),
-        child: Text(
-          label,
-          style: getTextStyle(
-            fontSize: 14,
-            color: isSelected ? Colors.white : AppColors.grey8B95A5Color,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: getTextStyle(
+                fontSize: 14,
+                color: isSelected ? Colors.white : AppColors.grey8B95A5Color,
+              ),
+            ),
+            if (showCloseIcon) ...[
+              SizedBox(width: 6.w),
+              Icon(
+                Icons.close,
+                size: 14.sp,
+                color: Colors.white.withValues(alpha: 0.7),
+              ),
+            ],
+          ],
         ),
       ),
     );
