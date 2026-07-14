@@ -580,7 +580,9 @@ class MapScreenController extends GetxController {
             ? null
             : filterController.selectedSpecies.join(',');
         depthMin = 0;
-        depthMax = filterController.depthValue.value.toInt();
+        depthMax = filterController.depthValue.value.toInt() >= 625
+            ? null
+            : filterController.depthValue.value.toInt();
 
         final mappedMethods = filterController.selectedMethods.map((m) {
           final clean = m.trim().toUpperCase();
