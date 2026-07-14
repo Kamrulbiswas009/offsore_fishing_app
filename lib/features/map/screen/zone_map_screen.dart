@@ -500,31 +500,31 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
             ),
           ),
         ),
-        Positioned(
-          top: -2.r,
-          right: -2.r,
-          child: Container(
-            padding: EdgeInsets.all(4.r),
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Color(0xFFFF5252), // vibrant red badge
-            ),
-            constraints: BoxConstraints(
-              minWidth: 18.r,
-              minHeight: 18.r,
-            ),
-            child: Center(
-              child: Text(
-                '3',
-                style: TextStyle(
-                  fontSize: 10.sp, 
-                  color: Colors.white, 
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ),
+        // Positioned(
+        //   top: -2.r,
+        //   right: -2.r,
+        //   child: Container(
+        //     padding: EdgeInsets.all(4.r),
+        //     decoration: const BoxDecoration(
+        //       shape: BoxShape.circle,
+        //       color: Color(0xFFFF5252), // vibrant red badge
+        //     ),
+        //     constraints: BoxConstraints(
+        //       minWidth: 18.r,
+        //       minHeight: 18.r,
+        //     ),
+        //     child: Center(
+        //       child: Text(
+        //         '3',
+        //         style: TextStyle(
+        //           fontSize: 10.sp, 
+        //           color: Colors.white, 
+        //           fontWeight: FontWeight.bold,
+        //         ),
+        //       ),
+        //     ),
+        //   ),
+        // ),
       ],
     );
   }
