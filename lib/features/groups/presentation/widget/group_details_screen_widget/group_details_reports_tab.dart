@@ -6,6 +6,7 @@ import 'package:paytonpieper/core/common/widgets/custom_button.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/features/groups/controller/group_details_screen_controller.dart';
 import 'package:paytonpieper/features/groups/model/group_details_model.dart';
+import 'package:paytonpieper/features/report_main/report_catch/screen/report_catch_screen.dart';
 
 class GroupDetailsReportsTab extends GetView<GroupDetailsScreenController> {
   const GroupDetailsReportsTab({super.key});
@@ -29,7 +30,9 @@ class GroupDetailsReportsTab extends GetView<GroupDetailsScreenController> {
               ),
             ),
             CustomButton(
-              ontap: () {},
+              ontap: () {
+                Get.to(()=>ReportCatchStep1Screen());
+              },
               title: ' Add Report',
               fontSize: 14,
               lineHeight: 10,
