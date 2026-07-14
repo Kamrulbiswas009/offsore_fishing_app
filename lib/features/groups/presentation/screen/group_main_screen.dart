@@ -15,6 +15,7 @@ import 'package:paytonpieper/features/groups/presentation/widget/group_main_scre
 import 'package:paytonpieper/features/groups/presentation/widget/group_main_screen_widget/join_group_bottom_sheet.dart';
 import 'package:paytonpieper/features/groups/presentation/widget/group_main_screen_widget/join_group_card_widget.dart';
 import 'package:paytonpieper/features/groups/presentation/widget/group_main_screen_widget/see_my_invitation_widget.dart';
+import 'package:paytonpieper/features/notification/controller/notification_screen_controller.dart';
 import 'package:paytonpieper/routes/app_routes.dart';
 
 class GroupMainScreen extends StatelessWidget {
@@ -22,6 +23,8 @@ class GroupMainScreen extends StatelessWidget {
       Get.find<GroupMainScreenController>();
   final SeeMyInvitationController seeMyInvitationController =
       Get.find<SeeMyInvitationController>();
+  final NotificationScreenController notificationController =
+      Get.find<NotificationScreenController>();
   GroupMainScreen({super.key});
 
   void _openJoinGroupSheet(BuildContext context) {
@@ -292,6 +295,10 @@ class GroupMainScreen extends StatelessWidget {
                               '${group.count.members} member${group.count.members == 1 ? '' : 's'}',
                           description: group.description,
                           isLocked: group.isPrivate,
+                          unreadCount:
+                              notificationController
+                                  .unreadMessageCounts[group.groupId] ??
+                              0,
                         ),
                       ),
                     );

@@ -6,6 +6,7 @@ import 'package:paytonpieper/core/common/widgets/custom_back_button.dart';
 import 'package:paytonpieper/core/common/widgets/custom_button.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
+import 'package:paytonpieper/features/notification/controller/notification_screen_controller.dart';
 import 'package:paytonpieper/features/payment_service/controller/payment_service_controller.dart';
 import 'package:paytonpieper/features/profile_and_setting/controller/profile_main_screen_controller.dart';
 import 'package:paytonpieper/features/profile_and_setting/presentation/widget/profile_main_screen_widget/profile_info_card_widget.dart';
@@ -18,6 +19,9 @@ class ProfileMainScreen extends StatelessWidget {
 
   final PaymentServiceController paymentServiceController =
       Get.find<PaymentServiceController>();
+
+  final NotificationScreenController notificationController =
+      Get.find<NotificationScreenController>();
 
   ProfileMainScreen({super.key});
 
@@ -48,10 +52,43 @@ class ProfileMainScreen extends StatelessWidget {
                   ),
                   CustomBackButton(
                     ontap: controller.onNotificationsTap,
-                    icon: Image.asset(
-                      IconPath.notificationIcon,
-                      width: 20.r,
-                      height: 20.r,
+                    icon: Obx(
+                      () => Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Image.asset(
+                            IconPath.notificationIcon,
+                            width: 20.r,
+                            height: 20.r,
+                          ),
+                          if (notificationController.unreadCount > 0)
+                            Positioned(
+                              top: -8.h,
+                              right: -8.w,
+                              child: Container(
+                                constraints: BoxConstraints(minWidth: 16.r),
+                                height: 16.r,
+                                padding: EdgeInsets.symmetric(horizontal: 4.w),
+                                alignment: Alignment.center,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.orangeFF6B35Color,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(
+                                  notificationController.unreadCount > 99
+                                      ? '99+'
+                                      : '${notificationController.unreadCount}',
+                                  style: getTextStyle(
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.whiteColor,
+                                    lineHeight: 8,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                   SizedBox(width: 10.w),

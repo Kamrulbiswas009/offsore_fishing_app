@@ -9,6 +9,7 @@ import 'package:paytonpieper/core/utils/constants/api_constants.dart';
 import 'package:paytonpieper/core/utils/constants/image_path.dart';
 import 'package:paytonpieper/core/utils/logging/logger.dart';
 import 'package:paytonpieper/features/groups/model/group_details_model.dart';
+import 'package:paytonpieper/features/notification/controller/notification_screen_controller.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
 class MessageServiceController extends GetxController {
@@ -42,7 +43,10 @@ class MessageServiceController extends GetxController {
 
   Future<void> openGroup(String? groupId) async {
     if (groupId == null || groupId.isEmpty) return;
-    if (_activeGroupId == groupId && _socket != null) return;
+    if (_activeGroupId == groupId && _socket != null) {
+      if (_socket!.connected) markGroupAsRead(groupId);
+      return;
+    }
 
     _activeGroupId = groupId;
     _nextCursor = null;
@@ -53,6 +57,39 @@ class MessageServiceController extends GetxController {
     replyingTo.value = null;
 
     _connectSocket();
+  }
+
+  void markGroupAsRead(String groupId) {
+    final socket = _socket;
+    if (groupId.isEmpty || socket == null || !socket.connected) return;
+
+    socket.emitWithAck(
+      'markGroupRead',
+      <String, dynamic>{'groupId': groupId},
+      ack: (response) {
+        try {
+          final ackData = _asMap(response);
+          if (!_isSuccessfulAck(ackData)) {
+            AppLoggerHelper.error(
+              '[MessageService] markGroupRead failed: $ackData',
+              ackData['error'] ?? ackData['message'] ?? response,
+            );
+            return;
+          }
+
+          if (Get.isRegistered<NotificationScreenController>()) {
+            final notificationController =
+                Get.find<NotificationScreenController>();
+            notificationController.unreadMessageCounts[groupId] = 0;
+          }
+        } catch (error) {
+          AppLoggerHelper.error(
+            '[MessageService] markGroupRead exception',
+            error,
+          );
+        }
+      },
+    );
   }
 
   Future<void> loadOlderMessages() async {
@@ -276,10 +313,9 @@ class MessageServiceController extends GetxController {
       socketUrl,
       io.OptionBuilder()
           .setTransports(['websocket'])
-          // Socket.IO auth normally expects the JWT itself. The HTTP header
-          // keeps the Bearer scheme for servers that authenticate from the
-          // upgrade request instead of `handshake.auth`.
-          .setAuth({'token': token, 'authorization': 'Bearer $token'})
+          // This backend authenticates Socket.IO events from handshake.auth
+          // and expects the same Bearer format used by HTTP requests.
+          .setAuth({'token': 'Bearer $token', 'authorization': 'Bearer $token'})
           .setExtraHeaders({'Authorization': 'Bearer $token'})
           .setQuery({'token': token})
           .enableReconnection()
@@ -300,6 +336,8 @@ class MessageServiceController extends GetxController {
       connectionStatus.value = 'Connected';
       loadOlderMessages();
       getOnlineUsers();
+      final groupId = _activeGroupId;
+      if (groupId != null) markGroupAsRead(groupId);
       AppLoggerHelper.info('[MessageService] socket connected');
     });
 
