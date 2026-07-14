@@ -200,7 +200,9 @@ class FilterDialog extends StatelessWidget {
                   _sectionHeader(IconPath.waveIcon, "Depth Range"),
                   Obx(
                     () => Text(
-                      "0ft - ${controller.depthValue.value.toInt()}ft",
+                      controller.depthValue.value.toInt() >= 625
+                          ? "0ft - 625+ ft"
+                          : "0ft - ${controller.depthValue.value.toInt()}ft",
                       style: getTextStyle(
                         fontSize: 14,
                         color: AppColors.grey8B95A5Color,
@@ -386,7 +388,7 @@ class FilterDialog extends StatelessWidget {
               ),
               SizedBox(height: 25.h),
 
-              _sectionHeader(IconPath.clock, "Time Range"),
+              _sectionHeader(IconPath.clock, "Timeframe"),
               Obx(
                 () => Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -583,7 +585,7 @@ class FilterDialog extends StatelessWidget {
   Widget _depthLabels() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: ["0ft", "125ft", "250ft", "375ft", "500ft", "625ft"]
+      children: ["0ft", "125ft", "250ft", "375ft", "500ft", "625+ ft"]
           .map(
             (e) => Text(
               e,

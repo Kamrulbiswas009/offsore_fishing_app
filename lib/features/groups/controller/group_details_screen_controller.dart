@@ -94,7 +94,7 @@ class GroupDetailsScreenController extends GetxController {
       '0-250ft',
       '0-375ft',
       '0-500ft',
-      '0-625ft',
+      '0-625+ft',
     ],
   );
   final GroupReportFilterOption methodFilter = const GroupReportFilterOption(
@@ -756,12 +756,15 @@ class GroupDetailsScreenController extends GetxController {
     return value.trim().toUpperCase().replaceAll(' ', '_');
   }
 
-  List<int>? get _selectedDepthRange {
+  List<int?>? get _selectedDepthRange {
     final value = selectedReportDepth.value;
     if (value == null || value == 'All Depths') return null;
-    final match = RegExp(r'^(\d+)-(\d+)ft$').firstMatch(value);
+    final match = RegExp(r'^(\d+)-(\d+)\+?ft$').firstMatch(value);
     if (match == null) return null;
-    return [int.parse(match.group(1)!), int.parse(match.group(2)!)];
+    final min = int.parse(match.group(1)!);
+    final maxStr = match.group(2)!;
+    final isPlus = value.contains('+');
+    return [min, isPlus ? null : int.parse(maxStr)];
   }
 
   void selectReportSpecies(String species) {
