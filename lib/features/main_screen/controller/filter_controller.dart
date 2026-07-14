@@ -40,8 +40,44 @@ class FilterController extends GetxController {
     selectedSpecies.contains(name) ? selectedSpecies.remove(name) : selectedSpecies.add(name);
   }
 
+  bool get isAllSpeciesSelected => selectedSpecies.length == speciesList.length;
+
+  void selectAllSpecies() {
+    selectedSpecies.assignAll(speciesList);
+  }
+
+  void clearAllSpecies() {
+    selectedSpecies.clear();
+  }
+
+  void toggleSelectAllSpecies() {
+    if (isAllSpeciesSelected) {
+      clearAllSpecies();
+    } else {
+      selectAllSpecies();
+    }
+  }
+
   void toggleMethod(String name) {
     selectedMethods.contains(name) ? selectedMethods.remove(name) : selectedMethods.add(name);
+  }
+
+  bool get isAllMethodsSelected => selectedMethods.length == methods.length;
+
+  void selectAllMethods() {
+    selectedMethods.assignAll(methods);
+  }
+
+  void clearAllMethods() {
+    selectedMethods.clear();
+  }
+
+  void toggleSelectAllMethods() {
+    if (isAllMethodsSelected) {
+      clearAllMethods();
+    } else {
+      selectAllMethods();
+    }
   }
 
   void toggleVisibility(String name) {
@@ -54,6 +90,7 @@ class FilterController extends GetxController {
     selectedMethods.clear();
     selectedVisibilities.assign("Public");
     selectedTime.value = "24h";
+    applyFilters();
   }
 
   Future<void> applyFilters() async {

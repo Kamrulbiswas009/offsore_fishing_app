@@ -568,13 +568,15 @@ class MapScreenController extends GetxController {
 
       if (Get.isRegistered<FilterController>()) {
         final filterController = Get.find<FilterController>();
-        isFiltering = filterController.selectedSpecies.isNotEmpty ||
-            filterController.selectedMethods.isNotEmpty ||
+        final allSpeciesSelected = filterController.isAllSpeciesSelected;
+        final allMethodsSelected = filterController.isAllMethodsSelected;
+        isFiltering = (filterController.selectedSpecies.isNotEmpty && !allSpeciesSelected) ||
+            (filterController.selectedMethods.isNotEmpty && !allMethodsSelected) ||
             filterController.selectedTime.value != "24h" ||
             filterController.depthValue.value != 250.0 ||
             filterController.selectedVisibilities.length != 1 ||
             !filterController.selectedVisibilities.contains("Public");
-        speciesParam = filterController.selectedSpecies.isEmpty
+        speciesParam = (filterController.selectedSpecies.isEmpty || allSpeciesSelected)
             ? null
             : filterController.selectedSpecies.join(',');
         depthMin = 0;
@@ -589,7 +591,7 @@ class MapScreenController extends GetxController {
             return "ANCHOR_SPOT_FISHING";
           return "CASTING";
         }).toList();
-        methodParam = mappedMethods.isEmpty ? null : mappedMethods.join(',');
+        methodParam = (mappedMethods.isEmpty || allMethodsSelected) ? null : mappedMethods.join(',');
 
         final upperVis = filterController.selectedVisibilities
             .map((v) => v.trim().toUpperCase())
