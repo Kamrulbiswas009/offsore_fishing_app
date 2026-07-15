@@ -89,6 +89,14 @@ class ReportDetailsController extends GetxController {
   }
 
   String get username {
+    // Prefer live API data
+    final data = reportData.value;
+    if (data != null) {
+      final user = data['user'] as Map?;
+      final name = user?['name']?.toString();
+      if (name != null && name.isNotEmpty) return name;
+    }
+    // Fall back to profile controller
     try {
       final profileController = Get.find<ProfileMainScreenController>();
       final name = profileController.profileName;
@@ -98,5 +106,14 @@ class ReportDetailsController extends GetxController {
     } catch (_) {}
     final args = Get.arguments as Map<String, dynamic>?;
     return args?['username'] ?? "CaptJohn_87";
+  }
+
+  String? get profileImageUrl {
+    final data = reportData.value;
+    if (data != null) {
+      final user = data['user'] as Map?;
+      return user?['profileImage']?.toString();
+    }
+    return null;
   }
 }
