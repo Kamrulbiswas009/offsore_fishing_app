@@ -193,8 +193,9 @@ class PaymentServiceController extends GetxController {
 
     final subscription = profileController.authMe.value?.subscription;
     final status = subscription?.status.toUpperCase();
+    final plan = subscription?.plan.toUpperCase();
 
-    if (status == 'COMPLETED' || status == 'ACTIVE') {
+    if (plan == 'PRO' && status == 'ACTIVE') {
       CommonMessage.showMessage(
         title: 'Payment success',
         message: 'Your Pro subscription is active.',

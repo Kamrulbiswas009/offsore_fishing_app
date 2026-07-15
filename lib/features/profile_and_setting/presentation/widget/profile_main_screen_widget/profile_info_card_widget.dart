@@ -3,12 +3,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
+import 'package:paytonpieper/core/utils/constants/image_path.dart';
 
 class ProfileInfoCardWidget extends StatelessWidget {
   final String name;
   final String email;
   final String imagePath;
   final VoidCallback onEditTap;
+  final bool isPremiumAccount;
 
   const ProfileInfoCardWidget({
     super.key,
@@ -16,6 +18,7 @@ class ProfileInfoCardWidget extends StatelessWidget {
     required this.email,
     required this.imagePath,
     required this.onEditTap,
+    required this.isPremiumAccount,
   });
 
   @override
@@ -47,7 +50,7 @@ class ProfileInfoCardWidget extends StatelessWidget {
                       errorBuilder: (_, _, _) =>
                           const Icon(Icons.person, color: AppColors.whiteColor),
                     )
-                  : Image.asset(imagePath, fit: BoxFit.cover),
+                  : Image.asset(ImagePath.profileDefaultImage,fit: BoxFit.cover,),
             ),
           ),
           SizedBox(width: 14.w),
@@ -106,6 +109,28 @@ class ProfileInfoCardWidget extends StatelessWidget {
                     ),
                   ],
                 ),
+                SizedBox(height: 6.h,),
+                RichText(text: TextSpan(children: [
+                  TextSpan(
+                    text: "Subscription: ",
+                    style: getTextStyle(
+                      fontSize: 12,
+                      lineHeight: 9,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.grey8B95A5Color,
+                    )
+                  ),
+                  TextSpan(
+                    text: isPremiumAccount? "Pro": "free",
+                    style: getTextStyle(
+                      fontSize: 12,
+                      lineHeight: 9,
+                      fontWeight: FontWeight.w500,
+                      //if free then show  AppColors.grey8B95A5Color if pro then green
+                      color:isPremiumAccount?AppColors.green10B981Color: AppColors.grey8B95A5Color,
+                    )
+                  )
+                ]))
               ],
             ),
           ),

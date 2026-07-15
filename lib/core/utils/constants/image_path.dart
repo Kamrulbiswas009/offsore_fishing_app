@@ -14,4 +14,6 @@ class ImagePath {
       "assets/images/message_profile_image.png";
   static const String miamiOffShoreCrewImage =
       "assets/images/miami_offshore_crew_image.png";
+
+  static const String profileDefaultImage = "assets/images/profile_default_image.png";
 }

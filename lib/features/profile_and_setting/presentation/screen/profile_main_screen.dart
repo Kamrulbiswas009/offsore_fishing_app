@@ -105,6 +105,7 @@ class ProfileMainScreen extends StatelessWidget {
               SizedBox(height: 26.h),
               Obx(
                 () => ProfileInfoCardWidget(
+                  isPremiumAccount: controller.isPremiumAccount,
                   name: controller.profileName,
                   email: controller.email,
                   imagePath: controller.profileImagePath,
