@@ -25,6 +25,7 @@ import 'package:paytonpieper/features/profile_and_setting/presentation/widget/pr
 class ProfileMainScreenController extends GetxController {
   final NetworkCaller _networkCaller = NetworkCaller();
   final Rxn<AuthMeModel> authMe = Rxn<AuthMeModel>();
+  bool _isEndingExpiredSession = false;
 
   //
 
@@ -36,7 +37,9 @@ class ProfileMainScreenController extends GetxController {
   String get email => authMe.value?.email ?? 'unknown';
   String get profileImagePath =>
       authMe.value?.profileImage ?? ImagePath.profileDefaultImage;
-  bool get isPremiumAccount => authMe.value?.subscription?.plan == "PRO" && authMe.value?.subscription?.status =="ACTIVE";
+  bool get isPremiumAccount =>
+      authMe.value?.subscription?.plan == "PRO" &&
+      authMe.value?.subscription?.status == "ACTIVE";
 
   @override
   void onInit() {
@@ -90,6 +93,7 @@ class ProfileMainScreenController extends GetxController {
 
   Future<void> _loadProfileScreenData() async {
     await getAuthMe();
+    if (_isEndingExpiredSession) return;
     await featchProfileState();
   }
 
@@ -106,9 +110,9 @@ class ProfileMainScreenController extends GetxController {
     try {
       var response = await _requestAuthMe();
 
-      if (!response.isSuccess) {
+      if (response.statusCode == 401) {
         AppLoggerHelper.warning(
-          'Profile request failed (${response.statusCode}). '
+          'Profile request was unauthorized. '
           'Attempting to refresh the access token.',
         );
 
@@ -117,6 +121,7 @@ class ProfileMainScreenController extends GetxController {
           AppLoggerHelper.error(
             'Profile fetch failed because the access token could not be refreshed.',
           );
+          await _endExpiredSession();
           return;
         }
 
@@ -124,6 +129,14 @@ class ProfileMainScreenController extends GetxController {
           'Access token refreshed. Retrying profile request.',
         );
         response = await _requestAuthMe();
+
+        if (response.statusCode == 401) {
+          AppLoggerHelper.error(
+            'Profile request remained unauthorized after token refresh.',
+          );
+          await _endExpiredSession();
+          return;
+        }
       }
 
       if (!response.isSuccess) {
@@ -159,12 +172,13 @@ class ProfileMainScreenController extends GetxController {
 
   Future<ResponseData> _requestAuthMe() {
     final accessToken = StorageService.token;
-    return _networkCaller.cachedGetRequest(
+    // This request validates the current session. Do not allow an old cached
+    // response to turn a server 401 into a false success.
+    return _networkCaller.getRequest(
       ApiConstants.authMeApi,
       token: accessToken == null || accessToken.isEmpty
           ? null
           : 'Bearer $accessToken',
-      cacheKey: "auth_me",
     );
   }
 
@@ -262,15 +276,24 @@ class ProfileMainScreenController extends GetxController {
     try {
       var response = await _requestProfileStats();
 
-      if (!response.isSuccess) {
+      if (response.statusCode == 401) {
         final didRefresh = await _refreshAccessToken();
         if (!didRefresh) {
           AppLoggerHelper.error(
             'Profile statistics fetch failed because the access token could not be refreshed.',
           );
+          await _endExpiredSession();
           return;
         }
         response = await _requestProfileStats();
+
+        if (response.statusCode == 401) {
+          AppLoggerHelper.error(
+            'Profile statistics request remained unauthorized after token refresh.',
+          );
+          await _endExpiredSession();
+          return;
+        }
       }
 
       if (!response.isSuccess) {
@@ -302,12 +325,16 @@ class ProfileMainScreenController extends GetxController {
         stats[index] = stats[index].copyWith(value: values[index].toString());
       }
       // Persist stats as the new local cache.
-      await StorageService.saveProfileStatsCache(jsonEncode({
-        'reportsSubmitted': profileStats.reportsSubmitted,
-        'confirmedReports': profileStats.confirmedReports,
-        'confirmationsReceived': profileStats.confirmationsReceived,
-      }));
-      AppLoggerHelper.info('User profile statistics fetched and cached successfully.');
+      await StorageService.saveProfileStatsCache(
+        jsonEncode({
+          'reportsSubmitted': profileStats.reportsSubmitted,
+          'confirmedReports': profileStats.confirmedReports,
+          'confirmationsReceived': profileStats.confirmationsReceived,
+        }),
+      );
+      AppLoggerHelper.info(
+        'User profile statistics fetched and cached successfully.',
+      );
     } catch (error) {
       AppLoggerHelper.error(
         'Profile statistics fetch failed unexpectedly.',
@@ -324,6 +351,39 @@ class ProfileMainScreenController extends GetxController {
           ? null
           : 'Bearer $accessToken',
     );
+  }
+
+  Future<void> _endExpiredSession() async {
+    if (_isEndingExpiredSession) return;
+    _isEndingExpiredSession = true;
+
+    try {
+      try {
+        await Get.find<OfflineCacheService>().clearAll();
+      } catch (error) {
+        AppLoggerHelper.error(
+          'Failed to clear offline cache for expired session.',
+          error,
+        );
+      }
+
+      await StorageService.logoutUser();
+      authMe.value = null;
+      for (var index = 0; index < stats.length; index++) {
+        stats[index] = stats[index].copyWith(value: 'N/A');
+      }
+      AppLoggerHelper.info(
+        'Expired session data cleared. Redirecting to login.',
+      );
+    } catch (error) {
+      AppLoggerHelper.error(
+        'Failed to completely clear expired session data.',
+        error,
+      );
+    } finally {
+      await EasyLoading.dismiss();
+      Get.offAllNamed(AppRoute.getLoginScreen());
+    }
   }
 
   late final SubscriptionPlanModel subscriptionPlan =
