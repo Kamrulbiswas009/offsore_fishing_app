@@ -40,7 +40,51 @@ class ProfileMainScreenController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    // Instantly restore the last known server state from local storage,
+    // so the UI never shows placeholder data on re-entry.
+    _loadCachedProfile();
+    _loadCachedStats();
+    // Then refresh from network in the background.
     _loadProfileScreenData();
+  }
+
+  /// Reads the last saved `/user/me` response from SharedPreferences
+  /// and populates [authMe] synchronously — zero network latency.
+  void _loadCachedProfile() {
+    final raw = StorageService.getCachedProfileJson();
+    if (raw == null || raw.isEmpty) return;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) {
+        authMe.value = AuthMeModel.fromJson(Map<String, dynamic>.from(decoded));
+        AppLoggerHelper.info('Profile loaded from local cache.');
+      }
+    } catch (e) {
+      AppLoggerHelper.warning('Could not parse cached profile: $e');
+    }
+  }
+
+  /// Reads the last saved profile stats from SharedPreferences and
+  /// updates [stats] synchronously — zero network latency.
+  void _loadCachedStats() {
+    final raw = StorageService.getCachedProfileStatsJson();
+    if (raw == null || raw.isEmpty) return;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) {
+        final values = [
+          (decoded['reportsSubmitted'] as num?)?.toInt() ?? 0,
+          (decoded['confirmedReports'] as num?)?.toInt() ?? 0,
+          (decoded['confirmationsReceived'] as num?)?.toInt() ?? 0,
+        ];
+        for (var i = 0; i < stats.length; i++) {
+          stats[i] = stats[i].copyWith(value: values[i].toString());
+        }
+        AppLoggerHelper.info('Profile stats loaded from local cache.');
+      }
+    } catch (e) {
+      AppLoggerHelper.warning('Could not parse cached profile stats: $e');
+    }
   }
 
   Future<void> _loadProfileScreenData() async {
@@ -102,7 +146,9 @@ class ProfileMainScreenController extends GetxController {
       if (profile.userId.isNotEmpty) {
         await StorageService.saveUserId(profile.userId);
       }
-      AppLoggerHelper.info('User profile fetched successfully.');
+      // Persist this fresh server response as the new local cache.
+      await StorageService.saveProfileCache(jsonEncode(profile.toJson()));
+      AppLoggerHelper.info('User profile fetched and cached successfully.');
     } catch (error) {
       AppLoggerHelper.error('Profile fetch failed unexpectedly.', error);
     } finally {
@@ -254,7 +300,13 @@ class ProfileMainScreenController extends GetxController {
       for (var index = 0; index < stats.length; index++) {
         stats[index] = stats[index].copyWith(value: values[index].toString());
       }
-      AppLoggerHelper.info('User profile statistics fetched successfully.');
+      // Persist stats as the new local cache.
+      await StorageService.saveProfileStatsCache(jsonEncode({
+        'reportsSubmitted': profileStats.reportsSubmitted,
+        'confirmedReports': profileStats.confirmedReports,
+        'confirmationsReceived': profileStats.confirmationsReceived,
+      }));
+      AppLoggerHelper.info('User profile statistics fetched and cached successfully.');
     } catch (error) {
       AppLoggerHelper.error(
         'Profile statistics fetch failed unexpectedly.',

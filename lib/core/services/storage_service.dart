@@ -6,6 +6,8 @@ class StorageService {
   static const String _refreshTokenKey = 'refreshToken';
   static const String _idKey = 'userId';
   static const String _offlineZonesKey = 'offline_zones';
+  static const String _profileCacheKey = 'profile_cache_json';
+  static const String _profileStatsCacheKey = 'profile_stats_cache_json';
 
   // Singleton instance for SharedPreferences
   static SharedPreferences? _preferences;
@@ -63,4 +65,24 @@ class StorageService {
   static String? get token => _preferences?.getString(_tokenKey);
 
   static String? get refreshToken => _preferences?.getString(_refreshTokenKey);
+
+  // --- Profile Cache (last internet state) ---
+
+  /// Persists the raw JSON string of the last successful `/user/me` response.
+  static Future<void> saveProfileCache(String json) async {
+    await _preferences?.setString(_profileCacheKey, json);
+  }
+
+  /// Returns the last cached profile JSON string, or null if not set yet.
+  static String? getCachedProfileJson() =>
+      _preferences?.getString(_profileCacheKey);
+
+  /// Persists the profile stats as a simple JSON string.
+  static Future<void> saveProfileStatsCache(String json) async {
+    await _preferences?.setString(_profileStatsCacheKey, json);
+  }
+
+  /// Returns the last cached profile stats JSON string, or null if not set yet.
+  static String? getCachedProfileStatsJson() =>
+      _preferences?.getString(_profileStatsCacheKey);
 }
