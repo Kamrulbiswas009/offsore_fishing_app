@@ -630,28 +630,100 @@ class CompassNeedlePainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// ── Zone Detail Panel
+// ── Zone Detail Panel (StatefulWidget — fetches real data from backend)
 
-class _ZoneDetailPanel extends StatelessWidget {
+class _ZoneDetailPanel extends StatefulWidget {
   final MapZoneModel zone;
   final VoidCallback onClose;
   const _ZoneDetailPanel({required this.zone, required this.onClose});
 
   @override
+  State<_ZoneDetailPanel> createState() => _ZoneDetailPanelState();
+}
+
+class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
+  final _ctrl = Get.find<MapScreenController>();
+
+  bool _loading = true;
+
+  // Live data from backend (populated after fetch)
+  late int _reportCount;
+  late double _activityScore;
+  late TrendDirection _trend;
+  late String _topSpecies;
+  late String _avgDepth;
+  late String _lastUpdated;
+  late String _dominantMethod;
+  late String _peakWindow;
+
+  @override
+  void initState() {
+    super.initState();
+    // Seed with whatever the controller already knows from the /zones call
+    _reportCount     = widget.zone.reports;
+    _activityScore   = widget.zone.activityScore;
+    _trend           = widget.zone.trend;
+    _topSpecies      = widget.zone.topSpecies;
+    _avgDepth        = widget.zone.avgDepth;
+    _lastUpdated     = widget.zone.lastUpdated;
+    _dominantMethod  = '—';
+    _peakWindow      = '—';
+
+    _fetchLiveData();
+  }
+
+  @override
+  void didUpdateWidget(_ZoneDetailPanel old) {
+    super.didUpdateWidget(old);
+    if (old.zone.id != widget.zone.id) {
+      setState(() {
+        _loading        = true;
+        _reportCount    = widget.zone.reports;
+        _activityScore  = widget.zone.activityScore;
+        _trend          = widget.zone.trend;
+        _topSpecies     = widget.zone.topSpecies;
+        _avgDepth       = widget.zone.avgDepth;
+        _lastUpdated    = widget.zone.lastUpdated;
+        _dominantMethod = '—';
+        _peakWindow     = '—';
+      });
+      _fetchLiveData();
+    }
+  }
+
+  Future<void> _fetchLiveData() async {
+    final data = await _ctrl.fetchZoneSummary(widget.zone.id);
+    if (!mounted) return;
+    if (data != null) {
+      setState(() {
+        _activityScore  = data['activityScore']  as double;
+        _trend          = data['trend']           as TrendDirection;
+        _topSpecies     = data['topSpecies']      as String;
+        _avgDepth       = data['avgDepth']        as String;
+        _dominantMethod = data['dominantMethod']  as String;
+        _peakWindow     = data['peakWindow']      as String;
+        _reportCount    = data['reportCount']     as int;
+        _lastUpdated    = data['lastUpdated']     as String;
+      });
+    }
+    if (mounted) setState(() => _loading = false);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final trendColor = zone.trend == TrendDirection.rising
+    final trendColor = _trend == TrendDirection.rising
         ? const Color(0xFF00E676)
-        : zone.trend == TrendDirection.falling
+        : _trend == TrendDirection.falling
         ? const Color(0xFFFF5252)
         : Colors.white70;
-    final trendIcon = zone.trend == TrendDirection.rising
+    final trendIcon = _trend == TrendDirection.rising
         ? Icons.trending_up
-        : zone.trend == TrendDirection.falling
+        : _trend == TrendDirection.falling
         ? Icons.trending_down
         : Icons.trending_flat;
-    final trendLabel = zone.trend == TrendDirection.rising
+    final trendLabel = _trend == TrendDirection.rising
         ? 'Rising'
-        : zone.trend == TrendDirection.falling
+        : _trend == TrendDirection.falling
         ? 'Falling'
         : 'Stable';
 
@@ -698,7 +770,7 @@ class _ZoneDetailPanel extends StatelessWidget {
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        zone.name,
+                        widget.zone.name,
                         style: getTextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.bold,
@@ -707,15 +779,33 @@ class _ZoneDetailPanel extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 4.h),
-                    Text(
-                      '${zone.reports} reports  •  Last updated ${zone.lastUpdated}',
-                      style: getTextStyle(fontSize: 13, color: Colors.white54),
+                    Row(
+                      children: [
+                        Text(
+                          '$_reportCount reports  •  ',
+                          style: getTextStyle(fontSize: 13, color: Colors.white54),
+                        ),
+                        if (_loading)
+                          SizedBox(
+                            width: 12.w,
+                            height: 12.w,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1.5,
+                              color: const Color(0xFF00D4FF),
+                            ),
+                          )
+                        else
+                          Text(
+                            'Updated $_lastUpdated',
+                            style: getTextStyle(fontSize: 13, color: Colors.white54),
+                          ),
+                      ],
                     ),
                   ],
                 ),
               ),
               GestureDetector(
-                onTap: onClose,
+                onTap: widget.onClose,
                 child: Container(
                   width: 32.w,
                   height: 32.w,
@@ -750,21 +840,23 @@ class _ZoneDetailPanel extends StatelessWidget {
                       'Activity Score',
                       style: getTextStyle(fontSize: 14, color: Colors.white54),
                     ),
-                    Text(
-                      '${(zone.activityScore * 100).round()}%',
-                      style: getTextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFFFF8C42),
-                      ),
-                    ),
+                    _loading
+                        ? _shimmerBox(48.w, 20.h)
+                        : Text(
+                            '${(_activityScore * 100).round()}%',
+                            style: getTextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFFFF8C42),
+                            ),
+                          ),
                   ],
                 ),
                 SizedBox(height: 10.h),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8.r),
                   child: LinearProgressIndicator(
-                    value: zone.activityScore,
+                    value: _loading ? null : _activityScore,
                     minHeight: 10.h,
                     backgroundColor: Colors.white10,
                     valueColor: const AlwaysStoppedAnimation(Color(0xFFFF8C42)),
@@ -775,14 +867,15 @@ class _ZoneDetailPanel extends StatelessWidget {
           ),
           SizedBox(height: 18.h),
 
-          // metric cards
+          // metric cards — Top Species + Avg Depth
           Row(
             children: [
               Expanded(
                 child: _metricCard(
                   icon: Icons.set_meal,
                   label: 'Top Species',
-                  value: zone.topSpecies,
+                  value: _topSpecies,
+                  loading: _loading,
                 ),
               ),
               SizedBox(width: 12.w),
@@ -790,7 +883,32 @@ class _ZoneDetailPanel extends StatelessWidget {
                 child: _metricCard(
                   icon: Icons.water,
                   label: 'Avg Depth',
-                  value: zone.avgDepth,
+                  value: _avgDepth,
+                  loading: _loading,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+
+          // second row — Dominant Method + Peak Window
+          Row(
+            children: [
+              Expanded(
+                child: _metricCard(
+                  icon: Icons.navigation,
+                  label: 'Top Method',
+                  value: _dominantMethod,
+                  loading: _loading,
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: _metricCard(
+                  icon: Icons.access_time,
+                  label: 'Peak Window',
+                  value: _peakWindow,
+                  loading: _loading,
                 ),
               ),
             ],
@@ -813,14 +931,17 @@ class _ZoneDetailPanel extends StatelessWidget {
                   'Trend: ',
                   style: getTextStyle(fontSize: 14, color: Colors.white54),
                 ),
-                Text(
-                  trendLabel,
-                  style: getTextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: trendColor,
+                if (_loading)
+                  _shimmerBox(60.w, 16.h)
+                else
+                  Text(
+                    trendLabel,
+                    style: getTextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: trendColor,
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -838,8 +959,38 @@ class _ZoneDetailPanel extends StatelessWidget {
                 ),
                 padding: EdgeInsets.symmetric(vertical: 15.h),
               ),
-              onPressed: () =>
-                  Get.to(() => SummaryScreen(isReportMainScreen: false), arguments: zone),
+              onPressed: () {
+                // Rebuild the zone model so the SummaryScreen receives the
+                // live-fetched data AND the original boundary coords
+                // (north/south/east/west) that are needed to compute the
+                // correct weather-fetch centre in SummaryController.
+                final liveZone = MapZoneModel(
+                  id: widget.zone.id,
+                  name: widget.zone.name,
+                  location: widget.zone.location,
+                  count: widget.zone.count,
+                  level: _activityScore >= 0.7
+                      ? ActivityLevel.high
+                      : _activityScore >= 0.4
+                          ? ActivityLevel.medium
+                          : ActivityLevel.low,
+                  reports: _reportCount,
+                  lastUpdated: _lastUpdated,
+                  activityScore: _activityScore,
+                  topSpecies: _topSpecies,
+                  avgDepth: _avgDepth,
+                  trend: _trend,
+                  // preserve boundary coords for weather centre calculation
+                  north: widget.zone.north,
+                  south: widget.zone.south,
+                  east: widget.zone.east,
+                  west: widget.zone.west,
+                );
+                Get.to(
+                  () => SummaryScreen(isReportMainScreen: false),
+                  arguments: liveZone,
+                );
+              },
               child: Text(
                 'View Full Details',
                 style: getTextStyle(
@@ -855,10 +1006,27 @@ class _ZoneDetailPanel extends StatelessWidget {
     );
   }
 
+  /// Animated shimmer placeholder for loading state
+  Widget _shimmerBox(double width, double height) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.3, end: 0.7),
+      duration: const Duration(milliseconds: 800),
+      builder: (_, val, __) => Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: val),
+          borderRadius: BorderRadius.circular(6.r),
+        ),
+      ),
+    );
+  }
+
   Widget _metricCard({
     required IconData icon,
     required String label,
     required String value,
+    bool loading = false,
   }) {
     return Container(
       padding: EdgeInsets.all(14.w),
@@ -878,15 +1046,18 @@ class _ZoneDetailPanel extends StatelessWidget {
                   label,
                   style: getTextStyle(fontSize: 12, color: Colors.white54),
                 ),
-                SizedBox(height: 2.h),
-                Text(
-                  value,
-                  style: getTextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+                SizedBox(height: 4.h),
+                loading
+                    ? _shimmerBox(double.infinity, 14.h)
+                    : Text(
+                        value.isEmpty ? '—' : value,
+                        style: getTextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
               ],
             ),
           ),
@@ -895,3 +1066,4 @@ class _ZoneDetailPanel extends StatelessWidget {
     );
   }
 }
+
