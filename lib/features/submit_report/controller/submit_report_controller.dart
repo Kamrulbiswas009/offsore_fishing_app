@@ -125,9 +125,17 @@ class VisibilitySharingController extends GetxController {
               AppLoggerHelper.info(
                 "Report submitted online successfully. Response: ${response.responseData}",
               );
-              final primarySpecies = payload['species'].isNotEmpty
-                  ? payload['species'][0]['speciesName']
-                  : 'Catch Report';
+              final patterns = payload['fishingPatterns'];
+              String primarySpecies = 'Catch Report';
+              if (patterns is List && patterns.isNotEmpty) {
+                final firstPattern = patterns[0];
+                if (firstPattern is Map) {
+                  final speciesList = firstPattern['species'];
+                  if (speciesList is List && speciesList.isNotEmpty) {
+                    primarySpecies = speciesList[0]['speciesName'] ?? 'Catch Report';
+                  }
+                }
+              }
               final zone = payload['zoneId'] ?? 'Unknown Zone';
 
               final resData = response.responseData;

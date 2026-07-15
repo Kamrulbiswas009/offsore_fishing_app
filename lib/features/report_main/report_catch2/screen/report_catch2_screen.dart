@@ -53,17 +53,23 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
                       children: [
                         _buildPatternToggle(),
                         SizedBox(height: 20.h),
-                        Text(
-                          "Species Caught",
-                          style: getTextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white,
-                            lineHeight: 27,
+                        // "No" mode: per-species list with individual pattern cards
+                        if (!controller.isSamePattern.value) ...[
+                          _buildNoPatternSpeciesList(),
+                        ] else ...[
+                          // "Yes" mode: original single species section
+                          Text(
+                            "Species Caught",
+                            style: getTextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                              lineHeight: 27,
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 15.h),
-                        _buildSpeciesSection(),
+                          SizedBox(height: 15.h),
+                          _buildSpeciesSection(),
+                        ],
                       ],
                     ),
                   ),
@@ -379,6 +385,371 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
     );
   }
 
+  // ── "No" mode: list of per-species cards with individual pattern sections ──
+  Widget _buildNoPatternSpeciesList() {
+    return Obx(() {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ...controller.speciesEntries.asMap().entries.map((entry) {
+            final index = entry.key;
+            final speciesEntry = entry.value;
+            return _buildPerSpeciesCard(speciesEntry, index);
+          }),
+          SizedBox(height: 8.h),
+          // Shared Date & Time (single for all species)
+          Obx(
+            () => Row(
+              children: [
+                Expanded(
+                  child: _iconInput(
+                    "Date",
+                    controller.selectedDate.value,
+                    Icons.calendar_today,
+                    onTap: () => controller.pickDate(Get.context!),
+                  ),
+                ),
+                SizedBox(width: 15.w),
+                Expanded(
+                  child: _iconInput(
+                    "Time",
+                    controller.selectedTime.value,
+                    Icons.access_time,
+                    onTap: () => controller.pickTime(Get.context!),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 12.h),
+          // Shared Notes (single for all species)
+          Text(
+            "Notes (Optional)",
+            style: getTextStyle(fontSize: 12, color: AppColors.grey8B95A5Color),
+          ),
+          SizedBox(height: 8.h),
+          TextField(
+            maxLines: 3,
+            controller: controller.notesController,
+            style: getTextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: "Additional details about your catch...",
+              hintStyle: getTextStyle(fontSize: 13, color: AppColors.grey516173Color),
+              fillColor: AppColors.blue1B2134Color,
+              filled: true,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.r),
+                borderSide: BorderSide(color: AppColors.blue153A56Color),
+              ),
+            ),
+          ),
+          SizedBox(height: 16.h),
+          // Add Species button
+          GestureDetector(
+            onTap: () => controller.addSpeciesEntry(),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: 14.h),
+              decoration: BoxDecoration(
+                color: AppColors.teal163A42Color,
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: AppColors.tealColor117A88),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.add, color: AppColors.blue00F0FFColor, size: 20.sp),
+                  SizedBox(width: 8.w),
+                  Text(
+                    "+ Add Species",
+                    style: getTextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.blue00F0FFColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    });
+  }
+
+  Widget _buildPerSpeciesCard(SpeciesEntry entry, int index) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 16.h),
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0B1C25),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: AppColors.blue00F0FFColor.withValues(alpha: 0.5),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header row: "Species N" + remove button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Species ${index + 1}",
+                style: getTextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                  lineHeight: 27,
+                ),
+              ),
+              if (controller.speciesEntries.length > 1)
+                GestureDetector(
+                  onTap: () => controller.removeSpeciesEntry(entry.id),
+                  child: Container(
+                    padding: EdgeInsets.all(6.w),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8.r),
+                      border: Border.all(color: Colors.red.withValues(alpha: 0.4)),
+                    ),
+                    child: Icon(Icons.close, color: Colors.red, size: 16.sp),
+                  ),
+                ),
+            ],
+          ),
+          SizedBox(height: 15.h),
+          // Species selector
+          GestureDetector(
+            onTap: () {
+              showModalBottomSheet(
+                context: Get.context!,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => SpeciesDrillDownBottomSheet(
+                  onSpeciesSelected: (speciesName) {
+                    controller.updateSpeciesEntryName(entry.id, speciesName);
+                    Navigator.pop(context);
+                  },
+                ),
+              );
+            },
+            child: Obx(() {
+              final currentEntry = controller.speciesEntries
+                  .firstWhere((e) => e.id == entry.id, orElse: () => entry);
+              return Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
+                decoration: BoxDecoration(
+                  color: AppColors.blue1B2134Color,
+                  borderRadius: BorderRadius.circular(8.r),
+                  border: Border.all(color: AppColors.blue153A56Color),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        currentEntry.speciesName.isEmpty
+                            ? "Select Species"
+                            : currentEntry.speciesName,
+                        style: getTextStyle(
+                          color: currentEntry.speciesName.isEmpty
+                              ? AppColors.greyC8D0DBColor
+                              : Colors.white,
+                        ),
+                      ),
+                    ),
+                    const Icon(Icons.keyboard_arrow_down, color: Colors.white),
+                  ],
+                ),
+              );
+            }),
+          ),
+          SizedBox(height: 12.h),
+          // Quantity row
+          Row(
+            children: [
+              Text(
+                "Quantity",
+                style: getTextStyle(
+                  fontSize: 12,
+                  color: AppColors.grey8B95A5Color,
+                ),
+              ),
+              const Spacer(),
+              _buildEntryQuantityCounter(entry),
+            ],
+          ),
+          SizedBox(height: 20.h),
+          // Fishing Details header
+          Text(
+            "Fishing Details",
+            style: getTextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+            ),
+          ),
+          SizedBox(height: 12.h),
+          _buildEntryFishingDetails(entry),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEntryQuantityCounter(SpeciesEntry entry) {
+    return Obx(() {
+      final currentEntry = controller.speciesEntries
+          .firstWhere((e) => e.id == entry.id, orElse: () => entry);
+      final qty = currentEntry.quantity;
+      return Container(
+        decoration: BoxDecoration(
+          color: AppColors.blue0D2B43Color,
+          borderRadius: BorderRadius.circular(6.r),
+        ),
+        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GestureDetector(
+              onTap: () {
+                if (qty > 1) controller.updateSpeciesEntryQty(entry.id, qty - 1);
+              },
+              child: Padding(
+                padding: EdgeInsets.all(4.w),
+                child: Icon(
+                  Icons.remove,
+                  color: qty > 1 ? Colors.white : Colors.white.withValues(alpha: 0.3),
+                  size: 16.sp,
+                ),
+              ),
+            ),
+            SizedBox(width: 8.w),
+            Text(
+              qty.toString().padLeft(2, '0'),
+              style: getTextStyle(
+                fontSize: 14,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(width: 8.w),
+            GestureDetector(
+              onTap: () => controller.updateSpeciesEntryQty(entry.id, qty + 1),
+              child: Padding(
+                padding: EdgeInsets.all(4.w),
+                child: Icon(Icons.add, color: Colors.white, size: 16.sp),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildEntryFishingDetails(SpeciesEntry entry) {
+    return Obx(() {
+      final e = controller.speciesEntries
+          .firstWhere((x) => x.id == entry.id, orElse: () => entry);
+      final baitOptions = controller.getFilteredBaitOptions(e.method);
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Water Column Position",
+            style: getTextStyle(fontSize: 12, color: AppColors.grey8B95A5Color),
+          ),
+          SizedBox(height: 8.h),
+          Row(
+            children: [
+              _entryPatternTab("Topwater", e.waterPosition == "Topwater",
+                  () => controller.updateSpeciesEntryWaterPosition(entry.id, "Topwater")),
+              _entryPatternTab("Suspended", e.waterPosition == "Suspended",
+                  () => controller.updateSpeciesEntryWaterPosition(entry.id, "Suspended")),
+              _entryPatternTab("Bottom", e.waterPosition == "Bottom",
+                  () => controller.updateSpeciesEntryWaterPosition(entry.id, "Bottom")),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          _miniInput(
+            "Water Depth (ft)",
+            "120",
+            controller: e.depthCtrl,
+          ),
+          SizedBox(height: 12.h),
+          Padding(
+            padding: EdgeInsets.only(bottom: 12.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Method",
+                  style: getTextStyle(fontSize: 12, color: AppColors.grey8B95A5Color),
+                ),
+                SizedBox(height: 8.h),
+                _customDropdown(
+                  items: controller.methodOptions,
+                  selectedValue: e.method,
+                  hint: "Select Method",
+                  onChanged: (val) {
+                    if (val != null) controller.updateSpeciesEntryMethod(entry.id, val);
+                  },
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(bottom: 12.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Bait / Lure Type",
+                  style: getTextStyle(fontSize: 12, color: AppColors.grey8B95A5Color),
+                ),
+                SizedBox(height: 8.h),
+                _customDropdown(
+                  items: baitOptions,
+                  selectedValue: e.bait,
+                  hint: "Select bait",
+                  onChanged: (val) {
+                    if (val != null) controller.updateSpeciesEntryBait(entry.id, val);
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    });
+  }
+
+  Widget _entryPatternTab(String title, bool active, VoidCallback onTap) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 36.h,
+          margin: EdgeInsets.symmetric(horizontal: 3.w),
+          decoration: BoxDecoration(
+            color: active ? AppColors.teal0C98AFColor : AppColors.blue1B2134Color,
+            borderRadius: BorderRadius.circular(8.r),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            title,
+            style: getTextStyle(
+              fontSize: 12,
+              color: active ? Colors.white : AppColors.grey8B95A5Color,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── "Yes" mode: original single shared-pattern section ───────────────────
   Widget _buildSpeciesSection() {
     return Container(
       padding: EdgeInsets.all(16.w),

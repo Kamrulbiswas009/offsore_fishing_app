@@ -1,6 +1,6 @@
 # PaytonPieper Project — Complete Analysis & API Tracking
 
-> **Last Updated**: 2026-07-15T08:30:00+06:00  
+> **Last Updated**: 2026-07-15T11:42:00+06:00  
 > **Analyzer**: AI Deep Scan — Full Source Code Review  
 > **Base URL**: `http://172.252.13.68:8000/api/v1`  
 > **Socket URL**: `http://172.252.13.68:8000` (derived by stripping `/api/v1`)
@@ -1207,4 +1207,241 @@ sequenceDiagram
 ---
 
 > **Document Status**: ✅ Complete — All 35 backend API endpoints, 1 external API (StormGlass), 1 external SDK (Firebase Auth), 6 WebSocket events, 9 incomplete features, and full flow architecture documented from source code.
-> **Last change (2026-07-15)**: `_ZoneDetailPanel` upgraded to `StatefulWidget`. On zone tap the panel now calls `GET /zones/summary?zoneId=...` to show real backend data (Activity Score, Top Species, Avg Depth, Top Method, Peak Window, Trend, Report Count). Shimmer loading states shown while fetching. Gracefully falls back to `/zones` data already in `MapZoneModel` if the summary call fails.
+> **Last change (2026-07-15 @ 08:30)**: `_ZoneDetailPanel` upgraded to `StatefulWidget`. On zone tap the panel now calls `GET /zones/summary?zoneId=...` to show real backend data (Activity Score, Top Species, Avg Depth, Top Method, Peak Window, Trend, Report Count). Shimmer loading states shown while fetching. Gracefully falls back to `/zones` data already in `MapZoneModel` if the summary call fails.
+
+---
+
+## 20. Session Progress Log
+
+### Session: 2026-07-15 (Morning — 09:13 → 11:42 +06:00)
+
+#### 20.1 ReportCatch2 — Multi-Species "No Pattern" UI Overhaul
+
+**Files Changed**:
+- [`report_catch2_controller.dart`](file:///Users/betopia/kamrul's Project/paytonpieper/lib/features/report_main/report_catch2/controller/report_catch2_controller.dart)
+- [`report_catch2_screen.dart`](file:///Users/betopia/kamrul's Project/paytonpieper/lib/features/report_main/report_catch2/screen/report_catch2_screen.dart)
+
+**Context**: The Report Catch Step 2 screen has a toggle "Fish share the same fishing pattern?" with **Yes** / **No** buttons. Previously, selecting **No** restricted the user to only 1 species (replaced on re-select). The requirement was to allow adding **multiple species**, each with its own individual fishing pattern when "No" is selected.
+
+---
+
+##### Change 1 — Controller: Added `SpeciesEntry` model + per-species state management
+
+Added a new **`SpeciesEntry`** class at the top of the controller file:
+
+```dart
+class SpeciesEntry {
+  final String id;         // unique UUID per entry
+  String speciesName;
+  int quantity;
+  String waterPosition;    // Topwater / Suspended / Bottom
+  String method;           // fishing method
+  String bait;             // bait/lure type
+  String date;             // per-entry date (removed from UI later — see Change 3)
+  String time;             // per-entry time (removed from UI later — see Change 3)
+  String notes;            // per-entry notes (removed from UI later — see Change 4)
+  final TextEditingController depthCtrl; // depth input controller
+}
+```
+
+**New controller fields and methods added**:
+
+| Method / Field | Purpose |
+|:---|:---|
+| `speciesEntries = <SpeciesEntry>[].obs` | Reactive list of per-species entries for "No" mode |
+| `_addBlankSpeciesEntry()` | Creates a new blank `SpeciesEntry` with a UUID and today's date/time |
+| `addSpeciesEntry()` | Public method — called by "+ Add Species" button |
+| `removeSpeciesEntry(id)` | Removes an entry by ID; ensures list never goes empty |
+| `updateSpeciesEntryName(id, name)` | Updates species name on a specific entry |
+| `updateSpeciesEntryQty(id, qty)` | Updates quantity on a specific entry |
+| `updateSpeciesEntryWaterPosition(id, pos)` | Updates water column position per entry |
+| `updateSpeciesEntryMethod(id, method)` | Updates fishing method; auto-resets bait if invalid |
+| `updateSpeciesEntryBait(id, bait)` | Updates bait/lure type per entry |
+| `updateSpeciesEntryDate(id, date)` | Updates date per entry (kept in model, unused in UI) |
+| `updateSpeciesEntryTime(id, time)` | Updates time per entry (kept in model, unused in UI) |
+| `updateSpeciesEntryNotes(id, notes)` | Updates notes per entry (kept in model, unused in UI) |
+| `getFilteredBaitOptions(method)` | Non-reactive bait filter — usable per-entry without shared state |
+| `pickDateForEntry(context, entryId)` | Date picker bound to a specific entry |
+| `pickTimeForEntry(context, entryId)` | Time picker bound to a specific entry |
+
+**`setSamePattern(false)`** updated — no longer restricts to 1 species. Now ensures `speciesEntries` is initialized.
+
+**`addSpecies()`** updated — early-returns if `!isSamePattern.value` (handled via entries instead).
+
+**`buildReportPayload()`** updated — branches on `isSamePattern`:
+- `true` → uses `selectedSpeciesList` + shared pattern fields (original behavior)
+- `false` → iterates `speciesEntries` for payload species list
+
+---
+
+##### Change 2 — Screen: Per-species card list UI in "No" mode
+
+The main body `Obx` now branches on `controller.isSamePattern.value`:
+
+- **Yes** → Shows original `_buildSpeciesSection()` with one shared fishing pattern section (unchanged)
+- **No** → Shows new `_buildNoPatternSpeciesList()`
+
+**New widgets added**:
+
+| Widget | Description |
+|:---|:---|
+| `_buildNoPatternSpeciesList()` | Renders `Obx` list of all `speciesEntries` as individual cards + shared Date/Time + shared Notes + "+ Add Species" button |
+| `_buildPerSpeciesCard(entry, index)` | Card titled "Species N" with: species picker, quantity counter, Fishing Details header, all pattern fields. Shows ❌ remove button if >1 entry |
+| `_buildEntryQuantityCounter(entry)` | `−` / count / `+` quantity stepper, reactive per entry |
+| `_buildEntryFishingDetails(entry)` | Water Column Position tabs, Water Depth input, Method dropdown, Bait dropdown — all per-species |
+| `_entryPatternTab(title, active, onTap)` | Topwater / Suspended / Bottom tab button for individual species cards |
+
+---
+
+##### Change 3 — Screen: Date & Time moved to shared section (single for all species)
+
+**Removed**: Date and Time pickers from each `_buildPerSpeciesCard` / `_buildEntryFishingDetails`.
+
+**Added**: A single shared `Obx` Date & Time row rendered once in `_buildNoPatternSpeciesList`, between the species cards and the Notes field. Uses the controller's existing `selectedDate`, `selectedTime`, `pickDate()`, `pickTime()` (same as "Yes" mode).
+
+**Layout order in "No" mode**:
+```
+[Species 1 card]
+[Species 2 card]
+...
+[Date]  [Time]       ← shared, once
+[Notes (Optional)]   ← shared, once
+[+ Add Species]
+```
+
+---
+
+##### Change 4 — Screen: Notes moved to shared section (single for all species)
+
+**Removed**: Notes `TextField` from each species card's fishing details section.
+
+**Added**: A single shared `TextField` rendered once in `_buildNoPatternSpeciesList`, below the shared Date/Time row. Uses the controller's existing `notesController` (same as "Yes" mode — already wired to `buildReportPayload()`).
+
+---
+
+##### Summary of Final "No" Mode Data Flow
+
+| Field | Scope | Storage |
+|:---|:---|:---|
+| Species Name | Per-species | `SpeciesEntry.speciesName` |
+| Quantity | Per-species | `SpeciesEntry.quantity` |
+| Water Column Position | Per-species | `SpeciesEntry.waterPosition` |
+| Water Depth (ft) | Per-species | `SpeciesEntry.depthCtrl` |
+| Method | Per-species | `SpeciesEntry.method` |
+| Bait / Lure Type | Per-species | `SpeciesEntry.bait` |
+| Date | **Shared** | `controller.selectedDate` |
+| Time | **Shared** | `controller.selectedTime` |
+| Notes | **Shared** | `controller.notesController` |
+
+---
+
+### Session: 2026-07-15 (Afternoon — 11:49 +06:00)
+
+#### 20.2 Breaking API Change — `fishingPatterns` Migration
+
+**Reference Doc**: `frontend-api-changes.md`
+
+**Context**: Backend broke the flat report structure. The old top-level fields `species`, `fishingMethod`, `baitLureType`, `waterDepthFt`, and `waterColumn` are **removed**. All fishing data is now grouped under a `fishingPatterns` array per report.
+
+---
+
+##### Files Changed
+
+- [`report_catch2_controller.dart`](file:///Users/betopia/kamrul's Project/paytonpieper/lib/features/report_main/report_catch2/controller/report_catch2_controller.dart) — `buildReportPayload()`
+- [`submit_report_controller.dart`](file:///Users/betopia/kamrul's Project/paytonpieper/lib/features/submit_report/controller/submit_report_controller.dart) — `submitReport()` species extraction
+
+---
+
+##### Old Payload Structure (❌ No Longer Accepted)
+
+```json
+{
+  "frontendReportId": "uuid",
+  "reportLat": 28.4521,
+  "reportLng": -89.1234,
+  "visibility": "PUBLIC",
+  "catchTimestamp": "2026-07-15T08:00:00Z",
+  "notes": "...",
+  "species": [{ "speciesName": "Red Snapper", "quantity": 2 }],
+  "fishingMethod": "JIGGING",
+  "baitLureType": "VERTICAL_JIG",
+  "waterDepthFt": 120,
+  "waterColumn": "BOTTOM"
+}
+```
+
+##### New Payload Structure (✅ Current)
+
+```json
+{
+  "frontendReportId": "uuid",
+  "reportLat": 28.4521,
+  "reportLng": -89.1234,
+  "visibility": "PUBLIC",
+  "catchTimestamp": "2026-07-15T08:00:00Z",
+  "notes": "Shared notes for whole report",
+  "fishingPatterns": [
+    {
+      "species": [{ "speciesName": "Red Snapper", "quantity": 1 }],
+      "fishingMethod": "JIGGING",
+      "baitLureType": "VERTICAL_JIG",
+      "waterDepthFt": 110,
+      "waterColumn": "BOTTOM"
+    },
+    {
+      "species": [{ "speciesName": "Mahi Mahi", "quantity": 3 }],
+      "fishingMethod": "TROLLING",
+      "baitLureType": "SKIRTED_LURE",
+      "waterDepthFt": 80,
+      "waterColumn": "MID_COLUMN"
+    }
+  ]
+}
+```
+
+---
+
+##### `buildReportPayload()` Logic Changes
+
+| Mode | `fishingPatterns` output |
+|:---|:---|
+| **Nothing Caught** | Single pattern: `species=[{None, 0}]`, all method fields `null` |
+| **Yes (same pattern)** | Single pattern: all `selectedSpeciesList` + shared method/bait/depth/column |
+| **No (different patterns)** | One pattern per `SpeciesEntry` — each with own method/bait/depth/column |
+
+`notes` field remains at **top-level** (shared for whole report, not inside patterns).
+
+Removed fields from payload root: `species`, `fishingMethod`, `baitLureType`, `waterDepthFt`, `waterColumn`.
+
+---
+
+##### `submit_report_controller.dart` Fix
+
+Updated `primarySpecies` extraction from old `payload['species'][0]` to new path:
+
+```dart
+// OLD (broken)
+final primarySpecies = payload['species'].isNotEmpty
+    ? payload['species'][0]['speciesName']
+    : 'Catch Report';
+
+// NEW (correct)
+final patterns = payload['fishingPatterns'];
+String primarySpecies = 'Catch Report';
+if (patterns is List && patterns.isNotEmpty) {
+  final firstPattern = patterns[0];
+  if (firstPattern is Map) {
+    final speciesList = firstPattern['species'];
+    if (speciesList is List && speciesList.isNotEmpty) {
+      primarySpecies = speciesList[0]['speciesName'] ?? 'Catch Report';
+    }
+  }
+}
+```
+
+---
+
+##### Updated API Endpoint Notes (Section 8 & 17)
+
+> **`POST /reports`** — Request body now uses `fishingPatterns[]` instead of flat `species`/`fishingMethod`/`baitLureType`/`waterDepthFt`/`waterColumn`. `notes` remains top-level. Response `GET /reports/:id` now includes `allSpecies` (aggregated summary) and `fishingPatterns[]` (detail array) in place of old flat fields.
+
