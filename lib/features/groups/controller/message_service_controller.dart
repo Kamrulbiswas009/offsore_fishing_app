@@ -313,9 +313,7 @@ class MessageServiceController extends GetxController {
       socketUrl,
       io.OptionBuilder()
           .setTransports(['websocket'])
-          // This backend authenticates Socket.IO events from handshake.auth
-          // and expects the same Bearer format used by HTTP requests.
-          .setAuth({'token': 'Bearer $token', 'authorization': 'Bearer $token'})
+          .setAuth({'token': token, 'authorization': 'Bearer $token'})
           .setExtraHeaders({'Authorization': 'Bearer $token'})
           .setQuery({'token': token})
           .enableReconnection()

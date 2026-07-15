@@ -4,10 +4,13 @@ import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/common/widgets/custom_back_button.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
+import 'package:paytonpieper/features/groups/controller/group_details_screen_controller.dart';
+import 'package:paytonpieper/features/main_screen/controller/main_screen_controller.dart';
 import 'package:paytonpieper/features/notification/controller/notification_screen_controller.dart';
 import 'package:paytonpieper/features/notification/presentation/widget/notification_screen_widget/notification_item_widget.dart';
 import 'package:paytonpieper/features/notification/presentation/widget/notification_screen_widget/notification_pro_banner_widget.dart';
 import 'package:paytonpieper/features/notification/presentation/widget/notification_screen_widget/notification_tab_bar_widget.dart';
+import 'package:paytonpieper/routes/app_routes.dart';
 
 class NotificationScreen extends GetView<NotificationScreenController> {
   const NotificationScreen({super.key});
@@ -59,7 +62,7 @@ class NotificationScreen extends GetView<NotificationScreenController> {
                       return NotificationItemWidget(
                         item: notifications[index],
                         onTap: () =>
-                            controller.markAsRead(notifications[index]),
+                            _handleNotificationTap(notifications[index]),
                         showDivider: index != notifications.length - 1,
                       );
                     },
@@ -71,5 +74,27 @@ class NotificationScreen extends GetView<NotificationScreenController> {
         ),
       ),
     );
+  }
+
+  void _handleNotificationTap(NotificationItemModel item) {
+    controller.markAsRead(item);
+    if (!item.isGroupMessage) return;
+
+    Get.find<MainScreenController>().changeIndex(2);
+    Get.offNamed(
+      AppRoute.getGroupDetailsScreen(),
+      arguments: <String, dynamic>{
+        'groupId': item.groupId,
+        'groupName': item.groupName,
+        'initialTab': 'chat',
+      },
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (Get.currentRoute == AppRoute.getGroupDetailsScreen()) {
+        Get.find<GroupDetailsScreenController>().fetchGroupDetails(
+          item.groupId,
+        );
+      }
+    });
   }
 }
