@@ -278,6 +278,9 @@ class NotificationItemModel {
   final String description;
   final String time;
   final bool isUnread;
+  final String type;
+  final String groupId;
+  final String groupName;
 
   const NotificationItemModel({
     required this.id,
@@ -285,12 +288,27 @@ class NotificationItemModel {
     required this.description,
     required this.time,
     required this.isUnread,
+    this.type = '',
+    this.groupId = '',
+    this.groupName = '',
   });
+
+  bool get isGroupMessage {
+    final messageKind = '$type $title'.toLowerCase();
+    return groupId.isNotEmpty &&
+        (messageKind.contains('message') || messageKind.contains('chat'));
+  }
 
   factory NotificationItemModel.fromJson(Map<String, dynamic> json) {
     final createdAt = DateTime.tryParse((json['createdAt'] ?? '').toString());
     final explicitlyUnread = json['isUnread'];
     final isRead = json['isRead'] ?? json['read'];
+    final data = _asMap(json['data']);
+    final metadata = _asMap(json['metadata']);
+    final payload = _asMap(json['payload']);
+    final group = _asMap(
+      json['group'] ?? data['group'] ?? metadata['group'] ?? payload['group'],
+    );
     return NotificationItemModel(
       id: (json['notificationId'] ?? json['id'] ?? '').toString(),
       title: (json['title'] ?? json['type'] ?? 'Notification').toString(),
@@ -303,6 +321,35 @@ class NotificationItemModel {
           : isRead is bool
           ? !isRead
           : json['readAt'] == null,
+      type: _firstNonEmpty([
+        json['type'],
+        json['notificationType'],
+        json['category'],
+        data['type'],
+        data['notificationType'],
+        data['category'],
+        metadata['type'],
+        metadata['notificationType'],
+        metadata['category'],
+        payload['type'],
+        payload['notificationType'],
+        payload['category'],
+      ]),
+      groupId: _firstNonEmpty([
+        json['groupId'],
+        data['groupId'],
+        metadata['groupId'],
+        payload['groupId'],
+        group['groupId'],
+        group['id'],
+      ]),
+      groupName: _firstNonEmpty([
+        json['groupName'],
+        data['groupName'],
+        metadata['groupName'],
+        payload['groupName'],
+        group['name'],
+      ]),
     );
   }
 
@@ -312,7 +359,24 @@ class NotificationItemModel {
     description: description,
     time: time,
     isUnread: false,
+    type: type,
+    groupId: groupId,
+    groupName: groupName,
   );
+
+  static Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return <String, dynamic>{};
+  }
+
+  static String _firstNonEmpty(List<dynamic> values) {
+    for (final value in values) {
+      final text = value?.toString().trim() ?? '';
+      if (text.isNotEmpty) return text;
+    }
+    return '';
+  }
 
   static String _formatTime(DateTime? value) {
     if (value == null) return '';
