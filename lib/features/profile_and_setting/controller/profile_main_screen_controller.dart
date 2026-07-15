@@ -32,10 +32,11 @@ class ProfileMainScreenController extends GetxController {
   final Rxn<File> selectedImageFile = Rxn<File>();
   final TextEditingController editNameController = TextEditingController();
 
-  String get profileName => authMe.value?.name ?? 'Captain Mike';
-  String get email => authMe.value?.email ?? 'captain.mike@example.com';
+  String get profileName => authMe.value?.name ?? 'Unknown';
+  String get email => authMe.value?.email ?? 'unknown';
   String get profileImagePath =>
-      authMe.value?.profileImage ?? ImagePath.messageProfileImage;
+      authMe.value?.profileImage ?? ImagePath.profileDefaultImage;
+  bool get isPremiumAccount => authMe.value?.subscription?.plan == "PRO" && authMe.value?.subscription?.status =="ACTIVE";
 
   @override
   void onInit() {
@@ -182,7 +183,7 @@ class ProfileMainScreenController extends GetxController {
 
   final RxList<ProfileStatModel> stats = <ProfileStatModel>[
     ProfileStatModel(
-      value: '--',
+      value: 'N/A',
       label: 'Reports Submitted',
       iconPath: IconPath.fishIcon,
       borderColor: AppColors.tealColor117A88.withValues(alpha: 0.15),
@@ -190,7 +191,7 @@ class ProfileMainScreenController extends GetxController {
       description: 'Total number of reports you have submitted.',
     ),
     ProfileStatModel(
-      value: '--',
+      value: 'N/A',
       label: 'confirmed reports',
       iconPath: IconPath.locationIcon,
       borderColor: AppColors.orangeFF6B35Color.withValues(alpha: 0.30),
@@ -199,7 +200,7 @@ class ProfileMainScreenController extends GetxController {
           'Your reports that received at least one positive bite confirmation.',
     ),
     ProfileStatModel(
-      value: '--',
+      value: 'N/A',
       label: 'Confirm bite',
       iconPath: IconPath.curveArrowIcon,
       borderColor: AppColors.tealColor117A88,
