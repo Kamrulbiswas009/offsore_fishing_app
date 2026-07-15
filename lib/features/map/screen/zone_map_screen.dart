@@ -1007,20 +1007,8 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
   }
 
   /// Animated shimmer placeholder for loading state
-  Widget _shimmerBox(double width, double height) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.3, end: 0.7),
-      duration: const Duration(milliseconds: 800),
-      builder: (_, val, __) => Container(
-        width: width,
-        height: height,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: val),
-          borderRadius: BorderRadius.circular(6.r),
-        ),
-      ),
-    );
-  }
+  Widget _shimmerBox(double width, double height) =>
+      _ShimmerBox(width: width, height: height);
 
   Widget _metricCard({
     required IconData icon,
@@ -1067,3 +1055,77 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Reusable looping shimmer box — matches the dark card background.
+// ---------------------------------------------------------------------------
+class _ShimmerBox extends StatefulWidget {
+  final double width;
+  final double height;
+
+  const _ShimmerBox({required this.width, required this.height});
+
+  @override
+  State<_ShimmerBox> createState() => _ShimmerBoxState();
+}
+
+class _ShimmerBoxState extends State<_ShimmerBox>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+    _anim = Tween<double>(begin: -1.5, end: 2.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Base card colour used across the bottom sheet.
+    const Color baseColor = Color(0xFF121F2E);
+    // Highlight — slightly lighter with a cyan-tinted sheen.
+    const Color highlightColor = Color(0xFF1E3347);
+
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) {
+        return Container(
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(6.r),
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              stops: const [0.0, 0.5, 1.0],
+              colors: const [baseColor, highlightColor, baseColor],
+              transform: _SlidingGradientTransform(slidePercent: _anim.value),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Shifts a gradient horizontally by [slidePercent] (range −1.5 → +2.0).
+class _SlidingGradientTransform extends GradientTransform {
+  final double slidePercent;
+  const _SlidingGradientTransform({required this.slidePercent});
+
+  @override
+  Matrix4? transform(Rect bounds, {TextDirection? textDirection}) =>
+      Matrix4.translationValues(bounds.width * slidePercent, 0, 0);
+}
