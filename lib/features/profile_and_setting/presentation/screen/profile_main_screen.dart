@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
@@ -158,13 +159,19 @@ class ProfileMainScreen extends StatelessWidget {
               //   onUpgradeTap: controller.onUpgradeToPro,
               // ),
               SizedBox(height: 8.h),
+              //if(controller.isPremiumAccount == false)
               CustomButton(
                 ontap: () {
+                  if(controller.isPremiumAccount == false){
                   paymentServiceController.openUnlockProFlow();
+                  }else{
+                    EasyLoading.showInfo("You Already in a Pro Member");
+                  }
                 },
-                title: "Unlock Pro >",
+                title: controller.isPremiumAccount? "Pro Activated": "Unlock Pro >",
                 lineHeight: 14,
                 fontSize: 16,
+                bgColor: controller.isPremiumAccount ? AppColors.grey8B95A5Color: AppColors.orangeColor,
               ),
               SizedBox(height: 4.h),
               Text(
