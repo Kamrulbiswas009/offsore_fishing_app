@@ -1,6 +1,6 @@
 # PaytonPieper Project — Complete Analysis & API Tracking
 
-> **Last Updated**: 2026-07-11T10:43:00+06:00  
+> **Last Updated**: 2026-07-15T08:30:00+06:00  
 > **Analyzer**: AI Deep Scan — Full Source Code Review  
 > **Base URL**: `http://172.252.13.68:8000/api/v1`  
 > **Socket URL**: `http://172.252.13.68:8000` (derived by stripping `/api/v1`)
@@ -748,6 +748,36 @@ During the FIFO sync loop, if a report upload fails with `401 Unauthorized`, `Sy
 ### Mock Fallback
 If API fails, loads 6 pre-configured GOM zones with hardcoded data.
 
+### 10.3 Zone Detail Panel — Real Backend Data
+
+**Widget**: `_ZoneDetailPanel` (StatefulWidget inside [ZoneMapScreen](file:///Users/betopia/kamrul's Project/paytonpieper/lib/features/map/screen/zone_map_screen.dart))  
+**Method**: `MapScreenController.fetchZoneSummary(zoneId)` → calls `GET /zones/summary`
+
+#### Behaviour
+1. On panel open (tap a zone on map), `_ZoneDetailPanelState.initState()` seeds UI from the `MapZoneModel` already in `activeZones` (from `/zones` call), then calls `_fetchLiveData()`.
+2. `_fetchLiveData()` calls `MapScreenController.fetchZoneSummary(zoneId)` which hits **`GET /zones/summary?zoneId={id}&regionCode=GOM&page=1&limit=20`**.
+3. Panel shows a shimmer/indeterminate loading state while fetching:
+   - Activity Score progress bar shows indeterminate animation
+   - Metric card values show pulsing shimmer boxes
+   - Trend label shows shimmer box
+   - Spinner shows next to report count subtitle
+4. On success, panel updates reactively with live values.
+5. On failure (network/API error), panel keeps the seeded data from `MapZoneModel`.
+6. `didUpdateWidget` re-triggers fetch if the user taps a different zone while panel is open.
+
+#### Data Mapped from `/zones/summary` Response
+
+| Panel Field | Source Path | Notes |
+|:---|:---|:---|
+| **Activity Score** | `data.singleZoneDetails.activityScore` | Normalized to 0.0–1.0 (÷100 if >1) |
+| **Trend** | `data.singleZoneDetails.trendDirection` | `RISING\|FALLING\|STABLE` → `TrendDirection` enum |
+| **Top Species** | `data.topSpecies[0].name` | First ranked species |
+| **Avg Depth** | `(data.patternIntelligence.commonDepthMinFt + commonDepthMaxFt) / 2` | Formatted as `"NNN ft"` |
+| **Top Method** | `data.patternIntelligence.dominantMethod` | Human-readable (e.g. `TROLLING` → `"Trolling"`) |
+| **Peak Window** | `data.activityTiming.peakWindow` | e.g. `"6.00 AM - 10.00 AM"` |
+| **Report Count** | `data.activityOverview.reportsCount` | Integer |
+| **Last Updated** | Computed — `"Just now"` (freshly fetched) | |
+
 ---
 
 ## 11. Summary & Intelligence Flow
@@ -996,7 +1026,12 @@ graph TD
 | 31 | `getFilteredRegionReportsApi` | `/zones/reports?regionCode=GOM&scope=region&...filters` | **GET** | `MapScreenController` | ✅ | — | `{data: [report_objects]}` |
 | 32 | `getPaymentPlanApi` | `/subscriptions/plans` | **GET** | `PaymentServiceController` | ✅ | — | `{data: [plan_objects]}` |
 | 33 | `createPaymentIntentPlanApi` | `/subscriptions/intent` | **POST** | `PaymentServiceController` | ✅ | `{priceId}` | `{data: {clientSecret, publishableKey, paymentIntentId}}` |
+| 30 | `getZonesApi` | `/zones?south=&north=&west=&east=&...filters` | **GET** | `MapScreenController` | ✅ | — | `{data: [zone_objects]}` |
+| 31 | `getFilteredRegionReportsApi` | `/zones/reports?regionCode=GOM&scope=region&...filters` | **GET** | `MapScreenController` | ✅ | — | `{data: [report_objects]}` |
+| 32 | `getPaymentPlanApi` | `/subscriptions/plans` | **GET** | `PaymentServiceController` | ✅ | — | `{data: [plan_objects]}` |
+| 33 | `createPaymentIntentPlanApi` | `/subscriptions/intent` | **POST** | `PaymentServiceController` | ✅ | `{priceId}` | `{data: {clientSecret, publishableKey, paymentIntentId}}` |
 | 34 | `getReportForGroupApi` | `/reports?groupId=&species=&timeframe=&fishingMethod=&depthMinFt=&depthMaxFt=&page=&limit=` | **GET** | `GroupDetailsScreenController` | ✅ | — | `{data: [report_objects]}` |
+| 35 | `getFilteredZoneSummaryApi` (zone panel) | `/zones/summary?zoneId={id}&regionCode=GOM&page=1&limit=20` | **GET** | `MapScreenController.fetchZoneSummary()` | ✅ | — | `{data: {activityOverview, singleZoneDetails, topSpecies, patternIntelligence, activityTiming}}` |
 
 **External APIs**:
 
@@ -1171,4 +1206,5 @@ sequenceDiagram
 
 ---
 
-> **Document Status**: ✅ Complete — All 34 backend API endpoints, 1 external API (StormGlass), 1 external SDK (Firebase Auth), 6 WebSocket events, 10 incomplete features, and full flow architecture documented from source code.
+> **Document Status**: ✅ Complete — All 35 backend API endpoints, 1 external API (StormGlass), 1 external SDK (Firebase Auth), 6 WebSocket events, 9 incomplete features, and full flow architecture documented from source code.
+> **Last change (2026-07-15)**: `_ZoneDetailPanel` upgraded to `StatefulWidget`. On zone tap the panel now calls `GET /zones/summary?zoneId=...` to show real backend data (Activity Score, Top Species, Avg Depth, Top Method, Peak Window, Trend, Report Count). Shimmer loading states shown while fetching. Gracefully falls back to `/zones` data already in `MapZoneModel` if the summary call fails.

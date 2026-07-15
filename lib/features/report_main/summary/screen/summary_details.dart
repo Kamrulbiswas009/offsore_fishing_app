@@ -33,30 +33,34 @@ class SummaryScreen extends GetView<SummaryController> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              Stack(
-                children: [
-                  const GlobalRealMapBox(
-                    center: LatLng(25.76721, -80.1918),
-                    zoom: 13.0,
+              // Back button row — only shown when navigated from zone map
+              if (!isReportMainScreen)
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => Get.back(),
+                        child: CircleAvatar(
+                          radius: 20.r,
+                          backgroundColor: AppColors.blue0D2B43Color,
+                          child: Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
+                            size: 20.sp,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  // Positioned(
-                  //   top: 50.h,
-                  //   left: 20.w,
-                  //   child: GestureDetector(
-                  //     onTap: () => Get.back(),
-                  //     child: CircleAvatar(
-                  //       radius: 20.r,
-                  //       backgroundColor: Colors.black.withOpacity(0.5),
-                  //       child: const Icon(
-                  //         Icons.arrow_back,
-                  //         color: Colors.white,
-                  //         size: 20,
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
-                ],
+                ),
+
+              // Map preview
+              const GlobalRealMapBox(
+                center: LatLng(25.76721, -80.1918),
+                zoom: 13.0,
               ),
+
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.w),
                 child: Column(

@@ -856,6 +856,111 @@ class MapScreenController extends GetxController {
     }
   }
 
+  // ── Zone Summary Fetch (for ZoneDetailPanel) ──────────────────────────
+
+  /// Fetches real zone summary data from GET /zones/summary?zoneId=...
+  /// Returns a map with keys: topSpecies, avgDepth, dominantMethod, peakWindow,
+  /// activityScore (0.0-1.0), trendDirection, reportCount, lastUpdated.
+  /// Returns null on failure.
+  Future<Map<String, dynamic>?> fetchZoneSummary(String zoneId) async {
+    try {
+      final network = NetworkCaller();
+      final accessToken = StorageService.token;
+      final token = (accessToken != null && accessToken.isNotEmpty)
+          ? 'Bearer $accessToken'
+          : null;
+
+      final url = ApiConstants.getFilteredZoneSummaryApi(
+        zoneId: zoneId,
+        regionCode: 'GOM',
+        page: 1,
+        limit: 20,
+      );
+
+      final response = await network.getRequest(url, token: token);
+
+      if (response.isSuccess && response.responseData is Map) {
+        final raw = response.responseData as Map;
+        final data = raw['data'] as Map<String, dynamic>?;
+        if (data == null) return null;
+
+        // Parse activityOverview
+        final overview = data['activityOverview'] as Map<String, dynamic>?;
+        final reportCount = (overview?['reportsCount'] as num?)?.toInt() ?? 0;
+
+        // Parse singleZoneDetails
+        final zoneDetails = data['singleZoneDetails'] as Map<String, dynamic>?;
+        final rawScore = (zoneDetails?['activityScore'] as num?)?.toDouble() ?? 0.0;
+        final activityScore = rawScore > 1.0 ? rawScore / 100.0 : rawScore;
+        final trendStr = zoneDetails?['trendDirection'] as String? ?? 'STABLE';
+
+        TrendDirection trend = TrendDirection.stable;
+        if (trendStr == 'RISING') trend = TrendDirection.rising;
+        if (trendStr == 'FALLING') trend = TrendDirection.falling;
+
+        // Parse topSpecies
+        final speciesList = data['topSpecies'] as List?;
+        String topSpecies = 'None';
+        if (speciesList != null && speciesList.isNotEmpty) {
+          final first = speciesList.first as Map<String, dynamic>?;
+          topSpecies = first?['name'] as String? ?? 'None';
+        }
+
+        // Parse patternIntelligence for avgDepth + dominantMethod
+        final pattern = data['patternIntelligence'] as Map<String, dynamic>?;
+        final depthMin = (pattern?['commonDepthMinFt'] as num?)?.toInt();
+        final depthMax = (pattern?['commonDepthMaxFt'] as num?)?.toInt();
+        String avgDepth = '—';
+        if (depthMin != null && depthMax != null) {
+          avgDepth = '${((depthMin + depthMax) / 2).round()} ft';
+        } else if (depthMax != null) {
+          avgDepth = '$depthMax ft';
+        } else if (depthMin != null) {
+          avgDepth = '$depthMin ft';
+        }
+
+        final rawMethod = pattern?['dominantMethod'] as String? ?? '';
+        final dominantMethod = _formatMethod(rawMethod);
+
+        // Parse activityTiming for peakWindow
+        final timing = data['activityTiming'] as Map<String, dynamic>?;
+        final peakWindow = timing?['peakWindow'] as String? ?? '—';
+
+        return {
+          'topSpecies': topSpecies,
+          'avgDepth': avgDepth,
+          'dominantMethod': dominantMethod,
+          'peakWindow': peakWindow,
+          'activityScore': activityScore,
+          'trend': trend,
+          'reportCount': reportCount,
+          'lastUpdated': _timeAgoFromNow(),
+        };
+      }
+    } catch (e, stack) {
+      AppLoggerHelper.error('fetchZoneSummary error: $e', stack);
+    }
+    return null;
+  }
+
+  String _formatMethod(String raw) {
+    switch (raw.toUpperCase()) {
+      case 'TROLLING': return 'Trolling';
+      case 'JIGGING': return 'Jigging';
+      case 'CASTING': return 'Casting';
+      case 'ANCHOR_SPOT_FISHING': return 'Anchor/Spot';
+      case 'FLY_FISHING': return 'Fly Fishing';
+      case 'DRIFTING': return 'Drifting';
+      case 'BOTTOM_FISHING': return 'Bottom Fishing';
+      default: return raw.isNotEmpty ? raw : '—';
+    }
+  }
+
+  String _timeAgoFromNow() {
+    // The summary was just fetched so it's current
+    return 'Just now';
+  }
+
   Future<void> refreshMapWithFilters() async {
     final bounds = _cameraBounds.value;
     if (bounds != null) {

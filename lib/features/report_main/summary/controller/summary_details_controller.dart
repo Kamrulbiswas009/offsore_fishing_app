@@ -785,10 +785,31 @@ class SummaryController extends GetxController {
     }).join(' ');
   }
 
+  /// Computes the geographic centre of the zone boundary.
+  /// Uses (north+south)/2 and (east+west)/2 when all bounds are present.
+  /// Falls back to the stored [MapZoneModel.location] centroid, then to a
+  /// Gulf-of-Mexico default if no zone is selected.
+  (double lat, double lng) get _weatherLatLng {
+    final zone = selectedZone.value;
+    if (zone != null) {
+      final n = zone.north;
+      final s = zone.south;
+      final e = zone.east;
+      final w = zone.west;
+      if (n != null && s != null && e != null && w != null) {
+        // Bounds-derived centre — most accurate
+        return ((n + s) / 2.0, (e + w) / 2.0);
+      }
+      // Fall back to stored centroid
+      return (zone.location.latitude, zone.location.longitude);
+    }
+    // No zone selected — use Gulf of Mexico region centre
+    return (28.375, -89.125);
+  }
+
   Future<void> fetchWeather({int? customTtl, bool forceRefresh = false}) async {
     isWeatherLoading.value = true;
-    final lat = selectedZone.value?.location.latitude ?? 28.375;
-    final lng = selectedZone.value?.location.longitude ?? -89.125;
+    final (lat, lng) = _weatherLatLng;
     final cacheKey = "weather_${lat.toStringAsFixed(3)}_${lng.toStringAsFixed(3)}";
 
     // Load from cache instantly if available
