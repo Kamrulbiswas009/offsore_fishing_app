@@ -1,14 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/models/species_node.dart';
-import 'package:paytonpieper/core/services/network_caller.dart';
-import 'package:paytonpieper/core/services/storage_service.dart';
-import 'package:paytonpieper/core/utils/constants/api_constants.dart';
 import 'package:paytonpieper/core/utils/logging/logger.dart';
-import '../../report_main/summary/controller/summary_details_controller.dart';
 import '../../map/controller/map_screen_controller.dart';
-import 'main_screen_controller.dart';
 
 class FilterController extends GetxController {
   // Species Selection

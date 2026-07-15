@@ -66,10 +66,10 @@ class ReportDetailsScreen extends GetView<ReportDetailsController> {
                   final displayName = zoneData?['displayName']?.toString();
                   zone = (displayName != null && displayName.isNotEmpty) ? displayName : zoneId;
 
-                  // Species
-                  final speciesArg = report['species'] as List?;
-                  if (speciesArg != null) {
-                    speciesList = speciesArg.map((e) {
+                  // Species — from allSpecies array
+                  final allSpeciesArg = report['allSpecies'] as List?;
+                  if (allSpeciesArg != null && allSpeciesArg.isNotEmpty) {
+                    speciesList = allSpeciesArg.map((e) {
                       final m = e as Map;
                       return {
                         "name": (m['speciesName'] ?? "").toString(),
@@ -78,28 +78,31 @@ class ReportDetailsScreen extends GetView<ReportDetailsController> {
                     }).toList();
                   }
 
-                  // Depth
-                  final waterDepth = report['waterDepthFt'];
-                  if (waterDepth != null) {
-                    depth = "$waterDepth ft";
-                  }
+                  // Fishing patterns — aggregate from fishingPatterns array
+                  final patterns = report['fishingPatterns'] as List?;
+                  if (patterns != null && patterns.isNotEmpty) {
+                    // Use first pattern as primary, collect unique values
+                    final depthValues = <String>{};
+                    final positionValues = <String>{};
+                    final methodValues = <String>{};
+                    final baitValues = <String>{};
 
-                  // Position (waterColumn)
-                  final waterCol = report['waterColumn']?.toString();
-                  if (waterCol != null) {
-                    position = _capitalizeAndFormat(waterCol);
-                  }
+                    for (final p in patterns) {
+                      final pm = p as Map;
+                      final d = pm['waterDepthFt'];
+                      if (d != null) depthValues.add("$d ft");
+                      final wc = pm['waterColumn']?.toString();
+                      if (wc != null) positionValues.add(_capitalizeAndFormat(wc));
+                      final fm = pm['fishingMethod']?.toString();
+                      if (fm != null) methodValues.add(_capitalizeAndFormat(fm));
+                      final bl = pm['baitLureType']?.toString();
+                      if (bl != null) baitValues.add(_capitalizeAndFormat(bl));
+                    }
 
-                  // Method (fishingMethod)
-                  final fMethod = report['fishingMethod']?.toString();
-                  if (fMethod != null) {
-                    method = _capitalizeAndFormat(fMethod);
-                  }
-
-                  // Bait (baitLureType)
-                  final bLure = report['baitLureType']?.toString();
-                  if (bLure != null) {
-                    bait = _capitalizeAndFormat(bLure);
+                    if (depthValues.isNotEmpty) depth = depthValues.join(', ');
+                    if (positionValues.isNotEmpty) position = positionValues.join(', ');
+                    if (methodValues.isNotEmpty) method = methodValues.join(', ');
+                    if (baitValues.isNotEmpty) bait = baitValues.join(', ');
                   }
                 }
 
@@ -147,7 +150,7 @@ class ReportDetailsScreen extends GetView<ReportDetailsController> {
                       SizedBox(height: 10.h),
                       
                       // Card 1: Reported By
-                      _buildReportedByCard(username, timestamp),
+                      _buildReportedByCard(username, timestamp, controller.profileImageUrl),
                       
                       SizedBox(height: 20.h),
                       
@@ -239,7 +242,7 @@ class ReportDetailsScreen extends GetView<ReportDetailsController> {
     );
   }
 
-  Widget _buildReportedByCard(String username, String timestamp) {
+  Widget _buildReportedByCard(String username, String timestamp, String? profileImageUrl) {
     return _buildCardContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,14 +253,19 @@ class ReportDetailsScreen extends GetView<ReportDetailsController> {
               CircleAvatar(
                 radius: 22.r,
                 backgroundColor: AppColors.tealColor117A88,
-                child: Text(
-                  username.isNotEmpty ? username[0].toUpperCase() : "U",
-                  style: getTextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+                backgroundImage: (profileImageUrl != null && profileImageUrl.isNotEmpty)
+                    ? NetworkImage(profileImageUrl)
+                    : null,
+                child: (profileImageUrl == null || profileImageUrl.isEmpty)
+                    ? Text(
+                        username.isNotEmpty ? username[0].toUpperCase() : "U",
+                        style: getTextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      )
+                    : null,
               ),
               SizedBox(width: 14.w),
               Column(
