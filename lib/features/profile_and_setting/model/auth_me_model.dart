@@ -66,6 +66,26 @@ class AuthMeModel {
   static DateTime? _parseDate(dynamic value) {
     return value is String ? DateTime.tryParse(value) : null;
   }
+
+  Map<String, dynamic> toJson() => {
+        'userId': userId,
+        'name': name,
+        'email': email,
+        'role': role,
+        'status': status,
+        'profileImage': profileImage,
+        'provider': provider,
+        'providerId': providerId,
+        'otpExpiredAt': otpExpiredAt?.toIso8601String(),
+        'isVerified': isVerified,
+        'isActive': isActive,
+        'isDeleted': isDeleted,
+        'deletedAt': deletedAt?.toIso8601String(),
+        'lastActive': lastActive?.toIso8601String(),
+        'createdAt': createdAt?.toIso8601String(),
+        'updatedAt': updatedAt?.toIso8601String(),
+        'subscription': subscription?.toJson(),
+      };
 }
 
 class UserSubscriptionModel {
@@ -101,4 +121,15 @@ class UserSubscriptionModel {
       cancelAtPeriodEnd: json['cancelAtPeriodEnd'] as bool? ?? false,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'userId': userId,
+        'stripeCustomerId': stripeCustomerId,
+        'stripeSubscriptionId': stripeSubscriptionId,
+        'stripePriceId': stripePriceId,
+        'plan': plan,
+        'status': status,
+        'cancelAtPeriodEnd': cancelAtPeriodEnd,
+      };
 }
