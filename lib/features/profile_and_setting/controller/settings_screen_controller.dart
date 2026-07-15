@@ -16,9 +16,9 @@ class SettingsScreenController extends GetxController {
   final NetworkCaller _networkCaller = NetworkCaller();
 
   final RxBool isOfflineModeEnabled = true.obs;
-  final RxBool isNotificationsEnabled = true.obs;
-  final RxBool isHotZoneAlertsEnabled = true.obs;
-  final RxBool isGroupActivityEnabled = true.obs;
+  final RxBool isNotificationsEnabled = false.obs;
+  final RxBool isHotZoneAlertsEnabled = false.obs;
+  final RxBool isGroupActivityEnabled = false.obs;
 
   int get storageUsedInMb => MapboxOfflineService.to.storageUsedInMb.value;
   int get totalStorageInMb => 500;

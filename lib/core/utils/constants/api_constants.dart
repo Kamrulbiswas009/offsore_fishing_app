@@ -1,7 +1,8 @@
 class ApiConstants {
-  static const String baseUrl =
-   "https://coefficiently-vermiform-tatiana.ngrok-free.dev/api/v1";
-  //static const String baseUrl = "http://172.252.13.68:8000/api/v1";
+  //static const String baseUrl =
+  // "https://coefficiently-vermiform-tatiana.ngrok-free.dev/api/v1";
+  static const String baseUrl = "http://172.252.13.68:8000/api/v1";
+  
   static const String stormGlassApiKey = "cb2f317e-409f-11f1-beac-0242ac120004-cb2f31e2-409f-11f1-beac-0242ac120004";
   static String get socketBaseUrl =>
       baseUrl.replaceFirst(RegExp(r'/api/v\d+/?$'), '');

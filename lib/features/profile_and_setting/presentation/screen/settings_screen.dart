@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
@@ -6,6 +7,7 @@ import 'package:paytonpieper/core/common/widgets/custom_back_button.dart';
 import 'package:paytonpieper/core/common/widgets/custom_button.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
+import 'package:paytonpieper/features/profile_and_setting/controller/profile_main_screen_controller.dart';
 import 'package:paytonpieper/features/profile_and_setting/controller/settings_screen_controller.dart';
 import 'package:paytonpieper/features/profile_and_setting/presentation/widget/settings_screen_widget/settings_action_tile_widget.dart';
 import 'package:paytonpieper/features/profile_and_setting/presentation/widget/settings_screen_widget/settings_info_tile_widget.dart';
@@ -16,7 +18,7 @@ import 'package:paytonpieper/features/profile_and_setting/presentation/widget/se
 class SettingsScreen extends StatelessWidget {
   final SettingsScreenController controller =
       Get.find<SettingsScreenController>();
-
+  final ProfileMainScreenController profileMainScreenController = Get.find<ProfileMainScreenController>();
   SettingsScreen({super.key});
 
   @override
@@ -228,7 +230,7 @@ class SettingsScreen extends StatelessWidget {
               Container(
                 padding: EdgeInsets.all(14.r),
                 decoration: BoxDecoration(
-                  color: AppColors.containerBackgroundColor,
+                  color: profileMainScreenController.isPremiumAccount? AppColors.containerBackgroundColor : AppColors.grey516173Color,
                   borderRadius: BorderRadius.circular(16.r),
                   border: Border.all(color: AppColors.tealColor117A88),
                 ),
@@ -239,7 +241,9 @@ class SettingsScreen extends StatelessWidget {
                         title: 'Enable Notifications',
                         subtitle: 'Get bite, weather, and group alerts',
                         value: controller.isNotificationsEnabled.value,
-                        onChanged: controller.toggleNotifications,
+                        onChanged: profileMainScreenController.isPremiumAccount? controller.toggleNotifications:(value) {
+                          EasyLoading.showInfo("Upgrade pro plan to active");
+                        },
                       ),
                     ),
                     Divider(color: Color(0xFF055467), height: 26.h),
@@ -248,7 +252,9 @@ class SettingsScreen extends StatelessWidget {
                         title: 'Hot Zone Alerts',
                         subtitle: 'Alerts when the bite is on',
                         value: controller.isHotZoneAlertsEnabled.value,
-                        onChanged: controller.toggleHotZoneAlerts,
+                        onChanged: profileMainScreenController.isPremiumAccount? controller.toggleHotZoneAlerts:(value) {
+                          EasyLoading.showInfo("Upgrade pro plan to active");
+                        },
                       ),
                     ),
                     Divider(color: Color(0xFF055467), height: 26.h),
@@ -258,7 +264,9 @@ class SettingsScreen extends StatelessWidget {
                         title: 'Group Activity',
                         subtitle: 'New reports and members',
                         value: controller.isGroupActivityEnabled.value,
-                        onChanged: controller.toggleGroupActivity,
+                        onChanged: profileMainScreenController.isPremiumAccount? controller.toggleGroupActivity:(value) {
+                          EasyLoading.showInfo("Upgrage pro plan to active");
+                        },
                       ),
                     ),
                   ],
