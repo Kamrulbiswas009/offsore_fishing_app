@@ -698,8 +698,17 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
       setState(() {
         _activityScore  = data['activityScore']  as double;
         _trend          = data['trend']           as TrendDirection;
-        _topSpecies     = data['topSpecies']      as String;
-        _avgDepth       = data['avgDepth']        as String;
+        
+        final newTopSpecies = data['topSpecies'] as String;
+        _topSpecies = (newTopSpecies == 'None' || newTopSpecies.isEmpty || newTopSpecies == 'Unknown')
+            ? widget.zone.topSpecies
+            : newTopSpecies;
+
+        final newAvgDepth = data['avgDepth'] as String;
+        _avgDepth = (newAvgDepth == '—' || newAvgDepth.isEmpty)
+            ? widget.zone.avgDepth
+            : newAvgDepth;
+
         _dominantMethod = data['dominantMethod']  as String;
         _peakWindow     = data['peakWindow']      as String;
         _reportCount    = data['reportCount']     as int;
@@ -740,27 +749,15 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
           ),
         ],
       ),
-      padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 20.h),
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // drag handle
-          Center(
-            child: Container(
-              width: 40.w,
-              height: 4.h,
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(2.r),
-              ),
-            ),
-          ),
-          SizedBox(height: 16.h),
-
-          // name + close
+          // name + reports + close button row
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
                 child: Column(
@@ -772,7 +769,7 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                       child: Text(
                         widget.zone.name,
                         style: getTextStyle(
-                          fontSize: 26,
+                          fontSize: 22,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
@@ -783,7 +780,10 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                       children: [
                         Text(
                           '$_reportCount reports  •  ',
-                          style: getTextStyle(fontSize: 13, color: Colors.white54),
+                          style: getTextStyle(
+                            fontSize: 13,
+                            color: const Color(0xFF9EA6B4),
+                          ),
                         ),
                         if (_loading)
                           SizedBox(
@@ -796,8 +796,11 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                           )
                         else
                           Text(
-                            'Updated $_lastUpdated',
-                            style: getTextStyle(fontSize: 13, color: Colors.white54),
+                            'Last updated $_lastUpdated',
+                            style: getTextStyle(
+                              fontSize: 13,
+                              color: const Color(0xFF9EA6B4),
+                            ),
                           ),
                       ],
                     ),
@@ -807,16 +810,16 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
               GestureDetector(
                 onTap: widget.onClose,
                 child: Container(
-                  width: 32.w,
-                  height: 32.w,
+                  width: 36.w,
+                  height: 36.w,
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white12,
+                    color: Color(0xFF1F242E),
                   ),
                   child: const Icon(
                     Icons.close,
-                    color: Colors.white70,
-                    size: 18,
+                    color: Colors.white,
+                    size: 16,
                   ),
                 ),
               ),
@@ -826,10 +829,10 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
 
           // activity score
           Container(
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.all(20.w),
             decoration: BoxDecoration(
-              color: const Color(0xFF121F2E),
-              borderRadius: BorderRadius.circular(14.r),
+              color: const Color(0xFF1F242E),
+              borderRadius: BorderRadius.circular(16.r),
             ),
             child: Column(
               children: [
@@ -838,112 +841,117 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                   children: [
                     Text(
                       'Activity Score',
-                      style: getTextStyle(fontSize: 14, color: Colors.white54),
+                      style: getTextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF8A94A6),
+                      ),
                     ),
                     _loading
                         ? _shimmerBox(48.w, 20.h)
                         : Text(
                             '${(_activityScore * 100).round()}%',
                             style: getTextStyle(
-                              fontSize: 18,
+                              fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: const Color(0xFFFF8C42),
+                              color: const Color(0xFFFF6D00),
                             ),
                           ),
                   ],
                 ),
-                SizedBox(height: 10.h),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8.r),
-                  child: LinearProgressIndicator(
-                    value: _loading ? null : _activityScore,
-                    minHeight: 10.h,
-                    backgroundColor: Colors.white10,
-                    valueColor: const AlwaysStoppedAnimation(Color(0xFFFF8C42)),
-                  ),
-                ),
+                SizedBox(height: 16.h),
+                _loading
+                    ? _shimmerBox(double.infinity, 8.h)
+                    : LayoutBuilder(
+                        builder: (context, constraints) {
+                          final progress = _activityScore.clamp(0.0, 1.0);
+                          final trackHeight = 8.h;
+                          final thumbSize = 16.w;
+                          final leftOffset = (constraints.maxWidth * progress) - (thumbSize / 2);
+                          final clampedOffset = leftOffset.clamp(0.0, constraints.maxWidth - thumbSize);
+                          
+                          return Stack(
+                            alignment: Alignment.centerLeft,
+                            clipBehavior: Clip.none,
+                            children: [
+                              // Track background
+                              Container(
+                                height: trackHeight,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF151922),
+                                  borderRadius: BorderRadius.circular(trackHeight / 2),
+                                ),
+                              ),
+                              // Progress track
+                              FractionallySizedBox(
+                                widthFactor: progress,
+                                child: Container(
+                                  height: trackHeight,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF00B4D8),
+                                    borderRadius: BorderRadius.circular(trackHeight / 2),
+                                  ),
+                                ),
+                              ),
+                              // Glowing thumb
+                              Positioned(
+                                left: clampedOffset,
+                                child: Container(
+                                  width: thumbSize,
+                                  height: thumbSize,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFF6D00),
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFFFF6D00).withValues(alpha: 0.6),
+                                        blurRadius: 10,
+                                        spreadRadius: 4,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
               ],
             ),
           ),
-          SizedBox(height: 18.h),
+          SizedBox(height: 16.h),
 
-          // metric cards — Top Species + Avg Depth
+          // metric cards Row (Top Species, Avg Depth, Trend)
           Row(
             children: [
               Expanded(
                 child: _metricCard(
-                  icon: Icons.set_meal,
                   label: 'Top Species',
                   value: _topSpecies,
-                  loading: _loading,
+                  loading: _loading && (_topSpecies == 'None' || _topSpecies.isEmpty || _topSpecies == 'Unknown'),
                 ),
               ),
-              SizedBox(width: 12.w),
+              SizedBox(width: 8.w),
               Expanded(
                 child: _metricCard(
-                  icon: Icons.water,
                   label: 'Avg Depth',
                   value: _avgDepth,
+                  loading: _loading && (_avgDepth == '—' || _avgDepth.isEmpty),
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: _metricCard(
+                  label: 'Trend',
+                  value: trendLabel,
+                  trendColor: trendColor,
+                  trendIcon: trendIcon,
+                  isTrend: true,
                   loading: _loading,
                 ),
               ),
             ],
-          ),
-          SizedBox(height: 12.h),
-
-          // second row — Dominant Method + Peak Window
-          Row(
-            children: [
-              Expanded(
-                child: _metricCard(
-                  icon: Icons.navigation,
-                  label: 'Top Method',
-                  value: _dominantMethod,
-                  loading: _loading,
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: _metricCard(
-                  icon: Icons.access_time,
-                  label: 'Peak Window',
-                  value: _peakWindow,
-                  loading: _loading,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 14.h),
-
-          // trend
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
-            decoration: BoxDecoration(
-              color: const Color(0xFF121F2E),
-              borderRadius: BorderRadius.circular(14.r),
-            ),
-            child: Row(
-              children: [
-                Icon(trendIcon, color: trendColor, size: 22.sp),
-                SizedBox(width: 10.w),
-                Text(
-                  'Trend: ',
-                  style: getTextStyle(fontSize: 14, color: Colors.white54),
-                ),
-                if (_loading)
-                  _shimmerBox(60.w, 16.h)
-                else
-                  Text(
-                    trendLabel,
-                    style: getTextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: trendColor,
-                    ),
-                  ),
-              ],
-            ),
           ),
           SizedBox(height: 20.h),
 
@@ -953,17 +961,14 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF00D4FF),
-                foregroundColor: Colors.white,
+                foregroundColor: const Color(0xFF0A1628),
+                elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14.r),
+                  borderRadius: BorderRadius.circular(16.r),
                 ),
-                padding: EdgeInsets.symmetric(vertical: 15.h),
+                padding: EdgeInsets.symmetric(vertical: 16.h),
               ),
               onPressed: () {
-                // Rebuild the zone model so the SummaryScreen receives the
-                // live-fetched data AND the original boundary coords
-                // (north/south/east/west) that are needed to compute the
-                // correct weather-fetch centre in SummaryController.
                 final liveZone = MapZoneModel(
                   id: widget.zone.id,
                   name: widget.zone.name,
@@ -980,7 +985,6 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                   topSpecies: _topSpecies,
                   avgDepth: _avgDepth,
                   trend: _trend,
-                  // preserve boundary coords for weather centre calculation
                   north: widget.zone.north,
                   south: widget.zone.south,
                   east: widget.zone.east,
@@ -996,7 +1000,7 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                 style: getTextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: const Color(0xFF0A1628),
                 ),
               ),
             ),
@@ -1011,44 +1015,66 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
       _ShimmerBox(width: width, height: height);
 
   Widget _metricCard({
-    required IconData icon,
     required String label,
     required String value,
     bool loading = false,
+    bool isTrend = false,
+    Color? trendColor,
+    IconData? trendIcon,
   }) {
     return Container(
-      padding: EdgeInsets.all(14.w),
+      padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 8.w),
       decoration: BoxDecoration(
-        color: const Color(0xFF121F2E),
-        borderRadius: BorderRadius.circular(14.r),
+        color: const Color(0xFF1F242E),
+        borderRadius: BorderRadius.circular(16.r),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, color: const Color(0xFF00F0FF), size: 20.sp),
-          SizedBox(width: 10.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: getTextStyle(fontSize: 12, color: Colors.white54),
-                ),
-                SizedBox(height: 4.h),
-                loading
-                    ? _shimmerBox(double.infinity, 14.h)
-                    : Text(
-                        value.isEmpty ? '—' : value,
-                        style: getTextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-              ],
-            ),
+          Text(
+            label,
+            style: getTextStyle(fontSize: 12, color: const Color(0xFF8A94A6)),
+            textAlign: TextAlign.center,
           ),
+          SizedBox(height: 8.h),
+          loading
+              ? _shimmerBox(50.w, 16.h)
+              : isTrend
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (trendIcon != null)
+                          Icon(
+                            trendIcon,
+                            color: trendColor ?? Colors.white,
+                            size: 16.sp,
+                          ),
+                        if (trendIcon != null) SizedBox(width: 4.w),
+                        Flexible(
+                          child: Text(
+                            value.isEmpty ? '—' : value,
+                            style: getTextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: trendColor ?? Colors.white,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Text(
+                      value.isEmpty ? '—' : value,
+                      style: getTextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                    ),
         ],
       ),
     );
