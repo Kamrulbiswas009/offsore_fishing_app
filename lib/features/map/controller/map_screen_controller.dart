@@ -830,6 +830,13 @@ class MapScreenController extends GetxController {
             level = ActivityLevel.medium;
           }
 
+          final topSpecies = item['topSpecies'] as String? ?? 'None';
+          final rawAvgDepth = item['avgDepth'] as num?;
+          String avgDepth = '—';
+          if (rawAvgDepth != null) {
+            avgDepth = '${rawAvgDepth.round()} ft';
+          }
+
           zonesList.add(MapZoneModel(
             id: zoneId,
             name: displayName,
@@ -839,6 +846,8 @@ class MapScreenController extends GetxController {
             reports: reportCount,
             activityScore: activityScore > 1.0 ? activityScore / 100.0 : activityScore,
             trend: trend,
+            topSpecies: topSpecies,
+            avgDepth: avgDepth,
             north: zNorth,
             south: zSouth,
             east: zEast,
@@ -905,6 +914,12 @@ class MapScreenController extends GetxController {
           final first = speciesList.first as Map<String, dynamic>?;
           topSpecies = first?['name'] as String? ?? 'None';
         }
+        if (topSpecies == 'None' || topSpecies.isEmpty) {
+          final fallbackSpecies = zoneDetails?['topSpecies'] as String?;
+          if (fallbackSpecies != null && fallbackSpecies.isNotEmpty) {
+            topSpecies = fallbackSpecies;
+          }
+        }
 
         // Parse patternIntelligence for avgDepth + dominantMethod
         final pattern = data['patternIntelligence'] as Map<String, dynamic>?;
@@ -917,6 +932,12 @@ class MapScreenController extends GetxController {
           avgDepth = '$depthMax ft';
         } else if (depthMin != null) {
           avgDepth = '$depthMin ft';
+        }
+        if (avgDepth == '—') {
+          final rawAvgDepth = zoneDetails?['avgDepth'] as num?;
+          if (rawAvgDepth != null) {
+            avgDepth = '${rawAvgDepth.round()} ft';
+          }
         }
 
         final rawMethod = pattern?['dominantMethod'] as String? ?? '';
