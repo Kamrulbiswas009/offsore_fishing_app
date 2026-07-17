@@ -9,6 +9,7 @@ import 'package:paytonpieper/core/utils/constants/api_constants.dart';
 import 'package:paytonpieper/core/utils/logging/logger.dart';
 import 'package:paytonpieper/features/main_screen/screen/home_main_screen.dart';
 import 'package:paytonpieper/routes/app_routes.dart';
+import 'package:paytonpieper/features/weather_alerts/controller/bite_watch_controller.dart';
 
 class LoginController extends GetxController {
   final formKey = GlobalKey<FormState>();
@@ -84,6 +85,16 @@ class LoginController extends GetxController {
         refreshToken: refreshToken,
       );
       AppLoggerHelper.info('Login successful and auth tokens saved.');
+
+      // Upload FCM token and refresh watched zones
+      try {
+        final biteCtrl = Get.find<BiteWatchController>();
+        await biteCtrl.uploadFcmToken();
+        await biteCtrl.fetchWatchedZones();
+      } catch (e) {
+        AppLoggerHelper.error('Failed to sync FCM / watched zones on login', e);
+      }
+
       emailController.clear();
       passwordController.clear();
     } catch (error) {

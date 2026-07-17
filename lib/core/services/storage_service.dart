@@ -62,6 +62,8 @@ class StorageService {
     await preferences.clear();
   }
 
+  static const String _fcmTokenKey = 'fcm_token';
+
   // Getter for user ID
   static String? get userId => _preferences?.getString(_idKey);
 
@@ -69,6 +71,12 @@ class StorageService {
   static String? get token => _preferences?.getString(_tokenKey);
 
   static String? get refreshToken => _preferences?.getString(_refreshTokenKey);
+
+  static String? get fcmToken => _preferences?.getString(_fcmTokenKey);
+
+  static Future<void> saveFcmToken(String value) async {
+    await _preferences?.setString(_fcmTokenKey, value);
+  }
 
   // --- Profile Cache (last internet state) ---
 

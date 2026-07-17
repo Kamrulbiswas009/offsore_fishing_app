@@ -1,4 +1,7 @@
+import 'dart:ui';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/utils/logging/logger.dart';
 import 'package:paytonpieper/routes/app_routes.dart';
@@ -38,6 +41,19 @@ class FCMHandler {
         snackPosition: SnackPosition.TOP,
         duration: const Duration(seconds: 6),
       );
+    } else if (type == 'BITE_ACTIVITY') {
+      final zoneId = message.data['zoneId'] as String? ?? 'Zone';
+      final title = message.notification?.title ?? 'Bite Activity Alert';
+      final body = message.notification?.body ?? 'Activity spike detected.';
+      Get.snackbar(
+        '🎣 $title',
+        body,
+        backgroundColor: const Color(0xFFFF6D00).withOpacity(0.9),
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 6),
+        onTap: (_) => _handleTap(message.data),
+      );
     }
   }
 
@@ -46,6 +62,21 @@ class FCMHandler {
     if (type == 'weather_alert') {
       // Navigate to weather tab on the summary screen
       final zoneId = data['zoneId'] as String? ?? 'GOM-R74-C88';
+      final zoneName = data['zoneName'] as String? ?? zoneId;
+      final lat = double.tryParse(data['lat']?.toString() ?? '') ?? 28.375;
+      final lng = double.tryParse(data['lng']?.toString() ?? '') ?? -89.125;
+
+      final liveZone = MapZoneModel(
+        id: zoneId,
+        name: zoneName,
+        location: LatLng(lat, lng),
+        count: 0,
+        level: ActivityLevel.medium,
+      );
+      Get.toNamed(AppRoute.summaryScreen, arguments: liveZone);
+    } else if (type == 'BITE_ACTIVITY') {
+      final zoneId = data['zoneId'] as String? ?? 
+          (data['deepLink'] as String?)?.split('/').last ?? 'GOM-0042';
       final zoneName = data['zoneName'] as String? ?? zoneId;
       final lat = double.tryParse(data['lat']?.toString() ?? '') ?? 28.375;
       final lng = double.tryParse(data['lng']?.toString() ?? '') ?? -89.125;

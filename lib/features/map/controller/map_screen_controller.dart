@@ -444,6 +444,46 @@ class MapScreenController extends GetxController {
   void selectZone(MapZoneModel zone) => selectedZone.value = zone;
   void deselectZone() => selectedZone.value = null;
 
+  void selectZoneById(String zoneId) {
+    // 1. Look up in activeZones
+    MapZoneModel? found;
+    for (final z in activeZones) {
+      if (z.id == zoneId) {
+        found = z;
+        break;
+      }
+    }
+    
+    // 2. If not found in activeZones, calculate coordinates and build a default one
+    if (found == null) {
+      final zoneInfo = ZoneCalculator.fromZoneId(zoneId);
+      if (zoneInfo != null) {
+        found = MapZoneModel(
+          id: zoneInfo.zoneId,
+          name: zoneInfo.zoneId,
+          location: LatLng(zoneInfo.centerLat, zoneInfo.centerLng),
+          count: 0,
+          level: ActivityLevel.low,
+          reports: 0,
+          lastUpdated: 'No reports yet',
+          activityScore: 0.0,
+          topSpecies: 'None',
+          avgDepth: '—',
+          trend: TrendDirection.stable,
+          north: zoneInfo.boundNorth,
+          south: zoneInfo.boundSouth,
+          east: zoneInfo.boundEast,
+          west: zoneInfo.boundWest,
+        );
+      }
+    }
+    
+    if (found != null) {
+      selectedCellId.value = found.id;
+      selectZone(found);
+    }
+  }
+
   // ── Mock data ─────────────────────────────────────────────────────────
 
   void loadMockData() {

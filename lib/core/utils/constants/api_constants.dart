@@ -208,4 +208,14 @@ class ApiConstants {
   //profile stat card -->
   static const String featchProfileStatApi = "$baseUrl/user/stats";
   static const String deleteAccountApi = "$baseUrl/user/delete";
+
+  // Zone Watch Flow -->
+  static String watchZoneApi(String zoneId) => "$baseUrl/zones/$zoneId/watch";
+  static const String watchedZonesListApi = "$baseUrl/zones/watched";
+  static const String fcmTokenApi = "$baseUrl/users/me/fcm-token";
+  
+  // Notification Settings -->
+  static const String notificationSettingsApi = "$baseUrl/notification-settings";
+  static const String generalNotificationSettingsApi = "$baseUrl/notification-settings/general";
+  static const String preferenceNotificationSettingsApi = "$baseUrl/notification-settings/preferences";
 }

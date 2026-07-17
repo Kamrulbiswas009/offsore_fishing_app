@@ -13,6 +13,7 @@ import 'package:paytonpieper/features/profile_and_setting/controller/profile_mai
 import 'package:paytonpieper/features/profile_and_setting/presentation/widget/profile_main_screen_widget/profile_info_card_widget.dart';
 import 'package:paytonpieper/features/profile_and_setting/presentation/widget/profile_main_screen_widget/profile_stat_card_widget.dart';
 import 'package:paytonpieper/features/profile_and_setting/presentation/widget/profile_main_screen_widget/subscription_plan_widget.dart';
+import 'package:paytonpieper/routes/app_routes.dart';
 
 class ProfileMainScreen extends StatelessWidget {
   final ProfileMainScreenController controller =
@@ -185,6 +186,26 @@ class ProfileMainScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 28.h),
+              CustomButton(
+                padding: EdgeInsets.symmetric(vertical: 12.h),
+                fontSize: 16,
+                lineHeight: 12,
+                ontap: () => Get.toNamed(AppRoute.watchedZonesScreen),
+                title: 'Bite Watch Alerts',
+                bgColor: const Color(0xFFFF6D00).withValues(alpha: 0.1),
+                borderColor: const Color(0xFFFF6D00).withValues(alpha: 0.2),
+                titleColor: const Color(0xFFFF6D00),
+                borderRadius: 16.r,
+                prefixIcon: Padding(
+                  padding: EdgeInsets.only(right: 10.w),
+                  child: const Icon(
+                    Icons.radar_rounded,
+                    color: Color(0xFFFF6D00),
+                    size: 20,
+                  ),
+                ),
+              ),
+              SizedBox(height: 12.h),
               CustomButton(
                 padding: EdgeInsets.symmetric(vertical: 12.h),
                 fontSize: 16,
