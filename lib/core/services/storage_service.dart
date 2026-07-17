@@ -9,6 +9,10 @@ class StorageService {
   static const String _profileCacheKey = 'profile_cache_json';
   static const String _profileStatsCacheKey = 'profile_stats_cache_json';
 
+  // --- Weather Alert Keys ---
+  static const String _watchedZonesKey = 'watched_zones_json';
+  static const String _weatherAlertCacheKey = 'weather_alert_cache_json';
+
   // Singleton instance for SharedPreferences
   static SharedPreferences? _preferences;
 
@@ -85,4 +89,24 @@ class StorageService {
   /// Returns the last cached profile stats JSON string, or null if not set yet.
   static String? getCachedProfileStatsJson() =>
       _preferences?.getString(_profileStatsCacheKey);
+
+  // --- Weather Alert: Watched Zones ---
+
+  /// Returns the raw JSON string for watched zones, or null if never set.
+  static String? getWatchedZonesJson() =>
+      _preferences?.getString(_watchedZonesKey);
+
+  /// Persists the serialized list of watched zone configs.
+  static Future<void> saveWatchedZonesJson(String json) async =>
+      _preferences?.setString(_watchedZonesKey, json);
+
+  // --- Weather Alert: Last-Sent Alert Cache ---
+
+  /// Returns the raw JSON string for the alert snapshot map, or null.
+  static String? getWeatherAlertCacheJson() =>
+      _preferences?.getString(_weatherAlertCacheKey);
+
+  /// Persists the serialized alert snapshot map.
+  static Future<void> saveWeatherAlertCacheJson(String json) async =>
+      _preferences?.setString(_weatherAlertCacheKey, json);
 }

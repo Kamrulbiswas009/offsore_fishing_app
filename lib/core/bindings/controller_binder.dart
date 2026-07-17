@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/services/permissions/location_permission_service.dart';
+import 'package:paytonpieper/core/services/weather_alert_service.dart';
 import 'package:paytonpieper/features/authentication/controllers/apple_login_controller.dart';
 import 'package:paytonpieper/features/authentication/controllers/google_login_controller.dart';
 import 'package:paytonpieper/features/groups/controller/message_service_controller.dart';
@@ -23,6 +24,7 @@ import 'package:paytonpieper/features/splash_screen/controller/splash_screen_con
 import 'package:paytonpieper/core/services/sync_service.dart';
 import 'package:paytonpieper/core/services/offline_cache_service.dart';
 import 'package:paytonpieper/core/services/mapbox_offline_service.dart';
+import 'package:paytonpieper/features/weather_alerts/controller/weather_alert_controller.dart';
 
 class ControllerBinder extends Bindings {
   @override
@@ -30,6 +32,12 @@ class ControllerBinder extends Bindings {
     Get.put(OfflineCacheService(), permanent: true);
     Get.put(MapboxOfflineService(), permanent: true);
     Get.put(SyncService(), permanent: true);
+    // Weather Alert — must be registered before controllers that use it
+    Get.put(WeatherAlertService(), permanent: true);
+    Get.lazyPut<WeatherAlertController>(
+      () => WeatherAlertController(),
+      fenix: true,
+    );
     Get.lazyPut<LocationPermissionService>(
       () => LocationPermissionService(),
       fenix: true,
