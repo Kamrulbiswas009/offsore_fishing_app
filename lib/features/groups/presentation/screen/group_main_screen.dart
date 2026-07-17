@@ -207,30 +207,28 @@ class GroupMainScreen extends StatelessWidget {
                               builder: (context) {
                                 return AlertDialog(
                                   backgroundColor:
-                                      AppColors.backgroundDarkColor,
+                                      AppColors.containerBackgroundColor,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12.r),
+                                    borderRadius: BorderRadius.circular(16.r),
                                     side: BorderSide(
-                                      color: AppColors.grey8B95A5Color,
-                                      width: 1,
+                                      color: AppColors.redDA605CColor,
+                                      width: 1.w,
                                     ),
                                   ),
                                   title: Text(
-                                    "Delete Group",
+                                    "Delete Group?",
                                     style: getTextStyle(
-                                      fontSize: 16,
+                                      fontSize: 20,
                                       fontWeight: FontWeight.w600,
                                       color: AppColors.whiteColor,
-                                      lineHeight: 12,
                                     ),
                                   ),
                                   content: Text(
-                                    "Are you sure you want to delete this group?",
+                                    "Are you sure you want to delete this group? This action is permanent.",
                                     style: getTextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w400,
-                                      color: AppColors.grey8B95A5Color,
-                                      lineHeight: 10,
+                                      color: AppColors.greyC8D0DBColor,
                                     ),
                                   ),
                                   actions: [
@@ -238,14 +236,25 @@ class GroupMainScreen extends StatelessWidget {
                                       onPressed: () {
                                         Get.back();
                                       },
-                                      child: Text("Cancel"),
+                                      child: Text(
+                                        "Cancel",
+                                        style: getTextStyle(
+                                          color: AppColors.greyC8D0DBColor,
+                                        ),
+                                      ),
                                     ),
                                     TextButton(
                                       onPressed: () {
                                         controller.deleteGroup(group.groupId);
                                         Get.back();
                                       },
-                                      child: Text("Delete"),
+                                      child: Text(
+                                        "Delete",
+                                        style: getTextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.redDA605CColor,
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 );

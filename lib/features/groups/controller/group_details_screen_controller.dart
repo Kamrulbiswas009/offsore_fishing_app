@@ -65,6 +65,64 @@ class GroupDetailsScreenController extends GetxController {
 
   final NetworkCaller _networkCaller = NetworkCaller();
 
+  bool get isMuted {
+    final detail = groupDetail.value;
+    if (detail == null) return false;
+    final currentUserId = StorageService.userId;
+    for (final member in detail.members) {
+      if (member.userId == currentUserId) {
+        if (member.isMuted) {
+          if (member.mutedUntil != null) {
+            final until = DateTime.tryParse(member.mutedUntil!);
+            if (until != null && until.isAfter(DateTime.now())) {
+              return true;
+            }
+            return false;
+          }
+          return true;
+        }
+        return false;
+      }
+    }
+    return false;
+  }
+
+  Future<void> updateGroupMuteStatus({required bool isMuted, int? muteDurationHours}) async {
+    final gId = groupId;
+    if (gId == null || gId.isEmpty) return;
+    final token = StorageService.token;
+    if (token == null || token.isEmpty) return;
+
+    final body = <String, dynamic>{
+      'isMuted': isMuted,
+    };
+    if (isMuted && muteDurationHours != null) {
+      final mutedUntil = DateTime.now().add(Duration(hours: muteDurationHours)).toUtc().toIso8601String();
+      body['mutedUntil'] = mutedUntil;
+    }
+
+    await EasyLoading.show(status: 'Updating mute status...');
+    try {
+      final response = await _networkCaller.patchRequest(
+        '${ApiConstants.baseUrl}/groups/$gId/mute',
+        body: body,
+        token: 'Bearer $token',
+      );
+
+      if (response.isSuccess) {
+        await fetchGroupDetails(gId, showHUD: false, forceRefresh: true);
+        EasyLoading.showSuccess(isMuted ? 'Group muted successfully' : 'Group unmuted successfully');
+      } else {
+        EasyLoading.showError(response.errorMessage.isNotEmpty ? response.errorMessage : 'Failed to update mute status');
+      }
+    } catch (e) {
+      AppLoggerHelper.error('Exception muting group', e);
+      EasyLoading.showError('Something went wrong');
+    } finally {
+      await EasyLoading.dismiss();
+    }
+  }
+
   // ── Legacy static fields (still used by existing widgets) ──────────
   String groupName = '';
   String groupMembers = '';

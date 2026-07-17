@@ -8,6 +8,8 @@ import 'package:paytonpieper/routes/app_routes.dart';
 
 import 'package:latlong2/latlong.dart';
 import 'package:paytonpieper/features/map/model/map_zone_model.dart';
+import 'package:paytonpieper/features/groups/controller/group_details_screen_controller.dart';
+import 'package:paytonpieper/features/main_screen/controller/main_screen_controller.dart';
 
 /// Handles FCM foreground and tap-open events.
 /// Background messages are handled by [_firebaseMessagingBackgroundHandler]
@@ -54,6 +56,18 @@ class FCMHandler {
         duration: const Duration(seconds: 6),
         onTap: (_) => _handleTap(message.data),
       );
+    } else if (type == 'GROUP_INTEL') {
+      final title = message.notification?.title ?? 'New Group Intel';
+      final body = message.notification?.body ?? 'A new report was shared in your group.';
+      Get.snackbar(
+        '👥 $title',
+        body,
+        backgroundColor: const Color(0xFF117A88).withOpacity(0.9),
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 6),
+        onTap: (_) => _handleTap(message.data),
+      );
     }
   }
 
@@ -89,6 +103,34 @@ class FCMHandler {
         level: ActivityLevel.medium,
       );
       Get.toNamed(AppRoute.summaryScreen, arguments: liveZone);
+    } else if (type == 'GROUP_INTEL') {
+      final groupId = data['groupId'] as String? ?? '';
+      final reportId = data['reportId'] as String? ?? '';
+
+      if (reportId.isNotEmpty) {
+        Get.toNamed(
+          AppRoute.reportDetailsScreen,
+          arguments: {
+            'reportId': reportId,
+          },
+        );
+      } else if (groupId.isNotEmpty) {
+        try {
+          Get.find<MainScreenController>().changeIndex(2);
+        } catch (_) {}
+        Get.toNamed(
+          AppRoute.getGroupDetailsScreen(),
+          arguments: {
+            'groupId': groupId,
+            'initialTab': 'reports',
+          },
+        );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (Get.currentRoute == AppRoute.getGroupDetailsScreen()) {
+            Get.find<GroupDetailsScreenController>().fetchGroupDetails(groupId);
+          }
+        });
+      }
     }
   }
 

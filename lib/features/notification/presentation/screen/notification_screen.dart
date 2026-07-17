@@ -80,6 +80,46 @@ class NotificationScreen extends GetView<NotificationScreenController> {
 
   void _handleNotificationTap(NotificationItemModel item) {
     controller.markAsRead(item);
+
+    if (item.type == 'GROUP_INTEL') {
+      String reportId = '';
+      String groupId = item.groupId;
+      if (item.deepLink.isNotEmpty) {
+        try {
+          final uri = Uri.parse(item.deepLink);
+          if (uri.pathSegments.length >= 4) {
+            groupId = uri.pathSegments[1];
+            reportId = uri.pathSegments[3];
+          }
+        } catch (_) {}
+      }
+
+      if (reportId.isNotEmpty) {
+        Get.toNamed(
+          AppRoute.reportDetailsScreen,
+          arguments: {
+            'reportId': reportId,
+          },
+        );
+      } else if (groupId.isNotEmpty) {
+        Get.find<MainScreenController>().changeIndex(2);
+        Get.offNamed(
+          AppRoute.getGroupDetailsScreen(),
+          arguments: <String, dynamic>{
+            'groupId': groupId,
+            'initialTab': 'reports',
+          },
+        );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (Get.currentRoute == AppRoute.getGroupDetailsScreen()) {
+            Get.find<GroupDetailsScreenController>().fetchGroupDetails(
+              groupId,
+            );
+          }
+        });
+      }
+      return;
+    }
     
     if (item.isGroupMessage) {
       Get.find<MainScreenController>().changeIndex(2);
