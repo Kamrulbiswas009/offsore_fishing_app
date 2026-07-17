@@ -45,7 +45,9 @@ class NotificationItemWidget extends StatelessWidget {
               ),
               alignment: Alignment.center,
               child: Image.asset(
-                IconPath.notificaton2Icon,
+                (item.type == 'GROUP_INTEL' || item.isGroupMessage)
+                    ? IconPath.doublePersonIcon
+                    : IconPath.notificaton2Icon,
                 height: 32.r,
                 width: 32.r,
               ), // Icon(item.icon, size: 18.r, color: item.iconColor),

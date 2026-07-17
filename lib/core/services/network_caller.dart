@@ -218,6 +218,30 @@ class NetworkCaller {
     }
   }
 
+  // PUT method
+  Future<ResponseData> putRequest(
+    String url, {
+    Map<String, dynamic>? body,
+    String? token,
+  }) async {
+    log('PUT Request: $url');
+    log('Request Body: ${body != null ? jsonEncode(_redactSensitiveData(body)) : 'EMPTY'}');
+
+    try {
+      final Response response = await put(
+        Uri.parse(url),
+        headers: {
+          'Content-type': 'application/json',
+          if (token != null && token.isNotEmpty) 'Authorization': token,
+        },
+        body: body != null ? jsonEncode(body) : null,
+      ).timeout(Duration(seconds: timeoutDuration));
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
 
   // PATCH multipart/form-data method (for file uploads)
   Future<ResponseData> patchMultipartRequest(
