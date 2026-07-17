@@ -18,6 +18,10 @@ import 'package:paytonpieper/core/services/sync_service.dart';
 import 'package:paytonpieper/features/weather_alerts/controller/weather_alert_controller.dart';
 import 'package:paytonpieper/features/weather_alerts/model/watched_zone_model.dart';
 import 'package:paytonpieper/features/weather_alerts/widgets/zone_watch_settings_sheet.dart';
+import 'package:paytonpieper/features/weather_alerts/controller/bite_watch_controller.dart';
+import 'package:paytonpieper/features/weather_alerts/widgets/bite_watch_settings_sheet.dart';
+import 'package:paytonpieper/features/profile_and_setting/controller/profile_main_screen_controller.dart';
+import 'package:paytonpieper/features/payment_service/controller/payment_service_controller.dart';
 
 import '../controller/map_screen_controller.dart';
 import '../model/map_zone_model.dart';
@@ -70,6 +74,36 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
       final map = _mapboxMap;
       if (map != null && _layersReady) {
         controller.refreshGridOnMap(map);
+      }
+    });
+
+    // Reactively handle external zone selection (notification tap support)
+    ever(controller.selectedZone, (zone) {
+      if (zone != null) {
+        if (_panelAnim.status != AnimationStatus.forward &&
+            _panelAnim.status != AnimationStatus.completed) {
+          _panelAnim.forward(from: 0);
+        }
+        final map = _mapboxMap;
+        if (map != null) {
+          map.easeTo(
+            mapbox.CameraOptions(
+              center: mapbox.Point(
+                coordinates: mapbox.Position(
+                  zone.location.longitude,
+                  zone.location.latitude,
+                ),
+              ),
+              zoom: 8.5,
+            ),
+            mapbox.MapAnimationOptions(duration: 1200),
+          );
+        }
+      } else {
+        if (_panelAnim.status != AnimationStatus.reverse &&
+            _panelAnim.status != AnimationStatus.dismissed) {
+          _panelAnim.reverse();
+        }
       }
     });
   }
@@ -964,6 +998,7 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
       ),
     );
     
+    
   }
 
   /// Dual-button CTA: Watch Zone bell + View Full Details.
@@ -984,9 +1019,24 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
       final isWatched = alertCtrl!.isWatched(widget.zone.name);
       final alertsOn = alertCtrl.configFor(widget.zone.name)?.alertsEnabled ?? false;
 
+      BiteWatchController? biteCtrl;
+      try {
+        biteCtrl = Get.find<BiteWatchController>();
+      } catch (_) {}
+
+      ProfileMainScreenController? profileCtrl;
+      try {
+        profileCtrl = Get.find<ProfileMainScreenController>();
+      } catch (_) {}
+
+      final isPro = profileCtrl?.isPremiumAccount ?? false;
+      final isBiteWatched = biteCtrl != null && biteCtrl.isWatched(widget.zone.name);
+      final biteConfig = biteCtrl?.getWatchFor(widget.zone.name);
+      final biteAlertsOn = biteConfig?.watchBiteActivity ?? false;
+
       return Column(
         children: [
-          // ── Watch Zone status banner ─────────────────────────────────
+          // ── Watch Zone status banner (Weather) ─────────────────────────
           GestureDetector(
             onTap: () {
               if (isWatched) {
@@ -1104,7 +1154,7 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                               ? (alertsOn
                                   ? 'Weather Alerts Active'
                                   : 'Alerts Paused')
-                              : 'Watch This Zone',
+                              : 'Watch This Zone (Weather)',
                           style: getTextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
@@ -1152,6 +1202,168 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                           fontWeight: FontWeight.w700,
                           color: alertsOn
                               ? AppColors.teal0C98AFColor
+                              : Colors.orange,
+                        ),
+                      ),
+                    )
+                  else
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: const Color(0xFF8A94A6),
+                      size: 18.sp,
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Watch Zone status banner (Bite Activity) ───────────────────
+          GestureDetector(
+            onTap: () {
+              if (!isPro) {
+                try {
+                  Get.find<PaymentServiceController>().openUnlockProFlow();
+                } catch (_) {}
+                return;
+              }
+              if (biteCtrl == null) return;
+              
+              if (isBiteWatched) {
+                biteCtrl.updateWatchSettings(
+                  widget.zone.name,
+                  watchBiteActivity: !biteAlertsOn,
+                );
+              } else {
+                BiteWatchSettingsSheet.show(
+                  zoneId: widget.zone.name,
+                  isEditing: false,
+                );
+              }
+            },
+            onLongPress: isBiteWatched && isPro
+                ? () {
+                    BiteWatchSettingsSheet.show(
+                      zoneId: widget.zone.name,
+                      config: biteConfig,
+                      isEditing: true,
+                    );
+                  }
+                : null,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              margin: EdgeInsets.only(bottom: 12.h),
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 11.h),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: isBiteWatched && isPro
+                      ? [
+                          const Color(0xFFFF6D00).withOpacity(0.18),
+                          const Color(0xFF0D1B2A),
+                        ]
+                      : [
+                          const Color(0xFF1F242E),
+                          const Color(0xFF1F242E),
+                        ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(14.r),
+                border: Border.all(
+                  color: isBiteWatched && isPro
+                      ? const Color(0xFFFF6D00).withOpacity(0.5)
+                      : const Color(0xFF2E3A4A),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36.w,
+                    height: 36.w,
+                    decoration: BoxDecoration(
+                      color: isBiteWatched && isPro
+                          ? const Color(0xFFFF6D00).withOpacity(0.15)
+                          : const Color(0xFF252B36),
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Icon(
+                      !isPro
+                          ? Icons.lock_outline_rounded
+                          : isBiteWatched
+                              ? (biteAlertsOn
+                                  ? Icons.notifications_active_rounded
+                                  : Icons.notifications_paused_rounded)
+                              : Icons.notifications_none_rounded,
+                      size: 18.sp,
+                      color: !isPro
+                          ? Colors.amber
+                          : isBiteWatched
+                              ? (biteAlertsOn
+                                  ? const Color(0xFFFF6D00)
+                                  : Colors.orange)
+                              : const Color(0xFF8A94A6),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          !isPro
+                              ? 'Watch Bite Activity (PRO)'
+                              : isBiteWatched
+                                  ? (biteAlertsOn
+                                      ? 'Bite Alerts Active'
+                                      : 'Bite Alerts Paused')
+                                  : 'Watch Bite Activity',
+                          style: getTextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: isBiteWatched && isPro
+                                ? Colors.white
+                                : const Color(0xFFC8D0DB),
+                          ),
+                        ),
+                        Text(
+                          !isPro
+                              ? 'Unlock to receive activity spike alerts'
+                              : isBiteWatched
+                                  ? 'Notify: ≥${biteConfig?.biteThreshold ?? 3} reports / ${biteConfig?.biteThresholdDays ?? 7}d'
+                                  : 'Get notified when recent reports spike',
+                          style: getTextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w400,
+                            color: const Color(0xFF8A94A6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (isBiteWatched && isPro)
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 8.w, vertical: 4.h),
+                      decoration: BoxDecoration(
+                        color: biteAlertsOn
+                            ? const Color(0xFFFF6D00).withOpacity(0.15)
+                            : Colors.orange.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(8.r),
+                        border: Border.all(
+                          color: biteAlertsOn
+                              ? const Color(0xFFFF6D00).withOpacity(0.4)
+                              : Colors.orange.withOpacity(0.4),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        biteAlertsOn ? 'On' : 'Paused',
+                        style: getTextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: biteAlertsOn
+                              ? const Color(0xFFFF6D00)
                               : Colors.orange,
                         ),
                       ),

@@ -281,6 +281,8 @@ class NotificationItemModel {
   final String type;
   final String groupId;
   final String groupName;
+  final String zoneId;
+  final String deepLink;
 
   const NotificationItemModel({
     required this.id,
@@ -291,6 +293,8 @@ class NotificationItemModel {
     this.type = '',
     this.groupId = '',
     this.groupName = '',
+    this.zoneId = '',
+    this.deepLink = '',
   });
 
   bool get isGroupMessage {
@@ -350,6 +354,18 @@ class NotificationItemModel {
         payload['groupName'],
         group['name'],
       ]),
+      zoneId: _firstNonEmpty([
+        json['zoneId'],
+        data['zoneId'],
+        metadata['zoneId'],
+        payload['zoneId'],
+      ]),
+      deepLink: _firstNonEmpty([
+        json['deepLink'],
+        data['deepLink'],
+        metadata['deepLink'],
+        payload['deepLink'],
+      ]),
     );
   }
 
@@ -362,6 +378,8 @@ class NotificationItemModel {
     type: type,
     groupId: groupId,
     groupName: groupName,
+    zoneId: zoneId,
+    deepLink: deepLink,
   );
 
   static Map<String, dynamic> _asMap(dynamic value) {

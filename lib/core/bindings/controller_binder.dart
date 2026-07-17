@@ -25,6 +25,7 @@ import 'package:paytonpieper/core/services/sync_service.dart';
 import 'package:paytonpieper/core/services/offline_cache_service.dart';
 import 'package:paytonpieper/core/services/mapbox_offline_service.dart';
 import 'package:paytonpieper/features/weather_alerts/controller/weather_alert_controller.dart';
+import 'package:paytonpieper/features/weather_alerts/controller/bite_watch_controller.dart';
 
 class ControllerBinder extends Bindings {
   @override
@@ -36,6 +37,10 @@ class ControllerBinder extends Bindings {
     Get.put(WeatherAlertService(), permanent: true);
     Get.lazyPut<WeatherAlertController>(
       () => WeatherAlertController(),
+      fenix: true,
+    );
+    Get.lazyPut<BiteWatchController>(
+      () => BiteWatchController(),
       fenix: true,
     );
     Get.lazyPut<LocationPermissionService>(

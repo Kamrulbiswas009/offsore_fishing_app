@@ -11,6 +11,8 @@ import 'package:paytonpieper/features/notification/presentation/widget/notificat
 import 'package:paytonpieper/features/notification/presentation/widget/notification_screen_widget/notification_pro_banner_widget.dart';
 import 'package:paytonpieper/features/notification/presentation/widget/notification_screen_widget/notification_tab_bar_widget.dart';
 import 'package:paytonpieper/routes/app_routes.dart';
+import 'package:paytonpieper/features/map/controller/map_screen_controller.dart';
+import 'package:paytonpieper/core/utils/logging/logger.dart';
 
 class NotificationScreen extends GetView<NotificationScreenController> {
   const NotificationScreen({super.key});
@@ -78,23 +80,52 @@ class NotificationScreen extends GetView<NotificationScreenController> {
 
   void _handleNotificationTap(NotificationItemModel item) {
     controller.markAsRead(item);
-    if (!item.isGroupMessage) return;
+    
+    if (item.isGroupMessage) {
+      Get.find<MainScreenController>().changeIndex(2);
+      Get.offNamed(
+        AppRoute.getGroupDetailsScreen(),
+        arguments: <String, dynamic>{
+          'groupId': item.groupId,
+          'groupName': item.groupName,
+          'initialTab': 'chat',
+        },
+      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (Get.currentRoute == AppRoute.getGroupDetailsScreen()) {
+          Get.find<GroupDetailsScreenController>().fetchGroupDetails(
+            item.groupId,
+          );
+        }
+      });
+      return;
+    }
 
-    Get.find<MainScreenController>().changeIndex(2);
-    Get.offNamed(
-      AppRoute.getGroupDetailsScreen(),
-      arguments: <String, dynamic>{
-        'groupId': item.groupId,
-        'groupName': item.groupName,
-        'initialTab': 'chat',
-      },
-    );
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (Get.currentRoute == AppRoute.getGroupDetailsScreen()) {
-        Get.find<GroupDetailsScreenController>().fetchGroupDetails(
-          item.groupId,
-        );
+    final zoneId = item.zoneId.isNotEmpty ? item.zoneId : _parseZoneIdFromDeepLink(item.deepLink);
+    if (zoneId.isNotEmpty) {
+      if (Get.currentRoute != AppRoute.homeMainScreen) {
+        Get.until((route) => Get.currentRoute == AppRoute.homeMainScreen);
       }
-    });
+      
+      Get.find<MainScreenController>().changeIndex(0);
+      
+      try {
+        final mapCtrl = Get.find<MapScreenController>();
+        mapCtrl.selectZoneById(zoneId);
+      } catch (e) {
+        AppLoggerHelper.error('Could not select zone by ID: $zoneId', e);
+      }
+    }
+  }
+
+  String _parseZoneIdFromDeepLink(String deepLink) {
+    if (deepLink.isEmpty) return '';
+    try {
+      final uri = Uri.parse(deepLink);
+      if (uri.pathSegments.isNotEmpty) {
+        return uri.pathSegments.last;
+      }
+    } catch (_) {}
+    return '';
   }
 }

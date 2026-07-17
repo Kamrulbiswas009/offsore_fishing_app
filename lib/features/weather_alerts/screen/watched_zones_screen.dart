@@ -6,30 +6,44 @@ import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/features/weather_alerts/controller/weather_alert_controller.dart';
+import 'package:paytonpieper/features/weather_alerts/controller/bite_watch_controller.dart';
 import 'package:paytonpieper/features/weather_alerts/model/watched_zone_model.dart';
+import 'package:paytonpieper/features/weather_alerts/model/bite_watch_model.dart';
 import 'package:paytonpieper/features/weather_alerts/widgets/zone_watch_settings_sheet.dart';
+import 'package:paytonpieper/features/weather_alerts/widgets/bite_watch_settings_sheet.dart';
 import 'package:intl/intl.dart';
 
-/// Full-screen list of all watched zones with alert management.
-class WatchedZonesScreen extends GetView<WeatherAlertController> {
+/// Full-screen list of all watched zones, managing both Weather Alerts (local)
+/// and Bite Activity Alerts (backend API integration).
+class WatchedZonesScreen extends StatelessWidget {
   const WatchedZonesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final weatherCtrl = Get.find<WeatherAlertController>();
+    final biteCtrl = Get.find<BiteWatchController>();
+
     return Scaffold(
       backgroundColor: AppColors.backgroundDarkColor,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildAppBar(),
+            _buildAppBar(weatherCtrl, biteCtrl),
             _buildSubHeader(),
             Expanded(
               child: Obx(() {
-                if (controller.watchedZones.isEmpty) {
+                final weatherZones = weatherCtrl.watchedZones;
+                final biteZones = biteCtrl.watchedZones;
+                final allZoneIds = {
+                  ...weatherZones.map((z) => z.zoneId),
+                  ...biteZones.map((z) => z.zoneId),
+                }.toList();
+
+                if (allZoneIds.isEmpty) {
                   return _buildEmptyState();
                 }
-                return _buildZoneList();
+                return _buildZoneList(allZoneIds, weatherCtrl, biteCtrl);
               }),
             ),
           ],
@@ -40,7 +54,7 @@ class WatchedZonesScreen extends GetView<WeatherAlertController> {
 
   // ── App Bar ────────────────────────────────────────────────────────────────
 
-  Widget _buildAppBar() {
+  Widget _buildAppBar(WeatherAlertController weatherCtrl, BiteWatchController biteCtrl) {
     return Padding(
       padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
       child: Row(
@@ -78,14 +92,18 @@ class WatchedZonesScreen extends GetView<WeatherAlertController> {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                Obx(() => Text(
-                  '${controller.watchedZones.length} zone${controller.watchedZones.length == 1 ? '' : 's'} monitored',
-                  style: getTextStyle(
-                    fontSize: 12,
-                    color: AppColors.grey8B95A5Color,
-                    fontWeight: FontWeight.w400,
-                  ),
-                )),
+                Obx(() {
+                  final weatherCount = weatherCtrl.watchedZones.length;
+                  final biteCount = biteCtrl.watchedZones.length;
+                  return Text(
+                    '$weatherCount weather / $biteCount bite monitors active',
+                    style: getTextStyle(
+                      fontSize: 12,
+                      color: AppColors.grey8B95A5Color,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  );
+                }),
               ],
             ),
           ),
@@ -150,7 +168,7 @@ class WatchedZonesScreen extends GetView<WeatherAlertController> {
           SizedBox(width: 10.w),
           Expanded(
             child: Text(
-              'Alerts fire when conditions meaningfully improve or deteriorate. Identical conditions are suppressed for 4 hours.',
+              'Weather alerts update locally. Bite alerts are synced with the server and fire upon recent report activity spikes.',
               style: getTextStyle(
                 fontSize: 11,
                 color: AppColors.grey8B95A5Color,
@@ -165,14 +183,27 @@ class WatchedZonesScreen extends GetView<WeatherAlertController> {
 
   // ── Zone List ──────────────────────────────────────────────────────────────
 
-  Widget _buildZoneList() {
+  Widget _buildZoneList(
+    List<String> zoneIds,
+    WeatherAlertController weatherCtrl,
+    BiteWatchController biteCtrl,
+  ) {
     return ListView.separated(
       padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
-      itemCount: controller.watchedZones.length,
+      itemCount: zoneIds.length,
       separatorBuilder: (_, __) => SizedBox(height: 12.h),
       itemBuilder: (_, index) {
-        final zone = controller.watchedZones[index];
-        return _ZoneCard(zone: zone, controller: controller);
+        final zoneId = zoneIds[index];
+        final weatherConfig = weatherCtrl.configFor(zoneId);
+        final biteConfig = biteCtrl.getWatchFor(zoneId);
+        
+        return _UnifiedZoneCard(
+          zoneId: zoneId,
+          weatherConfig: weatherConfig,
+          biteConfig: biteConfig,
+          weatherCtrl: weatherCtrl,
+          biteCtrl: biteCtrl,
+        );
       },
     );
   }
@@ -215,7 +246,7 @@ class WatchedZonesScreen extends GetView<WeatherAlertController> {
             ),
             SizedBox(height: 8.h),
             Text(
-              'Go to the Weather tab on any zone and tap the bell icon to start watching.',
+              'Select any zone on the map, then enable weather or bite activity monitoring.',
               textAlign: TextAlign.center,
               style: getTextStyle(
                 fontSize: 13,
@@ -227,7 +258,7 @@ class WatchedZonesScreen extends GetView<WeatherAlertController> {
             ElevatedButton.icon(
               onPressed: () => Get.back(),
               icon: const Icon(Icons.map_rounded, size: 16),
-              label: const Text('Browse Zones'),
+              label: const Text('Browse Map'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.tealColor117A88,
                 foregroundColor: Colors.white,
@@ -245,27 +276,52 @@ class WatchedZonesScreen extends GetView<WeatherAlertController> {
   }
 }
 
-// ── Zone Card Widget ─────────────────────────────────────────────────────────
+// ── Unified Zone Card Widget ────────────────────────────────────────────────
 
-class _ZoneCard extends StatelessWidget {
-  const _ZoneCard({required this.zone, required this.controller});
+class _UnifiedZoneCard extends StatelessWidget {
+  const _UnifiedZoneCard({
+    required this.zoneId,
+    this.weatherConfig,
+    this.biteConfig,
+    required this.weatherCtrl,
+    required this.biteCtrl,
+  });
 
-  final WatchedZoneConfig zone;
-  final WeatherAlertController controller;
+  final String zoneId;
+  final WatchedZoneConfig? weatherConfig;
+  final BiteWatchModel? biteConfig;
+  final WeatherAlertController weatherCtrl;
+  final BiteWatchController biteCtrl;
 
   @override
   Widget build(BuildContext context) {
-    final snapshot = controller.lastSnapshotFor(zone.zoneId);
-    final lastAlertText = snapshot != null
-        ? 'Last alert: ${_formatTime(snapshot.lastAlertAt)}'
-        : 'No alerts sent yet';
+    final hasWeather = weatherConfig != null;
+    final hasBite = biteConfig != null;
+
+    final weatherSnapshot = weatherCtrl.lastSnapshotFor(zoneId);
+    final biteLastNotified = biteConfig?.lastNotifiedAt;
+
+    String lastAlertText = 'No alerts sent yet';
+    if (weatherSnapshot != null && biteLastNotified != null) {
+      final latest = weatherSnapshot.lastAlertAt.isAfter(biteLastNotified)
+          ? weatherSnapshot.lastAlertAt
+          : biteLastNotified;
+      lastAlertText = 'Last alert: ${_formatTime(latest)}';
+    } else if (weatherSnapshot != null) {
+      lastAlertText = 'Last alert (weather): ${_formatTime(weatherSnapshot.lastAlertAt)}';
+    } else if (biteLastNotified != null) {
+      lastAlertText = 'Last alert (bite): ${_formatTime(biteLastNotified)}';
+    }
+
+    final isWeatherEnabled = weatherConfig?.alertsEnabled ?? false;
+    final isBiteEnabled = biteConfig?.watchBiteActivity ?? false;
 
     return Container(
       decoration: BoxDecoration(
         color: AppColors.blue0D2B43Color,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
-          color: zone.alertsEnabled
+          color: (isWeatherEnabled || isBiteEnabled)
               ? AppColors.tealColor117A88.withOpacity(0.35)
               : AppColors.grey516173Color.withOpacity(0.2),
           width: 1,
@@ -283,36 +339,17 @@ class _ZoneCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Row 1: Zone name + toggle ──
+            // Zone Name Header
             Row(
               children: [
-                Container(
-                  padding: EdgeInsets.all(8.w),
-                  decoration: BoxDecoration(
-                    color: zone.alertsEnabled
-                        ? AppColors.tealColor117A88.withOpacity(0.15)
-                        : AppColors.grey516173Color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                  child: Icon(
-                    zone.alertsEnabled
-                        ? Icons.notifications_active_rounded
-                        : Icons.notifications_off_rounded,
-                    color: zone.alertsEnabled
-                        ? AppColors.teal0C98AFColor
-                        : AppColors.grey516173Color,
-                    size: 18.sp,
-                  ),
-                ),
-                SizedBox(width: 12.w),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        zone.zoneName,
+                        weatherConfig?.zoneName ?? biteConfig?.displayLabel ?? zoneId,
                         style: getTextStyle(
-                          fontSize: 14,
+                          fontSize: 16,
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
                         ),
@@ -330,144 +367,254 @@ class _ZoneCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                Switch(
-                  value: zone.alertsEnabled,
-                  onChanged: (enabled) =>
-                      controller.toggleAlerts(zone.zoneId, enabled: enabled),
-                  activeColor: AppColors.teal0C98AFColor,
-                  activeTrackColor: AppColors.tealColor117A88.withOpacity(0.4),
-                  inactiveThumbColor: AppColors.grey516173Color,
-                  inactiveTrackColor:
-                      AppColors.grey516173Color.withOpacity(0.15),
+                GestureDetector(
+                  onTap: _onDeletePressed,
+                  child: Container(
+                    padding: EdgeInsets.all(6.w),
+                    decoration: BoxDecoration(
+                      color: AppColors.redDA605CColor.withOpacity(0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.delete_outline_rounded,
+                      color: AppColors.redDA605CColor,
+                      size: 18.sp,
+                    ),
+                  ),
                 ),
               ],
             ),
-            SizedBox(height: 12.h),
+            Divider(color: AppColors.grey516173Color.withOpacity(0.15), height: 16.h),
 
-            // ── Row 2: Threshold pills ──
-            Wrap(
-              spacing: 6.w,
-              runSpacing: 6.h,
-              children: [
-                _ThresholdPill(
-                  icon: Icons.waves_rounded,
-                  color: const Color(0xFF00D4FF),
-                  label: '>${zone.waveHeightThresholdFt.toStringAsFixed(0)} ft',
-                ),
-                _ThresholdPill(
-                  icon: Icons.air_rounded,
-                  color: const Color(0xFF10B981),
-                  label: '>${zone.windSpeedThresholdMph.toStringAsFixed(0)} mph',
-                ),
-                _ThresholdPill(
-                  icon: Icons.thermostat_rounded,
-                  color: const Color(0xFFE25301),
-                  label: '±${zone.waterTempChangeDeltaF.toStringAsFixed(0)}°F',
-                ),
-                if (zone.alertOnThunderstorm)
-                  _ThresholdPill(
-                    icon: Icons.thunderstorm_rounded,
-                    color: Colors.amber,
-                    label: 'Storm Alert',
+            // --- Weather Section ---
+            if (hasWeather) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        isWeatherEnabled
+                            ? Icons.notifications_active_rounded
+                            : Icons.notifications_off_rounded,
+                        color: isWeatherEnabled ? AppColors.teal0C98AFColor : AppColors.grey516173Color,
+                        size: 16.sp,
+                      ),
+                      SizedBox(width: 8.w),
+                      Text(
+                        'Weather Alerts',
+                        style: getTextStyle(
+                          fontSize: 13,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
-                if (zone.alertOnRain)
-                  _ThresholdPill(
-                    icon: Icons.umbrella_rounded,
-                    color: Colors.lightBlue,
-                    label: 'Rain Alert',
+                  Switch(
+                    value: isWeatherEnabled,
+                    onChanged: (enabled) =>
+                        weatherCtrl.toggleAlerts(zoneId, enabled: enabled),
+                    activeColor: AppColors.teal0C98AFColor,
+                    activeTrackColor: AppColors.tealColor117A88.withOpacity(0.4),
+                    inactiveThumbColor: AppColors.grey516173Color,
+                    inactiveTrackColor: AppColors.grey516173Color.withOpacity(0.15),
                   ),
-                if (zone.alertOnGoodSunny)
-                  _ThresholdPill(
-                    icon: Icons.wb_sunny_rounded,
-                    color: Colors.orange,
-                    label: 'Sunny Alert',
-                  ),
+                ],
+              ),
+              if (isWeatherEnabled) ...[
+                SizedBox(height: 6.h),
+                Wrap(
+                  spacing: 6.w,
+                  runSpacing: 6.h,
+                  children: [
+                    _ThresholdPill(
+                      icon: Icons.waves_rounded,
+                      color: const Color(0xFF00D4FF),
+                      label: '>${weatherConfig!.waveHeightThresholdFt.toStringAsFixed(0)} ft',
+                    ),
+                    _ThresholdPill(
+                      icon: Icons.air_rounded,
+                      color: const Color(0xFF10B981),
+                      label: '>${weatherConfig!.windSpeedThresholdMph.toStringAsFixed(0)} mph',
+                    ),
+                    _ThresholdPill(
+                      icon: Icons.thermostat_rounded,
+                      color: const Color(0xFFE25301),
+                      label: '±${weatherConfig!.waterTempChangeDeltaF.toStringAsFixed(0)}°F',
+                    ),
+                  ],
+                ),
               ],
-            ),
-            SizedBox(height: 12.h),
-
-            // ── Row 3: Action buttons ──
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
+              SizedBox(height: 6.h),
+              Row(
+                children: [
+                  TextButton.icon(
                     onPressed: () => ZoneWatchSettingsSheet.show(
-                      config: zone,
+                      config: weatherConfig!,
                       isEditing: true,
                     ),
-                    icon: Icon(Icons.tune_rounded, size: 14.sp),
-                    label: const Text('Edit Thresholds'),
-                    style: OutlinedButton.styleFrom(
+                    icon: Icon(Icons.tune_rounded, size: 13.sp),
+                    label: const Text('Edit Weather Thresholds'),
+                    style: TextButton.styleFrom(
                       foregroundColor: AppColors.teal0C98AFColor,
-                      side: BorderSide(
-                        color: AppColors.tealColor117A88.withOpacity(0.5),
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.r),
-                      ),
-                      padding: EdgeInsets.symmetric(vertical: 8.h),
-                      textStyle: getTextStyle(
-                        fontSize: 12,
-                        color: AppColors.teal0C98AFColor,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      textStyle: getTextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                     ),
                   ),
-                ),
-                SizedBox(width: 8.w),
-                OutlinedButton.icon(
-                  onPressed: () => _confirmRemove(zone),
-                  icon: Icon(Icons.delete_outline_rounded, size: 14.sp),
-                  label: const Text('Remove'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.redDA605CColor,
-                    side: BorderSide(
-                      color: AppColors.redDA605CColor.withOpacity(0.4),
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
-                    padding:
-                        EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
-                    textStyle: getTextStyle(
-                      fontSize: 12,
-                      color: AppColors.redDA605CColor,
-                      fontWeight: FontWeight.w600,
-                    ),
+                ],
+              ),
+              SizedBox(height: 12.h),
+            ],
+
+            // --- Bite Activity Section ---
+            if (hasBite) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        isBiteEnabled
+                            ? Icons.notifications_active_rounded
+                            : Icons.notifications_off_rounded,
+                        color: isBiteEnabled ? const Color(0xFFFF6D00) : AppColors.grey516173Color,
+                        size: 16.sp,
+                      ),
+                      SizedBox(width: 8.w),
+                      Text(
+                        'Bite Activity Alerts',
+                        style: getTextStyle(
+                          fontSize: 13,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
+                  Switch(
+                    value: isBiteEnabled,
+                    onChanged: (enabled) =>
+                        biteCtrl.updateWatchSettings(zoneId, watchBiteActivity: enabled),
+                    activeColor: const Color(0xFFFF6D00),
+                    activeTrackColor: const Color(0xFFFF6D00).withOpacity(0.4),
+                    inactiveThumbColor: AppColors.grey516173Color,
+                    inactiveTrackColor: AppColors.grey516173Color.withOpacity(0.15),
+                  ),
+                ],
+              ),
+              if (isBiteEnabled) ...[
+                SizedBox(height: 6.h),
+                Wrap(
+                  spacing: 6.w,
+                  runSpacing: 6.h,
+                  children: [
+                    _ThresholdPill(
+                      icon: Icons.phishing,
+                      color: const Color(0xFFFF6D00),
+                      label: '≥${biteConfig!.biteThreshold} reports',
+                    ),
+                    _ThresholdPill(
+                      icon: Icons.calendar_month_outlined,
+                      color: const Color(0xFF00D4FF),
+                      label: 'within ${biteConfig!.biteThresholdDays} days',
+                    ),
+                  ],
                 ),
               ],
-            ),
+              SizedBox(height: 6.h),
+              Row(
+                children: [
+                  TextButton.icon(
+                    onPressed: () => BiteWatchSettingsSheet.show(
+                      zoneId: zoneId,
+                      config: biteConfig,
+                      isEditing: true,
+                    ),
+                    icon: Icon(Icons.tune_rounded, size: 13.sp),
+                    label: const Text('Edit Bite Thresholds'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFFFF6D00),
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      textStyle: getTextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 
-  void _confirmRemove(WatchedZoneConfig z) {
-    Get.defaultDialog(
-      title: 'Remove Zone',
-      middleText: 'Stop watching ${z.zoneName}? You will no longer receive weather alerts for this zone.',
-      textConfirm: 'Remove',
-      textCancel: 'Keep',
-      confirmTextColor: Colors.white,
-      buttonColor: AppColors.redDA605CColor,
-      cancelTextColor: Colors.white,
-      backgroundColor: AppColors.blue0D2B43Color,
-      titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-      middleTextStyle: const TextStyle(color: Color(0xFF8B95A5)),
-      onConfirm: () {
-        Get.back();
-        controller.removeZone(z.zoneId);
-        Get.snackbar(
-          'Zone Removed',
-          '${z.zoneName} has been removed from your watch list.',
-          backgroundColor: const Color(0xFF3F2B27),
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 3),
-        );
-      },
+  void _onDeletePressed() {
+    final list = <Widget>[];
+    if (weatherConfig != null) {
+      list.add(
+        ListTile(
+          leading: const Icon(Icons.waves_rounded, color: AppColors.teal0C98AFColor),
+          title: const Text(
+            'Remove Weather Watch',
+            style: TextStyle(color: Colors.white),
+          ),
+          onTap: () {
+            Get.back();
+            weatherCtrl.removeZone(zoneId);
+          },
+        ),
+      );
+    }
+    if (biteConfig != null) {
+      list.add(
+        ListTile(
+          leading: const Icon(Icons.phishing, color: Color(0xFFFF6D00)),
+          title: const Text(
+            'Remove Bite Activity Watch',
+            style: TextStyle(color: Colors.white),
+          ),
+          onTap: () {
+            Get.back();
+            biteCtrl.unwatchZone(zoneId);
+          },
+        ),
+      );
+    }
+
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.all(18.w),
+        decoration: BoxDecoration(
+          color: AppColors.backgroundDarkColor,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+          border: Border.all(color: AppColors.tealColor117A88.withOpacity(0.3)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Remove Watch Settings',
+              style: getTextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.w700),
+            ),
+            SizedBox(height: 12.h),
+            ...list,
+            SizedBox(height: 8.h),
+            OutlinedButton(
+              onPressed: () => Get.back(),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: AppColors.grey516173Color.withOpacity(0.4)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+              ),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
