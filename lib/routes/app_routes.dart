@@ -10,6 +10,7 @@ import 'package:paytonpieper/features/authentication/presentation/screens/verify
 import 'package:paytonpieper/features/authentication/presentation/screens/verify_otp_screen.dart';
 import 'package:paytonpieper/features/groups/presentation/screen/create_group_screen.dart';
 import 'package:paytonpieper/features/groups/presentation/screen/group_details_screen.dart';
+import 'package:paytonpieper/features/map/model/map_zone_model.dart';
 import 'package:paytonpieper/features/map/screen/zone_map_screen.dart';
 import 'package:paytonpieper/features/notification/presentation/screen/notification_screen.dart';
 import 'package:paytonpieper/features/onboarding/presentation/screen/onboardin_screen3.dart';
@@ -30,6 +31,7 @@ import 'package:paytonpieper/features/report_main/report_catch2/screen/report_ca
 import 'package:paytonpieper/features/submit_report/screen/submit_report_screen.dart';
 import 'package:paytonpieper/features/report_main/offline_report/screen/offline_report_screen.dart';
 import 'package:paytonpieper/features/success_submit_report/screen/succes_screen.dart';
+import 'package:paytonpieper/features/weather_alerts/screen/watched_zones_screen.dart';
 
 class AppRoute {
   static String splashScreen1 = "/splashScreen1";
@@ -58,6 +60,8 @@ class AppRoute {
   static String offlineReportScreen = "/offlineReportScreen";
   static String succesScreen = "/succesScreen";
   static String verifyEmailOtpScreen = "/VerifyEmailOtpScreen";
+  // Feature 3: Saved Zone Weather Alerts
+  static String watchedZonesScreen = "/watchedZonesScreen";
 
   static String getSplashScreen1() => splashScreen1;
   static String getOnboardingScreen1() => onboardingScreen1;
@@ -85,6 +89,8 @@ class AppRoute {
   static String getOfflineReportScreen() => offlineReportScreen;
   static String getSuccesScreen() => succesScreen;
   static String getVerifyEmailOtpScreen()=> verifyEmailOtpScreen;
+  // Feature 3
+  static String getWatchedZonesScreen() => watchedZonesScreen;
 
   static List<GetPage> routes = [
     GetPage(name: splashScreen1, page: () => SplashScreen1()),
@@ -144,7 +150,16 @@ class AppRoute {
     ),
     GetPage(
       name: summaryScreen,
-      page: () => SummaryScreen(isReportMainScreen: Get.arguments as bool),
+      page: () {
+        final args = Get.arguments;
+        bool isReport = true;
+        if (args is bool) {
+          isReport = args;
+        } else if (args is MapZoneModel) {
+          isReport = false;
+        }
+        return SummaryScreen(isReportMainScreen: isReport);
+      },
       binding: BindingsBuilder(() {
         Get.put(SummaryController());
       }),
@@ -202,5 +217,13 @@ class AppRoute {
     GetPage(
       name: verifyEmailOtpScreen, 
       page: ()=> VerifyEmailOtpScreen()),
+
+    // Feature 3: Saved Zone Weather Alerts
+    GetPage(
+      name: watchedZonesScreen,
+      page: () => const WatchedZonesScreen(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 300),
+    ),
   ];
 }

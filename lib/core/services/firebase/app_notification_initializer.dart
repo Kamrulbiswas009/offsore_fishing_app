@@ -1,16 +1,33 @@
-// import 'package:flutter/cupertino.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:paytonpieper/core/services/firebase/fcm_handler.dart';
+import 'package:paytonpieper/core/utils/logging/logger.dart';
 
-// import 'fcm_handler.dart';
-// import 'firebase_service.dart';
-// import 'notification_service.dart';
+/// Initializes Firebase Cloud Messaging and registers the background handler.
+/// Call [AppNotificationInitializer.init()] in [main()] after Firebase.initializeApp().
+class AppNotificationInitializer {
+  /// Initialize FCM, request permissions, and wire foreground/background handlers.
+  static Future<void> init() async {
+    final messaging = FirebaseMessaging.instance;
 
-// class AppNotificationInitializer {
-//   /// Initialize Firebase, Local Notification, and FCM
-//   static Future<void> init() async {
-//     WidgetsFlutterBinding.ensureInitialized();
+    // Request notification permissions (iOS + Android 13+)
+    final settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+      provisional: false,
+    );
+    AppLoggerHelper.info('[FCM] Permission status: ${settings.authorizationStatus}');
 
-//     await FirebaseService.init();       //  Firebase Init + Token
-//     await NotificationService.init();   //  Local Notification Init
-//     FCMHandler.configure();             //  Foreground & Tap handler
-//   }
-// }
+    // Register the background message handler (must be top-level function)
+    FirebaseMessaging.onBackgroundMessage(
+      FCMHandler.firebaseMessagingBackgroundHandler,
+    );
+
+    // Configure foreground + tap handlers
+    FCMHandler.configure();
+
+    // Log device token for backend registration
+    final token = await messaging.getToken();
+    AppLoggerHelper.info('[FCM] Device token: $token');
+  }
+}

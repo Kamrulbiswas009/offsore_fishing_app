@@ -15,6 +15,9 @@ import 'package:paytonpieper/features/main_screen/widgets/filter_dialog.dart';
 import 'package:paytonpieper/features/report_main/report_catch/screen/report_catch_screen.dart';
 import 'package:paytonpieper/features/report_main/summary/screen/summary_details.dart';
 import 'package:paytonpieper/core/services/sync_service.dart';
+import 'package:paytonpieper/features/weather_alerts/controller/weather_alert_controller.dart';
+import 'package:paytonpieper/features/weather_alerts/model/watched_zone_model.dart';
+import 'package:paytonpieper/features/weather_alerts/widgets/zone_watch_settings_sheet.dart';
 
 import '../controller/map_screen_controller.dart';
 import '../model/map_zone_model.dart';
@@ -955,60 +958,274 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
           ),
           SizedBox(height: 20.h),
 
-          // CTA
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00D4FF),
-                foregroundColor: const Color(0xFF0A1628),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16.r),
-                ),
-                padding: EdgeInsets.symmetric(vertical: 16.h),
-              ),
-              onPressed: () {
-                final liveZone = MapZoneModel(
-                  id: widget.zone.id,
-                  name: widget.zone.name,
-                  location: widget.zone.location,
-                  count: widget.zone.count,
-                  level: _activityScore >= 0.7
-                      ? ActivityLevel.high
-                      : _activityScore >= 0.4
-                          ? ActivityLevel.medium
-                          : ActivityLevel.low,
-                  reports: _reportCount,
-                  lastUpdated: _lastUpdated,
-                  activityScore: _activityScore,
-                  topSpecies: _topSpecies,
-                  avgDepth: _avgDepth,
-                  trend: _trend,
-                  north: widget.zone.north,
-                  south: widget.zone.south,
-                  east: widget.zone.east,
-                  west: widget.zone.west,
-                );
-                Get.to(
-                  () => SummaryScreen(isReportMainScreen: false),
-                  arguments: liveZone,
-                );
-              },
-              child: Text(
-                'View Full Details',
-                style: getTextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF0A1628),
-                ),
-              ),
-            ),
-          ),
+          // ── CTA Buttons ──────────────────────────────────────────────────
+          _buildCtaRow(),
         ],
       ),
     );
+    
   }
+
+  /// Dual-button CTA: Watch Zone bell + View Full Details.
+  Widget _buildCtaRow() {
+    // Safely look up the alert controller — may not be registered yet on
+    // first launch before ControllerBinder runs.
+    WeatherAlertController? alertCtrl;
+    try {
+      alertCtrl = Get.find<WeatherAlertController>();
+    } catch (_) {}
+
+    if (alertCtrl == null) {
+      // Fallback — just show the View Full Details button.
+      return _viewFullDetailsButton();
+    }
+
+    return Obx(() {
+      final isWatched = alertCtrl!.isWatched(widget.zone.name);
+      final alertsOn = alertCtrl.configFor(widget.zone.name)?.alertsEnabled ?? false;
+
+      return Column(
+        children: [
+          // ── Watch Zone status banner ─────────────────────────────────
+          GestureDetector(
+            onTap: () {
+              if (isWatched) {
+                // Toggle alerts enabled/disabled
+                alertCtrl!.toggleAlerts(
+                  widget.zone.name,
+                  enabled: !alertsOn,
+                );
+                final msg = alertsOn
+                    ? 'Alerts paused for ${widget.zone.name}'
+                    : 'Alerts re-enabled for ${widget.zone.name}';
+                Get.snackbar(
+                  alertsOn ? 'Alerts Paused 🔕' : 'Alerts On 🔔',
+                  msg,
+                  backgroundColor: alertsOn
+                      ? const Color(0xFF3F2B27)
+                      : AppColors.tealColor117A88.withOpacity(0.9),
+                  colorText: Colors.white,
+                  snackPosition: SnackPosition.BOTTOM,
+                  duration: const Duration(seconds: 3),
+                  margin: EdgeInsets.all(12.w),
+                  borderRadius: 12,
+                );
+              } else {
+                ZoneWatchSettingsSheet.show(
+                  config: WatchedZoneConfig(
+                    zoneId: widget.zone.name,
+                    zoneName: widget.zone.name,
+                    lat: widget.zone.location.latitude,
+                    lng: widget.zone.location.longitude,
+                  ),
+                );
+              }
+            },
+            onLongPress: isWatched
+                ? () {
+                    final config = alertCtrl!.configFor(widget.zone.name);
+                    if (config != null) {
+                      ZoneWatchSettingsSheet.show(
+                        config: config,
+                        isEditing: true,
+                      );
+                    }
+                  }
+                : null,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              margin: EdgeInsets.only(bottom: 12.h),
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 11.h),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: isWatched
+                      ? [
+                          AppColors.tealColor117A88.withOpacity(0.22),
+                          const Color(0xFF0D1B2A),
+                        ]
+                      : [
+                          const Color(0xFF1F242E),
+                          const Color(0xFF1F242E),
+                        ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(14.r),
+                border: Border.all(
+                  color: isWatched
+                      ? AppColors.tealColor117A88.withOpacity(0.55)
+                      : const Color(0xFF2E3A4A),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  // Bell icon container
+                  TweenAnimationBuilder<double>(
+                    key: ValueKey(isWatched),
+                    tween: Tween(begin: 0.7, end: 1.0),
+                    duration: const Duration(milliseconds: 450),
+                    curve: Curves.elasticOut,
+                    builder: (_, scale, child) =>
+                        Transform.scale(scale: scale, child: child),
+                    child: Container(
+                      width: 36.w,
+                      height: 36.w,
+                      decoration: BoxDecoration(
+                        color: isWatched
+                            ? AppColors.tealColor117A88.withOpacity(0.2)
+                            : const Color(0xFF252B36),
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                      child: Icon(
+                        isWatched
+                            ? (alertsOn
+                                ? Icons.notifications_active_rounded
+                                : Icons.notifications_paused_rounded)
+                            : Icons.notifications_none_rounded,
+                        size: 18.sp,
+                        color: isWatched
+                            ? (alertsOn
+                                ? AppColors.teal0C98AFColor
+                                : Colors.orange)
+                            : const Color(0xFF8A94A6),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  // Label column
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isWatched
+                              ? (alertsOn
+                                  ? 'Weather Alerts Active'
+                                  : 'Alerts Paused')
+                              : 'Watch This Zone',
+                          style: getTextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: isWatched
+                                ? Colors.white
+                                : const Color(0xFFC8D0DB),
+                          ),
+                        ),
+                        Text(
+                          isWatched
+                              ? (alertsOn
+                                  ? 'Tap to pause  •  Hold to edit'
+                                  : 'Tap to re-enable  •  Hold to edit')
+                              : 'Get notified on wave / wind changes',
+                          style: getTextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w400,
+                            color: const Color(0xFF8A94A6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Status badge
+                  if (isWatched)
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 8.w, vertical: 4.h),
+                      decoration: BoxDecoration(
+                        color: alertsOn
+                            ? AppColors.tealColor117A88.withOpacity(0.18)
+                            : Colors.orange.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(8.r),
+                        border: Border.all(
+                          color: alertsOn
+                              ? AppColors.tealColor117A88.withOpacity(0.5)
+                              : Colors.orange.withOpacity(0.4),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        alertsOn ? 'On' : 'Paused',
+                        style: getTextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: alertsOn
+                              ? AppColors.teal0C98AFColor
+                              : Colors.orange,
+                        ),
+                      ),
+                    )
+                  else
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: const Color(0xFF8A94A6),
+                      size: 18.sp,
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── View Full Details button ─────────────────────────────────
+          _viewFullDetailsButton(),
+        ],
+      );
+    });
+  }
+
+  Widget _viewFullDetailsButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF00D4FF),
+          foregroundColor: const Color(0xFF0A1628),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          padding: EdgeInsets.symmetric(vertical: 16.h),
+        ),
+        onPressed: () {
+          final liveZone = MapZoneModel(
+            id: widget.zone.id,
+            name: widget.zone.name,
+            location: widget.zone.location,
+            count: widget.zone.count,
+            level: _activityScore >= 0.7
+                ? ActivityLevel.high
+                : _activityScore >= 0.4
+                    ? ActivityLevel.medium
+                    : ActivityLevel.low,
+            reports: _reportCount,
+            lastUpdated: _lastUpdated,
+            activityScore: _activityScore,
+            topSpecies: _topSpecies,
+            avgDepth: _avgDepth,
+            trend: _trend,
+            north: widget.zone.north,
+            south: widget.zone.south,
+            east: widget.zone.east,
+            west: widget.zone.west,
+          );
+          Get.to(
+            () => SummaryScreen(isReportMainScreen: false),
+            arguments: liveZone,
+          );
+        },
+        child: Text(
+          'View Full Details',
+          style: getTextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF0A1628),
+          ),
+        ),
+      ),
+    );
+  }
+
 
   /// Animated shimmer placeholder for loading state
   Widget _shimmerBox(double width, double height) =>

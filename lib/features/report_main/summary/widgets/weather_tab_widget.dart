@@ -6,6 +6,9 @@ import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
+import 'package:paytonpieper/features/weather_alerts/controller/weather_alert_controller.dart';
+import 'package:paytonpieper/features/weather_alerts/model/watched_zone_model.dart';
+import 'package:paytonpieper/features/weather_alerts/widgets/zone_watch_settings_sheet.dart';
 
 import '../controller/summary_details_controller.dart';
 
@@ -17,6 +20,10 @@ class WeatherTabWidget extends GetView<SummaryController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ── Watch Zone Banner ────────────────────────────────────────────────
+        _buildWatchZoneBanner(),
+        SizedBox(height: 12.h),
+        // ── API Warning ──────────────────────────────────────────────────────
         Obx(() {
           if (controller.weatherData.value == null && !controller.isWeatherLoading.value) {
             return Container(
@@ -63,6 +70,194 @@ class WeatherTabWidget extends GetView<SummaryController> {
       ],
     );
   }
+
+  // ── Watch Zone Banner ────────────────────────────────────────────────────
+  Widget _buildWatchZoneBanner() {
+    WeatherAlertController? alertCtrl;
+    try {
+      alertCtrl = Get.find<WeatherAlertController>();
+    } catch (_) {
+      return const SizedBox.shrink();
+    }
+
+    return Obx(() {
+      final zone = controller.selectedZone.value;
+      if (zone == null) return const SizedBox.shrink();
+
+      final zoneId = zone.name;
+      final isWatched = alertCtrl!.isWatched(zoneId);
+      final alertsOn = alertCtrl.configFor(zoneId)?.alertsEnabled ?? false;
+
+      return GestureDetector(
+        // Single tap: watch/unwatch or toggle alerts
+        onTap: () {
+          if (isWatched) {
+            // Toggle alerts on/off
+            alertCtrl!.toggleAlerts(zoneId, enabled: !alertsOn);
+            final onNow = !alertsOn;
+            Get.snackbar(
+              onNow ? 'Alerts On 🔔' : 'Alerts Paused 🔕',
+              onNow
+                  ? 'You\'ll be notified on condition changes in ${zone.name}.'
+                  : 'Weather alerts paused for ${zone.name}.',
+              backgroundColor: onNow
+                  ? AppColors.tealColor117A88.withOpacity(0.9)
+                  : const Color(0xFF3F2B27),
+              colorText: Colors.white,
+              snackPosition: SnackPosition.BOTTOM,
+              margin: EdgeInsets.all(12.w),
+              borderRadius: 12,
+              duration: const Duration(seconds: 3),
+            );
+          } else {
+            // Not yet watched — open settings sheet
+            ZoneWatchSettingsSheet.show(
+              config: WatchedZoneConfig(
+                zoneId: zoneId,
+                zoneName: zone.name,
+                lat: zone.location.latitude,
+                lng: zone.location.longitude,
+              ),
+            );
+          }
+        },
+        // Long press when watched → open full management screen
+        onLongPress: isWatched ? alertCtrl.openWatchedZonesScreen : null,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isWatched
+                  ? [
+                      AppColors.tealColor117A88.withOpacity(0.2),
+                      AppColors.blue0D2B43Color.withOpacity(0.6),
+                    ]
+                  : [
+                      AppColors.blue0D2B43Color,
+                      AppColors.blue12263AColor,
+                    ],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(14.r),
+            border: Border.all(
+              color: isWatched
+                  ? (alertsOn
+                      ? AppColors.tealColor117A88.withOpacity(0.5)
+                      : Colors.orange.withOpacity(0.5))
+                  : AppColors.grey516173Color.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              // Animated Bell Icon
+              TweenAnimationBuilder<double>(
+                key: ValueKey('$isWatched-$alertsOn'),
+                tween: Tween(begin: 0.8, end: 1.0),
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.elasticOut,
+                builder: (_, scale, child) => Transform.scale(
+                  scale: scale,
+                  child: child,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: isWatched
+                        ? (alertsOn
+                            ? AppColors.tealColor117A88.withOpacity(0.25)
+                            : Colors.orange.withOpacity(0.15))
+                        : AppColors.grey516173Color.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Icon(
+                    isWatched
+                        ? (alertsOn
+                            ? Icons.notifications_active_rounded
+                            : Icons.notifications_paused_rounded)
+                        : Icons.notifications_none_rounded,
+                    color: isWatched
+                        ? (alertsOn ? AppColors.teal0C98AFColor : Colors.orange)
+                        : AppColors.grey8B95A5Color,
+                    size: 18.sp,
+                  ),
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isWatched
+                          ? (alertsOn
+                              ? 'Weather Alerts Active'
+                              : 'Alerts Paused')
+                          : 'Watch This Zone',
+                      style: getTextStyle(
+                        fontSize: 13,
+                        color: isWatched ? Colors.white : AppColors.greyC8D0DBColor,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      isWatched
+                          ? (alertsOn
+                              ? 'Tap to pause  •  Hold to manage'
+                              : 'Tap to re-enable  •  Hold to manage')
+                          : 'Get notified when conditions change',
+                      style: getTextStyle(
+                        fontSize: 11,
+                        color: AppColors.grey8B95A5Color,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Status badge
+              if (isWatched)
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: alertsOn
+                        ? AppColors.tealColor117A88.withOpacity(0.2)
+                        : Colors.orange.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8.r),
+                    border: Border.all(
+                      color: alertsOn
+                          ? AppColors.tealColor117A88.withOpacity(0.5)
+                          : Colors.orange.withOpacity(0.4),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    alertsOn ? 'On' : 'Paused',
+                    style: getTextStyle(
+                      fontSize: 11,
+                      color: alertsOn
+                          ? AppColors.teal0C98AFColor
+                          : Colors.orange,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                )
+              else
+                Icon(
+                  Icons.add_circle_outline_rounded,
+                  color: AppColors.grey8B95A5Color,
+                  size: 20.sp,
+                ),
+            ],
+          ),
+        ),
+      );
+    });
+  }
+
 
   // ── "Now" full content ──────────────────────────────────────────────────────
   Widget _buildNowContent() {
