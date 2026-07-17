@@ -347,7 +347,7 @@ class _UnifiedZoneCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        weatherConfig?.zoneName ?? biteConfig?.displayLabel ?? zoneId,
+                        zoneId,
                         style: getTextStyle(
                           fontSize: 16,
                           color: Colors.white,

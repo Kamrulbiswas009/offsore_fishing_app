@@ -135,6 +135,28 @@ class ProfileMainScreen extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 24.h),
+                CustomButton(
+                padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+                fontSize: 16,
+                lineHeight: 12,
+                ontap: () => Get.toNamed(AppRoute.watchedZonesScreen),
+                title: 'Bite Watch Alerts',
+                bgColor: const Color(0xFFFF6D00).withValues(alpha: 0.1),
+                borderColor: const Color(0xFFFF6D00).withValues(alpha: 0.2),
+                titleColor: const Color(0xFFFF6D00),
+                borderRadius: 16.r,
+                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisSize: MainAxisSize.max,
+                prefixIcon: Padding(
+                  padding: EdgeInsets.only(right: 10.w),
+                  child: const Icon(
+                    Icons.radar_rounded,
+                    color: Color(0xFFFF6D00),
+                    size: 20,
+                  ),
+                ),
+              ),
+              SizedBox(height: 12.h),
               Text(
                 'Subscription',
                 style: getTextStyle(
@@ -185,26 +207,7 @@ class ProfileMainScreen extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 28.h),
-              CustomButton(
-                padding: EdgeInsets.symmetric(vertical: 12.h),
-                fontSize: 16,
-                lineHeight: 12,
-                ontap: () => Get.toNamed(AppRoute.watchedZonesScreen),
-                title: 'Bite Watch Alerts',
-                bgColor: const Color(0xFFFF6D00).withValues(alpha: 0.1),
-                borderColor: const Color(0xFFFF6D00).withValues(alpha: 0.2),
-                titleColor: const Color(0xFFFF6D00),
-                borderRadius: 16.r,
-                prefixIcon: Padding(
-                  padding: EdgeInsets.only(right: 10.w),
-                  child: const Icon(
-                    Icons.radar_rounded,
-                    color: Color(0xFFFF6D00),
-                    size: 20,
-                  ),
-                ),
-              ),
+            
               SizedBox(height: 12.h),
               CustomButton(
                 padding: EdgeInsets.symmetric(vertical: 12.h),

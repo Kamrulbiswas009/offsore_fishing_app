@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/features/weather_alerts/controller/weather_alert_controller.dart';
@@ -705,6 +706,9 @@ class _ZoneWatchSettingsSheetState extends State<ZoneWatchSettingsSheet>
   // ── Logic ──────────────────────────────────────────────────────────────────
 
   Future<void> _onSave() async {
+    await EasyLoading.show(
+      status: widget.isEditing ? 'Updating settings...' : 'Watching zone...',
+    );
     setState(() => _isSaving = true);
     try {
       final updated = widget.config.copyWith(
@@ -724,20 +728,15 @@ class _ZoneWatchSettingsSheetState extends State<ZoneWatchSettingsSheet>
         await controller.addZone(updated);
       }
 
-      Get.back();
-
-      Get.snackbar(
-        widget.isEditing ? 'Alert Updated' : 'Zone Watched! 🔔',
+      await EasyLoading.showSuccess(
         widget.isEditing
             ? '${updated.zoneName} alert thresholds saved.'
             : 'You\'ll be notified when conditions change in ${updated.zoneName}.',
-        backgroundColor: AppColors.tealColor117A88.withOpacity(0.9),
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: EdgeInsets.all(12.w),
-        borderRadius: 12,
-        duration: const Duration(seconds: 3),
       );
+      Get.back();
+    } catch (e) {
+      await EasyLoading.dismiss();
+      await EasyLoading.showError('An error occurred.');
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
