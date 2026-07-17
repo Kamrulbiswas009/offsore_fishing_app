@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
@@ -1048,18 +1049,7 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                 final msg = alertsOn
                     ? 'Alerts paused for ${widget.zone.name}'
                     : 'Alerts re-enabled for ${widget.zone.name}';
-                Get.snackbar(
-                  alertsOn ? 'Alerts Paused 🔕' : 'Alerts On 🔔',
-                  msg,
-                  backgroundColor: alertsOn
-                      ? const Color(0xFF3F2B27)
-                      : AppColors.tealColor117A88.withOpacity(0.9),
-                  colorText: Colors.white,
-                  snackPosition: SnackPosition.BOTTOM,
-                  duration: const Duration(seconds: 3),
-                  margin: EdgeInsets.all(12.w),
-                  borderRadius: 12,
-                );
+                EasyLoading.showToast(msg);
               } else {
                 ZoneWatchSettingsSheet.show(
                   config: WatchedZoneConfig(

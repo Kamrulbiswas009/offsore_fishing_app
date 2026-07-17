@@ -16,6 +16,8 @@ class CustomButton extends StatelessWidget {
   final Widget? prefixIcon;
   final EdgeInsetsGeometry? padding;
   final double? borderRadius;
+  final MainAxisAlignment? mainAxisAlignment;
+  final MainAxisSize? mainAxisSize;
 
   final Color? iconColor;
 
@@ -34,6 +36,8 @@ class CustomButton extends StatelessWidget {
     this.iconBgColor,
     this.padding,
     this.borderRadius,
+    this.mainAxisAlignment,
+    this.mainAxisSize,
   });
 
   @override
@@ -65,8 +69,8 @@ class CustomButton extends StatelessWidget {
               ),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: mainAxisAlignment ?? MainAxisAlignment.center,
+              mainAxisSize: mainAxisSize ?? MainAxisSize.min,
               children: [
                 if (prefixIcon != null) prefixIcon ?? const SizedBox.shrink(),
                 if (constraints.maxWidth.isFinite)

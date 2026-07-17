@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/features/weather_alerts/controller/bite_watch_controller.dart';
@@ -467,6 +468,9 @@ class _BiteWatchSettingsSheetState extends State<BiteWatchSettingsSheet>
   }
 
   Future<void> _saveSettings() async {
+    await EasyLoading.show(
+      status: widget.isEditing ? 'Updating settings...' : 'Watching zone...',
+    );
     setState(() => _isSaving = true);
     try {
       final controller = Get.find<BiteWatchController>();
@@ -487,29 +491,21 @@ class _BiteWatchSettingsSheetState extends State<BiteWatchSettingsSheet>
       }
 
       if (success) {
-        Get.back();
-        Get.snackbar(
-          widget.isEditing ? 'Settings Updated' : 'Zone Watched! 🎣',
+        await EasyLoading.showSuccess(
           widget.isEditing
               ? 'Bite threshold settings saved successfully.'
               : 'You will receive alerts for bite activity spikes in ${widget.zoneId}.',
-          backgroundColor: const Color(0xFFFF6D00).withOpacity(0.9),
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: EdgeInsets.all(12.w),
-          borderRadius: 12,
         );
+        Get.back();
       } else {
-        Get.snackbar(
-          'Error',
+        await EasyLoading.dismiss();
+        await EasyLoading.showError(
           'Could not update watch settings. Please check network connection.',
-          backgroundColor: AppColors.redDA605CColor.withOpacity(0.9),
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: EdgeInsets.all(12.w),
-          borderRadius: 12,
         );
       }
+    } catch (e) {
+      await EasyLoading.dismiss();
+      await EasyLoading.showError('An error occurred.');
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }

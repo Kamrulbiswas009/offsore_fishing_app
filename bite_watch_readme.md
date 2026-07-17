@@ -75,7 +75,7 @@ We have registered the following routes inside [api_constants.dart](lib/core/uti
 Use the following checklist to verify correct system operation:
 1. **FCM Registration**: Start the app, authenticate, check logs for:
    `[FCM] Device token: ...` and `[FCM] Device token registered successfully on server.`
-2. **Watch Zone**: Go to Map, tap a zone (e.g. `GOM-0042`), tap **Watch Bite Activity**, confirm success snackbar.
+2. **Watch Zone**: Go to Map, tap a zone (e.g. `GOM-0042`), tap **Watch Bite Activity**, confirm success EasyLoading message.
 3. **Threshold Config**: Long press the Bite Activity card, increase reports to `5`, save, confirm threshold text updates.
 4. **Watched List**: Go to Profile -> tap **Bite Watch Alerts**, verify the zone card appears with active status and threshold labels.
 5. **Push Navigation**: Send a mock FCM payload with `type: BITE_ACTIVITY` and `zoneId: GOM-0042`. Tap the push message and ensure the app loads the corresponding zone detail summaries.
