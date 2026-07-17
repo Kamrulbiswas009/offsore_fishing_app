@@ -250,7 +250,7 @@ class ReportTabWidget extends GetView<SummaryController> {
                   children: [
                     Flexible(
                       child: Text(
-                        report.title,
+                        report.zone,
                         style: getTextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
