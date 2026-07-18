@@ -1,4 +1,4 @@
-package com.example.paytonpieper
+package com.onthebite.app
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

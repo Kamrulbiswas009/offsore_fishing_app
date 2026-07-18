@@ -63,6 +63,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '411800532163',
     projectId: 'on-the-bite',
     storageBucket: 'on-the-bite.firebasestorage.app',
-    iosBundleId: 'com.example.paytonpieper',
+    iosBundleId: 'com.onthebite.app',
   );
 }
