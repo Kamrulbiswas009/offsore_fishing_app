@@ -29,8 +29,8 @@ class RegionConfig {
 
 /// All seeded regions. Keep in sync with backend REGION_CONFIG.
 /// When a new region is added to the backend, add it here too.
-const List<RegionConfig> kRegions = [
-  RegionConfig(
+final List<RegionConfig> regions = [
+  const RegionConfig(
     code: 'GOM',
     latMin: 18.0,
     latMax: 31.0,
@@ -38,7 +38,14 @@ const List<RegionConfig> kRegions = [
     lngMax: -81.0,
     resolution: 0.25,
   ),
-  // Add ATL, CAR, PAC etc. here when backend seeds them
+  const RegionConfig(
+    code: 'WLD',
+    latMin: -90.0,
+    latMax: 90.0,
+    lngMin: -180.0,
+    lngMax: 180.0,
+    resolution: 0.25,
+  ),
 ];
 
 class ZoneInfo {
@@ -72,7 +79,7 @@ class ZoneCalculator {
   ///
   /// This is the CANONICAL formula — mirrors latLngToZoneId() on the backend.
   static ZoneInfo? fromLatLng(double lat, double lng) {
-    for (final region in kRegions) {
+    for (final region in regions) {
       if (lat >= region.latMin &&
           lat < region.latMax &&
           lng >= region.lngMin &&
@@ -118,7 +125,7 @@ class ZoneCalculator {
     final index = int.tryParse(parts[1]);
     if (index == null || index < 1) return null;
 
-    final region = kRegions.firstWhere(
+    final region = regions.firstWhere(
       (r) => r.code == regionCode,
       orElse: () => throw ArgumentError('Unknown region: $regionCode'),
     );
@@ -153,7 +160,14 @@ class ZoneCalculator {
   }) {
     final results = <ZoneInfo>[];
 
-    for (final region in kRegions) {
+    for (final region in regions) {
+      if (region.code == 'WLD') {
+        // Performance safeguard: do not generate WLD grid if zoomed out too far
+        if ((north - south) > 6.0 || (east - west) > 6.0) {
+          continue;
+        }
+      }
+
       // Clamp to region
       final latFrom = south.clamp(region.latMin, region.latMax);
       final latTo   = north.clamp(region.latMin, region.latMax);
@@ -175,15 +189,26 @@ class ZoneCalculator {
           final index = row * region.cols + col + 1;
           final zoneId = '${region.code}-${index.toString().padLeft(4, '0')}';
 
+          final boundSouth = cellLat;
+          final boundNorth = _r5(cellLat + region.resolution);
+          final boundWest = cellLng;
+          final boundEast = _r5(cellLng + region.resolution);
+
+          // If region is WLD, check if it overlaps GOM region to avoid duplicate cells
+          if (region.code == 'WLD') {
+            final overlapsGOM = !(boundNorth <= 18.0 || boundSouth >= 31.0 || boundEast <= -98.0 || boundWest >= -81.0);
+            if (overlapsGOM) continue;
+          }
+
           results.add(ZoneInfo(
             zoneId: zoneId,
             regionCode: region.code,
             centerLat: _r5(cellLat + region.resolution / 2),
             centerLng: _r5(cellLng + region.resolution / 2),
-            boundSouth: cellLat,
-            boundNorth: _r5(cellLat + region.resolution),
-            boundWest: cellLng,
-            boundEast: _r5(cellLng + region.resolution),
+            boundSouth: boundSouth,
+            boundNorth: boundNorth,
+            boundWest: boundWest,
+            boundEast: boundEast,
           ));
         }
       }
