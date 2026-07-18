@@ -250,8 +250,56 @@ class ReportCatch2Controller extends GetxController {
 
   void setSamePattern(bool value) {
     isSamePattern.value = value;
-    if (!value && speciesEntries.isEmpty) {
-      _addBlankSpeciesEntry();
+    if (value) {
+      // Transitioning from NO to YES
+      // Update selectedSpeciesList and quantities from speciesEntries
+      selectedSpeciesList.clear();
+      quantities.clear();
+      for (final entry in speciesEntries) {
+        if (entry.speciesName.isNotEmpty) {
+          if (!selectedSpeciesList.contains(entry.speciesName)) {
+            selectedSpeciesList.add(entry.speciesName);
+          }
+          quantities[entry.speciesName] = entry.quantity;
+        }
+      }
+      // Copy pattern from first entry to YES mode shared fields
+      if (speciesEntries.isNotEmpty) {
+        final first = speciesEntries.first;
+        waterPosition.value = first.waterPosition;
+        selectedMethod.value = first.method;
+        selectedBait.value = first.bait;
+        depthController.text = first.depthCtrl.text;
+      }
+    } else {
+      // Transitioning from YES to NO
+      // Dispose old entries
+      for (final entry in speciesEntries) {
+        entry.dispose();
+      }
+      speciesEntries.clear();
+
+      if (selectedSpeciesList.isNotEmpty) {
+        for (final species in selectedSpeciesList) {
+          final qty = quantities[species] ?? 1;
+          speciesEntries.add(
+            SpeciesEntry(
+              id: _generateUuid(),
+              speciesName: species,
+              quantity: qty,
+              waterPosition: waterPosition.value,
+              method: selectedMethod.value,
+              bait: selectedBait.value,
+              date: selectedDate.value,
+              time: selectedTime.value,
+              notes: notesController.text,
+              depthText: depthController.text,
+            ),
+          );
+        }
+      } else {
+        _addBlankSpeciesEntry();
+      }
     }
   }
 
