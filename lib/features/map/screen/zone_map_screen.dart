@@ -23,6 +23,8 @@ import 'package:paytonpieper/features/weather_alerts/controller/bite_watch_contr
 import 'package:paytonpieper/features/weather_alerts/widgets/bite_watch_settings_sheet.dart';
 import 'package:paytonpieper/features/profile_and_setting/controller/profile_main_screen_controller.dart';
 import 'package:paytonpieper/features/payment_service/controller/payment_service_controller.dart';
+import 'package:paytonpieper/core/services/permissions/location_permission_service.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../controller/map_screen_controller.dart';
 import '../model/map_zone_model.dart';
@@ -147,11 +149,38 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
     if (_layersReady) return;
     _layersReady = true;
     await controller.setupMapLayers(_mapboxMap!);
+
+    // Check if location permission is already granted
+    try {
+      final permissionService = Get.find<LocationPermissionService>();
+      final isGranted = await permissionService.isLocationPermissionGranted();
+      if (isGranted && _mapboxMap != null) {
+        await _mapboxMap!.location.updateSettings(
+          mapbox.LocationComponentSettings(
+            enabled: true,
+            pulsingEnabled: true,
+            showAccuracyRing: true,
+          ),
+        );
+        final pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        );
+        await _mapboxMap!.setCamera(
+          mapbox.CameraOptions(
+            center: mapbox.Point(
+              coordinates: mapbox.Position(pos.longitude, pos.latitude),
+            ),
+            zoom: 10.0,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('[ZoneMapScreen] Error setting up initial location: $e');
+    }
+
     // Populate grid for the initial camera position
     await _updateGridForViewport();
   }
-
-
 
   /// Requests permission then flies camera to the device position.
   Future<void> _goToMyLocation() async {
@@ -165,19 +194,58 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
       final style = await map.style.isStyleLoaded();
       if (!style) return;
 
-      // Animate camera to the Gulf of Mexico offshore (mock device location)
-      await map.easeTo(
-        mapbox.CameraOptions(
-          center: mapbox.Point(
-            coordinates: mapbox.Position(
-              controller.mapCenter.longitude,
-              controller.mapCenter.latitude,
-            ),
+      final permissionService = Get.find<LocationPermissionService>();
+      var isGranted = await permissionService.isLocationPermissionGranted();
+
+      if (!isGranted) {
+        final result = await permissionService.requestLocationWhenInUse();
+        isGranted = (result == LocationPermissionResult.granted);
+      }
+
+      if (isGranted) {
+        // Enable location puck
+        await map.location.updateSettings(
+          mapbox.LocationComponentSettings(
+            enabled: true,
+            pulsingEnabled: true,
+            showAccuracyRing: true,
           ),
-          zoom: 10.0,
-        ),
-        mapbox.MapAnimationOptions(duration: 1000),
-      );
+        );
+        // Get user position
+        final pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        );
+
+        // Animate camera to the real location
+        await map.easeTo(
+          mapbox.CameraOptions(
+            center: mapbox.Point(
+              coordinates: mapbox.Position(
+                pos.longitude,
+                pos.latitude,
+              ),
+            ),
+            zoom: 10.0,
+          ),
+          mapbox.MapAnimationOptions(duration: 1200),
+        );
+      } else {
+        // Animate camera to the Gulf of Mexico offshore (mock device location)
+        await map.easeTo(
+          mapbox.CameraOptions(
+            center: mapbox.Point(
+              coordinates: mapbox.Position(
+                controller.mapCenter.longitude,
+                controller.mapCenter.latitude,
+              ),
+            ),
+            zoom: 10.0,
+          ),
+          mapbox.MapAnimationOptions(duration: 1000),
+        );
+      }
+    } catch (e) {
+      debugPrint('[ZoneMapScreen] Error in _goToMyLocation: $e');
     } finally {
       if (mounted) setState(() => _isLocating = false);
     }
@@ -256,6 +324,47 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
     // ── Normal zone-detail mode ──────────────────────────────────────────
     final zone = controller.zoneForCoordinate(lat, lng);
     if (zone != null) {
+      if (!zone.id.startsWith('GOM')) {
+        _dismissPanel();
+        Get.dialog(
+          AlertDialog(
+            backgroundColor: AppColors.containerBackgroundColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.r),
+              side: const BorderSide(color: AppColors.blue00F0FFColor),
+            ),
+            title: Text(
+              'Outside Service Area',
+              style: getTextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+            content: Text(
+              'You are out of Gulf of Mexico area.',
+              style: getTextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: AppColors.greyC8D0DBColor,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(),
+                child: Text(
+                  'OK',
+                  style: getTextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.blue00F0FFColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
       controller.selectZone(zone);
       _panelAnim.forward(from: 0);
     } else {
