@@ -768,10 +768,10 @@ class MapScreenController extends GetxController {
           zoneCounts[zoneId] = (zoneCounts[zoneId] ?? 0) + 1;
 
           // Collect species names
-          final speciesList = item['species'] as List?;
+          final speciesList = (item['allSpecies'] ?? item['species']) as List?;
           if (speciesList != null) {
             for (var sp in speciesList) {
-              if (sp is Map<String, dynamic>) {
+              if (sp is Map) {
                 final name = sp['speciesName'] as String? ?? '';
                 if (name.isNotEmpty) {
                   zoneSpecies.putIfAbsent(zoneId, () => []).add(name);
@@ -781,7 +781,14 @@ class MapScreenController extends GetxController {
           }
 
           // Collect depth
-          final depth = item['waterDepthFt'] as int?;
+          int? depth = item['waterDepthFt'] as int?;
+          final patterns = item['fishingPatterns'] as List?;
+          if (patterns != null && patterns.isNotEmpty) {
+            final firstPattern = patterns.first as Map;
+            if (firstPattern['waterDepthFt'] != null) {
+              depth = (firstPattern['waterDepthFt'] as num).toInt();
+            }
+          }
           if (depth != null) {
             zoneDepths.putIfAbsent(zoneId, () => []).add(depth);
           }

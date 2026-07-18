@@ -29,7 +29,7 @@ class GroupReportItem {
   });
 
   factory GroupReportItem.fromJson(Map<String, dynamic> json) {
-    final speciesList = json['species'] as List?;
+    final speciesList = (json['allSpecies'] ?? json['species']) as List?;
     final speciesNames = speciesList
         ?.map((item) {
           if (item is! Map) return null;
@@ -39,14 +39,28 @@ class GroupReportItem {
         .where((name) => name.trim().isNotEmpty)
         .join(', ');
 
+    final patterns = json['fishingPatterns'] as List?;
+    String depth = '${json['waterDepthFt'] ?? 0}ft';
+    String technique = _formatBackendLabel(json['fishingMethod']?.toString());
+
+    if (patterns != null && patterns.isNotEmpty) {
+      final firstPattern = patterns.first as Map;
+      if (firstPattern['waterDepthFt'] != null) {
+        depth = '${firstPattern['waterDepthFt']}ft';
+      }
+      if (firstPattern['fishingMethod'] != null) {
+        technique = _formatBackendLabel(firstPattern['fishingMethod']?.toString());
+      }
+    }
+
     return GroupReportItem(
       title: speciesNames == null || speciesNames.isEmpty
           ? 'Unknown species'
           : speciesNames,
       author: _readCreatedBy(json),
       timeAgo: _formatTimeAgo(json['submittedAt']?.toString()),
-      depth: '${json['waterDepthFt'] ?? 0}ft',
-      technique: _formatBackendLabel(json['fishingMethod']?.toString()),
+      depth: depth,
+      technique: technique,
       note: json['notes']?.toString() ?? '',
       confirmations: _readConfirmations(json),
       zone:

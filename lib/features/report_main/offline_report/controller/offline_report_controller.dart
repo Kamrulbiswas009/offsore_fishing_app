@@ -63,14 +63,32 @@ class OfflineReportsTabController extends GetxController {
     for (final row in pending) {
       try {
         final payload = jsonDecode(row['payload']) as Map<String, dynamic>;
-        final speciesList = payload['species'] as List?;
-        final primarySpecies = (speciesList != null && speciesList.isNotEmpty)
-            ? speciesList[0]['speciesName']
-            : 'Unknown';
+        final patterns = payload['fishingPatterns'] as List?;
+        
+        String primarySpecies = 'Unknown';
+        String method = 'Unknown';
+        String bait = 'Unknown';
+        String depth = '0ft';
 
-        final method = payload['fishingMethod'] ?? 'Unknown';
-        final bait = payload['baitLureType'] ?? 'Unknown';
-        final depth = "${payload['waterDepthFt'] ?? 0}ft";
+        if (patterns != null && patterns.isNotEmpty) {
+          final firstPattern = patterns.first as Map;
+          final patternSpecies = firstPattern['species'] as List?;
+          if (patternSpecies != null && patternSpecies.isNotEmpty) {
+            primarySpecies = patternSpecies[0]['speciesName'] ?? 'Unknown';
+          }
+          method = firstPattern['fishingMethod'] ?? 'Unknown';
+          bait = firstPattern['baitLureType'] ?? 'Unknown';
+          depth = "${firstPattern['waterDepthFt'] ?? 0}ft";
+        } else {
+          final speciesList = payload['species'] as List?;
+          primarySpecies = (speciesList != null && speciesList.isNotEmpty)
+              ? speciesList[0]['speciesName']
+              : 'Unknown';
+          method = payload['fishingMethod'] ?? 'Unknown';
+          bait = payload['baitLureType'] ?? 'Unknown';
+          depth = "${payload['waterDepthFt'] ?? 0}ft";
+        }
+
         final zone = payload['zoneId'] ?? 'Unknown';
         final note = payload['notes'];
 
@@ -99,17 +117,33 @@ class OfflineReportsTabController extends GetxController {
         final List dataList = cachedData['data'];
         for (var item in dataList) {
           if (item is Map) {
-            final speciesList = item['species'] as List?;
+            final speciesList = (item['allSpecies'] ?? item['species']) as List?;
             final speciesName = (speciesList != null && speciesList.isNotEmpty)
                 ? speciesList.map((s) => s['speciesName']).join(', ')
                 : 'Unknown';
 
             final catchTimestamp = item['catchTimestamp'] as String?;
             final timeAgo = _formatTimeAgo(catchTimestamp);
-            final depth = "${item['waterDepthFt'] ?? 0}ft";
+
+            final patterns = item['fishingPatterns'] as List?;
+            String depth = "${item['waterDepthFt'] ?? 0}ft";
+            String technique = _mapBackendMethodToUser(item['fishingMethod']);
+            String bait = _mapBackendBaitToUser(item['baitLureType']);
+
+            if (patterns != null && patterns.isNotEmpty) {
+              final firstPattern = patterns.first as Map;
+              if (firstPattern['waterDepthFt'] != null) {
+                depth = "${firstPattern['waterDepthFt']}ft";
+              }
+              if (firstPattern['fishingMethod'] != null) {
+                technique = _mapBackendMethodToUser(firstPattern['fishingMethod']);
+              }
+              if (firstPattern['baitLureType'] != null) {
+                bait = _mapBackendBaitToUser(firstPattern['baitLureType']);
+              }
+            }
+
             final zone = item['zoneId'] ?? item['zone']?['zoneId'] ?? 'Unknown';
-            final technique = _mapBackendMethodToUser(item['fishingMethod']);
-            final bait = _mapBackendBaitToUser(item['baitLureType']);
             final note = item['notes'];
             final confirms = item['biteConfirmations']?['confirmed'] ?? 0;
             final author = item['user']?['name'];
