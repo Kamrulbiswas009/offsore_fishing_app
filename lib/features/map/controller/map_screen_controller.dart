@@ -13,6 +13,7 @@ import 'package:paytonpieper/core/services/offline_cache_service.dart';
 import 'package:paytonpieper/core/utils/constants/api_constants.dart';
 import 'package:paytonpieper/core/utils/logging/logger.dart';
 import 'package:paytonpieper/features/main_screen/controller/filter_controller.dart';
+import 'package:paytonpieper/core/utils/helpers/app_helper.dart';
 
 // ── Source / Layer IDs ────────────────────────────────────────────────────
 const kGridCellSourceId  = 'zone-grid-cell-source';   // polygons (fill + line)
@@ -985,7 +986,9 @@ class MapScreenController extends GetxController {
 
         // Parse activityTiming for peakWindow
         final timing = data['activityTiming'] as Map<String, dynamic>?;
-        final peakWindow = timing?['peakWindow'] as String? ?? '—';
+        final rawHistogram = timing?['hourlyHistogram'] as List?;
+        final localHistogram = AppHelperFunctions.shiftHistogramToLocal(rawHistogram);
+        final peakWindow = AppHelperFunctions.calculateLocalPeakWindowFromLocal(localHistogram);
 
         return {
           'topSpecies': topSpecies,

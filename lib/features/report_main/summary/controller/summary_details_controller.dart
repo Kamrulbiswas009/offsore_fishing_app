@@ -12,6 +12,7 @@ import 'package:paytonpieper/core/services/sync_service.dart';
 import 'package:paytonpieper/core/utils/constants/api_constants.dart';
 import 'package:paytonpieper/core/utils/logging/logger.dart';
 import 'package:paytonpieper/core/models/species_node.dart';
+import 'package:paytonpieper/core/utils/helpers/app_helper.dart';
 
 
 class SummaryController extends GetxController {
@@ -751,13 +752,12 @@ class SummaryController extends GetxController {
     // 4. Activity Timing
     final timing = data['activityTiming'];
     if (timing != null && timing is Map<String, dynamic>) {
-      peakWindow.value = timing['peakWindow'] ?? "—";
       effectiveMethod.value = _mapBackendMethodToUser(timing['mostEffectiveMethod']);
 
       final histogram = timing['hourlyHistogram'] as List?;
-      if (histogram != null) {
-        hourlyHistogram.assignAll(histogram.map((item) => (item as num).toDouble()).toList());
-      }
+      final localHistogram = AppHelperFunctions.shiftHistogramToLocal(histogram);
+      hourlyHistogram.assignAll(localHistogram);
+      peakWindow.value = AppHelperFunctions.calculateLocalPeakWindowFromLocal(localHistogram);
     }
 
     // 5. Species Distribution
