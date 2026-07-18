@@ -292,7 +292,7 @@ class SummaryController extends GetxController {
     final List<FishingReport> fetchedList = [];
     for (var item in data) {
       try {
-        final speciesList = item['species'] as List?;
+        final speciesList = (item['allSpecies'] ?? item['species']) as List?;
         final title = (speciesList != null && speciesList.isNotEmpty)
             ? speciesList.map((s) => s['speciesName']).join(', ')
             : 'Unknown';
@@ -300,10 +300,25 @@ class SummaryController extends GetxController {
         final catchTimestamp = item['catchTimestamp'] as String?;
         final timeAgo = _formatTimeAgo(catchTimestamp);
 
-        final depth = "${item['waterDepthFt'] ?? 0}ft";
+        final patterns = item['fishingPatterns'] as List?;
+        String depth = "${item['waterDepthFt'] ?? 0}ft";
+        String technique = _mapBackendMethodToUser(item['fishingMethod']);
+        String bait = _mapBackendBaitToUser(item['baitLureType']);
+
+        if (patterns != null && patterns.isNotEmpty) {
+          final firstPattern = patterns.first as Map;
+          if (firstPattern['waterDepthFt'] != null) {
+            depth = "${firstPattern['waterDepthFt']}ft";
+          }
+          if (firstPattern['fishingMethod'] != null) {
+            technique = _mapBackendMethodToUser(firstPattern['fishingMethod']);
+          }
+          if (firstPattern['baitLureType'] != null) {
+            bait = _mapBackendBaitToUser(firstPattern['baitLureType']);
+          }
+        }
+
         final zone = item['zoneId'] ?? item['zone']?['zoneId'] ?? 'Unknown';
-        final technique = _mapBackendMethodToUser(item['fishingMethod']);
-        final bait = _mapBackendBaitToUser(item['baitLureType']);
         final note = item['notes'];
         final confirms = item['biteConfirmations']?['confirmed'] ?? 0;
         final author = item['user']?['name'];
