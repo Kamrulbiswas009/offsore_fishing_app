@@ -77,4 +77,46 @@ class AppHelperFunctions{
   return wrappedList;
  }
 
+ static List<double> shiftHistogramToLocal(List<dynamic>? utcHistogram) {
+   final localHistogram = List<double>.filled(24, 0.0);
+   if (utcHistogram == null || utcHistogram.isEmpty) {
+     return localHistogram;
+   }
+   final offsetHours = DateTime.now().timeZoneOffset.inHours;
+   for (int i = 0; i < 24; i++) {
+     if (i < utcHistogram.length) {
+       int localHour = (i + offsetHours) % 24;
+       if (localHour < 0) localHour += 24;
+       final val = utcHistogram[i];
+       localHistogram[localHour] = val is num ? val.toDouble() : 0.0;
+     }
+   }
+   return localHistogram;
+ }
+
+ static String calculateLocalPeakWindowFromLocal(List<double> localHistogram) {
+   double totalReports = localHistogram.fold(0.0, (sum, val) => sum + val);
+   if (totalReports == 0.0) return "N/A";
+
+   double max4Count = -1.0;
+   int peakStartHour = 6;
+   for (int i = 0; i < 24; i++) {
+     double count = localHistogram[i] +
+         localHistogram[(i + 1) % 24] +
+         localHistogram[(i + 2) % 24] +
+         localHistogram[(i + 3) % 24];
+     if (count > max4Count) {
+       max4Count = count;
+       peakStartHour = i;
+     }
+   }
+
+   String formatHour(int h) {
+     final ampm = h >= 12 ? 'PM' : 'AM';
+     final hr = h % 12 == 0 ? 12 : h % 12;
+     return "$hr:00 $ampm";
+   }
+   int peakEndHour = (peakStartHour + 4) % 24;
+   return "${formatHour(peakStartHour)} - ${formatHour(peakEndHour)}";
+ }
 }
