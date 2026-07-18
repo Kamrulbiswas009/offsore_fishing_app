@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:411800532163:android:8cf39c52d226d5e4f1de76",
         "android_client_info": {
-          "package_name": "com.example.paytonpieper"
+          "package_name": "com.onthebite.app"
         }
       },
       "oauth_client": [
@@ -17,7 +17,7 @@
           "client_id": "411800532163-2fang0crbcvsj0ler3dktmbuud8cvhuo.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.paytonpieper",
+            "package_name": "com.onthebite.app",
             "certificate_hash": "7828df7534f478f6c9321c385c480d729d355ac8"
           }
         },
@@ -42,7 +42,7 @@
               "client_id": "411800532163-drq4ursdk7rlc56ldmjmhtimsugkgn51.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.paytonpieper"
+                "bundle_id": "com.onthebite.app"
               }
             }
           ]
