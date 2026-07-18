@@ -479,6 +479,7 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
 
   Widget _buildPerSpeciesCard(SpeciesEntry entry, int index) {
     return Container(
+      key: ValueKey(entry.id),
       margin: EdgeInsets.only(bottom: 16.h),
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -689,6 +690,7 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
                 ),
                 SizedBox(height: 8.h),
                 _customDropdown(
+                  key: ValueKey('${entry.id}_method'),
                   items: controller.methodOptions,
                   selectedValue: e.method,
                   hint: "Select Method",
@@ -710,6 +712,7 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
                 ),
                 SizedBox(height: 8.h),
                 _customDropdown(
+                  key: ValueKey('${entry.id}_bait'),
                   items: baitOptions,
                   selectedValue: e.bait,
                   hint: "Select bait",
@@ -1130,12 +1133,14 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
   }
 
   Widget _customDropdown({
+    Key? key,
     required List<String> items,
     required String selectedValue,
     required Function(String?) onChanged,
     String? hint,
   }) {
     return Container(
+      key: key,
       padding: EdgeInsets.symmetric(horizontal: 12.w),
       decoration: BoxDecoration(
         color: AppColors.blue1B2134Color,
@@ -1154,7 +1159,13 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
           isExpanded: true,
           style: getTextStyle(color: AppColors.greyC8D0DBColor),
           items: items.map((String value) {
-            return DropdownMenuItem<String>(value: value, child: Text(value));
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(
+                value,
+                style: getTextStyle(color: Colors.white, fontSize: 14),
+              ),
+            );
           }).toList(),
           onChanged: onChanged,
         ),
