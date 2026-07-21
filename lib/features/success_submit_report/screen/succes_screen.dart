@@ -22,16 +22,16 @@ class ReportSuccessScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         automaticallyImplyLeading: false,
         elevation: 0,
-        // leading: Padding(
-        //   padding: EdgeInsets.all(8.r),
-        //   child: CircleAvatar(
-        //     backgroundColor: AppColors.blue1B2134Color,
-        //     // child: IconButton(
-        //     //   icon: Icon(Icons.arrow_back, color: Colors.white, size: 18.sp),
-        //     //   onPressed: () => Get.back(),
-        //     // ),
-        //   ),
-        // ),
+        leading: Padding(
+          padding: EdgeInsets.all(8.r),
+          child: CircleAvatar(
+            backgroundColor: AppColors.blue1B2134Color,
+            child: IconButton(
+              icon: Icon(Icons.arrow_back, color: Colors.white, size: 18.sp),
+              onPressed: () => controller.close(),
+            ),
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         child: Padding(

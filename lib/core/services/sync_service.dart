@@ -8,8 +8,10 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:paytonpieper/core/services/network_caller.dart';
 import 'package:paytonpieper/core/services/storage_service.dart';
-import 'package:paytonpieper/core/services/offline_cache_service.dart';
 import 'package:paytonpieper/core/utils/constants/api_constants.dart';
+import 'package:paytonpieper/routes/app_routes.dart';
+import 'package:paytonpieper/features/report_main/summary/controller/summary_details_controller.dart';
+import 'package:paytonpieper/features/map/controller/map_screen_controller.dart';
 
 class SyncService extends GetxService {
   static SyncService get to => Get.find<SyncService>();
@@ -236,6 +238,8 @@ class SyncService extends GetxService {
     isSyncing.value = true;
     debugPrint("=== STARTING BACKGROUND SYNC: ${pending.length} reports pending ===");
 
+    bool didSyncAny = false;
+
     try {
       final database = await db;
       for (final row in pending) {
@@ -283,6 +287,7 @@ class SyncService extends GetxService {
 
           if (response.isSuccess) {
             debugPrint("=== SYNC SUCCESS for report ID: $frontendReportId ===");
+            didSyncAny = true;
             // Remove from local storage upon success
             await database.delete('pending_reports', where: 'id = ?', whereArgs: [id]);
 
@@ -318,6 +323,21 @@ class SyncService extends GetxService {
     await _updatePendingCount();
     isSyncing.value = false;
     debugPrint("=== BACKGROUND SYNC FINISHED ===");
+
+    if (didSyncAny) {
+      if (Get.isRegistered<SummaryController>()) {
+        final summaryController = Get.find<SummaryController>();
+        summaryController.fetchReports(forceRefresh: true);
+        summaryController.fetchSummary(forceRefresh: true);
+        summaryController.fetchWeather(forceRefresh: true);
+      }
+      if (Get.isRegistered<MapScreenController>()) {
+        Get.find<MapScreenController>().forceRefreshZones();
+      }
+      if (Get.currentRoute != AppRoute.homeMainScreen) {
+        Get.offAllNamed(AppRoute.homeMainScreen);
+      }
+    }
   }
 
   Future<bool> _refreshAccessToken() async {

@@ -9,6 +9,9 @@ import 'package:paytonpieper/features/report_main/report_catch2/controller/repor
 import 'package:paytonpieper/features/report_main/offline_report/screen/offline_report_screen.dart';
 import 'package:paytonpieper/features/success_submit_report/screen/succes_screen.dart';
 import 'package:paytonpieper/core/utils/logging/logger.dart';
+import 'package:paytonpieper/routes/app_routes.dart';
+import 'package:paytonpieper/features/report_main/summary/controller/summary_details_controller.dart';
+import 'package:paytonpieper/features/map/controller/map_screen_controller.dart';
 
 class VisibilitySharingController extends GetxController {
   // Selection States
@@ -149,8 +152,20 @@ class VisibilitySharingController extends GetxController {
                 }
               }
 
-              Get.offAll(
-                () => const ReportSuccessScreen(),
+              // Refresh controllers reactively
+              if (Get.isRegistered<SummaryController>()) {
+                final summaryController = Get.find<SummaryController>();
+                summaryController.fetchReports(forceRefresh: true);
+                summaryController.fetchSummary(forceRefresh: true);
+                summaryController.fetchWeather(forceRefresh: true);
+              }
+              if (Get.isRegistered<MapScreenController>()) {
+                Get.find<MapScreenController>().forceRefreshZones();
+              }
+
+              Get.offNamedUntil(
+                AppRoute.succesScreen,
+                (route) => route.isFirst,
                 arguments: {
                   "species": primarySpecies,
                   "zone": zone,
