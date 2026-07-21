@@ -232,6 +232,38 @@ class MapScreenController extends GetxController {
     );
   }
 
+  /// Toggles the visibility of the mock user location marker.
+  /// When [show] is true, populates the source with the default coordinates.
+  /// When [show] is false, clears features from the source to hide the marker.
+  Future<void> toggleMockUserLocation(mapbox.MapboxMap map, bool show) async {
+    try {
+      final source = await map.style.getSource('mock-user-location-source') as mapbox.GeoJsonSource?;
+      if (source != null) {
+        final data = show
+            ? jsonEncode({
+                'type': 'FeatureCollection',
+                'features': [
+                  {
+                    'type': 'Feature',
+                    'properties': <String, dynamic>{},
+                    'geometry': {
+                      'type': 'Point',
+                      'coordinates': [mapCenter.longitude, mapCenter.latitude]
+                    }
+                  }
+                ]
+              })
+            : jsonEncode({
+                'type': 'FeatureCollection',
+                'features': <dynamic>[]
+              });
+        await source.updateGeoJSON(data);
+      }
+    } catch (e) {
+      debugPrint('[MapScreenController] Error toggling mock user location: $e');
+    }
+  }
+
   // ── Dynamic grid refresh (called on every camera change) ──────────────
 
   /// Rebuilds GeoJSON sources to cover the current [sw]→[ne] viewport.

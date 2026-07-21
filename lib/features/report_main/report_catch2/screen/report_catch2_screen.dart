@@ -675,7 +675,7 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
           SizedBox(height: 12.h),
           _miniInput(
             "Water Depth (ft)",
-            "120",
+            "",
             controller: e.depthCtrl,
           ),
           SizedBox(height: 12.h),
@@ -963,7 +963,7 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
             Expanded(
               child: _miniInput(
                 "Water Depth (ft)",
-                "120",
+                "",
                 controller: controller.depthController,
               ),
             ),

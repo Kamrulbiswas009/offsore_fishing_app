@@ -36,7 +36,7 @@ class SpeciesEntry {
     String? date,
     String? time,
     this.notes = '',
-    String depthText = '120',
+    String depthText = '',
   })  : date = date ?? DateFormat('MM/dd/yyyy').format(DateTime.now()),
         time = time ?? DateFormat('hh:mm a').format(DateTime.now()),
         depthCtrl = TextEditingController(text: depthText);
@@ -241,7 +241,7 @@ class ReportCatch2Controller extends GetxController {
   }
 
   // Form Controllers (shared "Yes" mode)
-  final depthController = TextEditingController(text: "120");
+  final depthController = TextEditingController(text: "");
   final strikeZoneController = TextEditingController(text: "80");
   final notesController = TextEditingController();
 
@@ -536,7 +536,7 @@ class ReportCatch2Controller extends GetxController {
         "species": speciesList,
         "fishingMethod": _mapMethod(selectedMethod.value),
         "baitLureType": _mapBait(selectedBait.value, selectedMethod.value),
-        "waterDepthFt": int.tryParse(depthController.text) ?? 120,
+        "waterDepthFt": int.tryParse(depthController.text),
         "waterColumn": _mapWaterColumn(waterPosition.value),
       });
     } else {
@@ -547,7 +547,7 @@ class ReportCatch2Controller extends GetxController {
           "species": [{"speciesName": entry.speciesName, "quantity": entry.quantity}],
           "fishingMethod": _mapMethod(entry.method),
           "baitLureType": _mapBait(entry.bait, entry.method),
-          "waterDepthFt": int.tryParse(entry.depthCtrl.text) ?? 120,
+          "waterDepthFt": int.tryParse(entry.depthCtrl.text),
           "waterColumn": _mapWaterColumn(entry.waterPosition),
         });
       }

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
+import 'package:paytonpieper/features/report_main/report_catch2/screen/species_drill_down_bottom_sheet.dart';
 import '../controller/filter_controller.dart';
 
 class FilterDialog extends StatelessWidget {
@@ -65,101 +66,58 @@ class FilterDialog extends StatelessWidget {
                 () => Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w),
-                      decoration: BoxDecoration(
-                        color: AppColors.blue1B2134Color,
-                        borderRadius: BorderRadius.circular(15.r),
-                        border: Border.all(
-                          color: AppColors.blue00F0FFColor.withValues(alpha: 0.2),
-                          width: 1,
+                    GestureDetector(
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) => SpeciesDrillDownBottomSheet(
+                            onSpeciesSelected: (_) {},
+                            isMultiSelect: true,
+                            initialSelectedSpecies: controller.selectedSpecies.toList(),
+                            onMultiSpeciesSelected: (selected) {
+                              controller.selectedSpecies.assignAll(selected);
+                            },
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                        decoration: BoxDecoration(
+                          color: AppColors.blue1B2134Color,
+                          borderRadius: BorderRadius.circular(15.r),
+                          border: Border.all(
+                            color: AppColors.blue00F0FFColor.withValues(alpha: 0.2),
+                            width: 1,
+                          ),
                         ),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: null,
-                          hint: Text(
-                            "Select Species",
-                            style: getTextStyle(
-                              fontSize: 14,
-                              color: AppColors.grey8B95A5Color,
-                            ),
-                          ),
-                          dropdownColor: AppColors.backgroundDarkColor,
-                          icon: Icon(
-                            Icons.keyboard_arrow_down,
-                            color: AppColors.blue00F0FFColor,
-                            size: 20.sp,
-                          ),
-                          isExpanded: true,
-                          style: getTextStyle(
-                            fontSize: 14,
-                            color: Colors.white,
-                          ),
-                          items: [
-                            DropdownMenuItem<String>(
-                              value: "all_species",
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    "All Species (Select All)",
-                                    style: getTextStyle(
-                                      fontSize: 14,
-                                      color: controller.isAllSpeciesSelected
-                                          ? AppColors.blue00F0FFColor
-                                          : Colors.white,
-                                      fontWeight: controller.isAllSpeciesSelected
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
-                                    ),
-                                  ),
-                                  if (controller.isAllSpeciesSelected)
-                                    Icon(
-                                      Icons.check_circle,
-                                      color: AppColors.blue00F0FFColor,
-                                      size: 18.sp,
-                                    ),
-                                ],
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                controller.selectedSpecies.isEmpty
+                                    ? "Select Species"
+                                    : controller.isAllSpeciesSelected
+                                        ? "All Species Selected"
+                                        : "${controller.selectedSpecies.length} Species Selected",
+                                style: getTextStyle(
+                                  fontSize: 14,
+                                  color: controller.selectedSpecies.isEmpty
+                                      ? AppColors.grey8B95A5Color
+                                      : Colors.white,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            ...controller.speciesList.map((String value) {
-                              final isSelected = controller.selectedSpecies.contains(value);
-                              return DropdownMenuItem<String>(
-                                value: value,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      value,
-                                      style: getTextStyle(
-                                        fontSize: 14,
-                                        color: isSelected
-                                            ? AppColors.blue00F0FFColor
-                                            : Colors.white,
-                                        fontWeight: isSelected
-                                            ? FontWeight.bold
-                                            : FontWeight.normal,
-                                      ),
-                                    ),
-                                    if (isSelected)
-                                      Icon(
-                                        Icons.check_circle,
-                                        color: AppColors.blue00F0FFColor,
-                                        size: 18.sp,
-                                      ),
-                                  ],
-                                ),
-                              );
-                            }),
+                            Icon(
+                              Icons.keyboard_arrow_down,
+                              color: AppColors.blue00F0FFColor,
+                              size: 20.sp,
+                            ),
                           ],
-                          onChanged: (value) {
-                            if (value == "all_species") {
-                              controller.toggleSelectAllSpecies();
-                            } else if (value != null) {
-                              controller.toggleSpecies(value);
-                            }
-                          },
                         ),
                       ),
                     ),
