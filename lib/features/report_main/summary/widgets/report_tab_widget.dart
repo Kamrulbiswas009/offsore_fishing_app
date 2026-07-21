@@ -288,6 +288,18 @@ class ReportTabWidget extends GetView<SummaryController> {
               ),
             ],
           ),
+          SizedBox(height: 4.h),
+          Text(
+            report.title,
+            style: getTextStyle(
+              fontSize: 14,
+              color: AppColors.blue00D4FFColor,
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: 2.h),
           Text(
             report.author != null
                 ? "by ${report.author} . ${report.timeAgo}"

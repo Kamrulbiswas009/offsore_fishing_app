@@ -625,13 +625,15 @@ class WeatherTabWidget extends GetView<SummaryController> {
               ),
             ],
           ),
-          Text(
-            'About 2 Hours Ago',
-            style: getTextStyle(
-              fontSize: 12,
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-              lineHeight: 20,
+          Obx(
+            () => Text(
+              controller.lastUpdatedText,
+              style: getTextStyle(
+                fontSize: 12,
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                lineHeight: 20,
+              ),
             ),
           ),
         ],
@@ -1030,13 +1032,15 @@ class WeatherTabWidget extends GetView<SummaryController> {
                   ),
                 ],
               ),
-              Text(
-                'About 2 Hours Ago',
-                style: getTextStyle(
-                  fontSize: 12,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  lineHeight: 20,
+              Obx(
+                () => Text(
+                  controller.lastUpdatedText,
+                  style: getTextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    lineHeight: 20,
+                  ),
                 ),
               ),
             ],

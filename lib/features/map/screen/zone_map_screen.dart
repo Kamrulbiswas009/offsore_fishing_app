@@ -26,6 +26,7 @@ import 'package:paytonpieper/features/payment_service/controller/payment_service
 import 'package:paytonpieper/core/services/permissions/location_permission_service.dart';
 import 'package:geolocator/geolocator.dart';
 
+import 'package:paytonpieper/features/main_screen/controller/main_screen_controller.dart';
 import '../controller/map_screen_controller.dart';
 import '../model/map_zone_model.dart';
 
@@ -47,7 +48,7 @@ class ZoneMapScreen extends StatefulWidget {
 }
 
 class _ZoneMapScreenState extends State<ZoneMapScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   final controller = Get.find<MapScreenController>();
 
   late final AnimationController _panelAnim;
@@ -59,6 +60,9 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
   bool _isLocating = false; // prevents double-tap on location button
   Timer? _gridDebounce;
   double _bearing = 0.0;
+
+  StreamSubscription<Position>? _positionStream;
+  Worker? _tabIndexWorker;
 
   @override
   void initState() {
@@ -104,18 +108,101 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
         }
       } else {
         if (_panelAnim.status != AnimationStatus.reverse &&
-            _panelAnim.status != AnimationStatus.dismissed) {
+          _panelAnim.status != AnimationStatus.dismissed) {
           _panelAnim.reverse();
         }
       }
     });
+
+    WidgetsBinding.instance.addObserver(this);
+
+    if (Get.isRegistered<MainScreenController>()) {
+      _tabIndexWorker = ever(Get.find<MainScreenController>().currentIndex, (_) {
+        _updateLocationTracking();
+      });
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _tabIndexWorker?.dispose();
+    _stopLocationStream();
     _gridDebounce?.cancel();
     _panelAnim.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _updateLocationTracking();
+    } else if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _stopLocationStream();
+    }
+  }
+
+  void _startLocationStream() {
+    if (_positionStream != null) return;
+    const locationSettings = LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 10,
+    );
+    _positionStream = Geolocator.getPositionStream(locationSettings: locationSettings).listen(
+      (Position position) {
+        debugPrint('[ZoneMapScreen] Location stream update: ${position.latitude}, ${position.longitude}');
+      },
+      onError: (e) {
+        debugPrint('[ZoneMapScreen] Location stream error: $e');
+      },
+    );
+  }
+
+  void _stopLocationStream() {
+    _positionStream?.cancel();
+    _positionStream = null;
+  }
+
+  Future<void> _updateLocationTracking() async {
+    try {
+      final permissionService = Get.find<LocationPermissionService>();
+      final isGranted = await permissionService.isLocationPermissionGranted();
+      
+      bool isMapTabActive = true;
+      if (Get.isRegistered<MainScreenController>()) {
+        final mainController = Get.find<MainScreenController>();
+        isMapTabActive = mainController.currentIndex.value == 0;
+      }
+      
+      final isAppForeground = WidgetsBinding.instance.lifecycleState == null ||
+          WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+
+      if (isGranted && isMapTabActive && isAppForeground && _mapboxMap != null) {
+        _startLocationStream();
+        await controller.toggleMockUserLocation(_mapboxMap!, false);
+        await _mapboxMap!.location.updateSettings(
+          mapbox.LocationComponentSettings(
+            enabled: true,
+            pulsingEnabled: true,
+            showAccuracyRing: true,
+          ),
+        );
+      } else {
+        _stopLocationStream();
+        if (_mapboxMap != null) {
+          await _mapboxMap!.location.updateSettings(
+            mapbox.LocationComponentSettings(
+              enabled: false,
+            ),
+          );
+          if (!isGranted) {
+            await controller.toggleMockUserLocation(_mapboxMap!, true);
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[ZoneMapScreen] Error in _updateLocationTracking: $e');
+    }
   }
 
   // ── Map lifecycle ────────────────────────────────────────────────────────
@@ -154,14 +241,10 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
     try {
       final permissionService = Get.find<LocationPermissionService>();
       final isGranted = await permissionService.isLocationPermissionGranted();
+      
+      await _updateLocationTracking();
+
       if (isGranted && _mapboxMap != null) {
-        await _mapboxMap!.location.updateSettings(
-          mapbox.LocationComponentSettings(
-            enabled: true,
-            pulsingEnabled: true,
-            showAccuracyRing: true,
-          ),
-        );
         final pos = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
         );
@@ -171,6 +254,18 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
               coordinates: mapbox.Position(pos.longitude, pos.latitude),
             ),
             zoom: 10.0,
+          ),
+        );
+      } else if (_mapboxMap != null) {
+        await _mapboxMap!.setCamera(
+          mapbox.CameraOptions(
+            center: mapbox.Point(
+              coordinates: mapbox.Position(
+                controller.mapCenter.longitude,
+                controller.mapCenter.latitude,
+              ),
+            ),
+            zoom: 8.0,
           ),
         );
       }
@@ -196,21 +291,69 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
 
       final permissionService = Get.find<LocationPermissionService>();
       var isGranted = await permissionService.isLocationPermissionGranted();
+      LocationPermissionResult? result;
 
       if (!isGranted) {
-        final result = await permissionService.requestLocationWhenInUse();
+        result = await permissionService.requestLocationWhenInUse();
         isGranted = (result == LocationPermissionResult.granted);
       }
 
-      if (isGranted) {
-        // Enable location puck
-        await map.location.updateSettings(
-          mapbox.LocationComponentSettings(
-            enabled: true,
-            pulsingEnabled: true,
-            showAccuracyRing: true,
+      if (result == LocationPermissionResult.permanentlyDenied) {
+        Get.dialog(
+          AlertDialog(
+            backgroundColor: AppColors.containerBackgroundColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.r),
+              side: const BorderSide(color: AppColors.blue00F0FFColor),
+            ),
+            title: Text(
+              'Location Permission Required',
+              style: getTextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+            content: Text(
+              'Location permission is permanently denied. Please enable it in app settings to use this feature.',
+              style: getTextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: AppColors.greyC8D0DBColor,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(),
+                child: Text(
+                  'Cancel',
+                  style: getTextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.grey516173Color,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Get.back();
+                  permissionService.openSettings();
+                },
+                child: Text(
+                  'Settings',
+                  style: getTextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.blue00F0FFColor,
+                  ),
+                ),
+              ),
+            ],
           ),
         );
+      }
+
+      await _updateLocationTracking();
+
+      if (isGranted) {
         // Get user position
         final pos = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
