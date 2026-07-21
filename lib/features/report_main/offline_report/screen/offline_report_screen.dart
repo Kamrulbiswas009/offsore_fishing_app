@@ -8,58 +8,66 @@ import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/report_main/offline_report/controller/offline_report_controller.dart';
 import 'package:paytonpieper/features/report_main/offline_report/model/offline_report_model.dart';
 import '../../../../core/utils/constants/colors.dart';
+import 'package:paytonpieper/routes/app_routes.dart';
 
 class OfflineReportsScreen extends GetView<OfflineReportsTabController> {
   const OfflineReportsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundDarkColor,
-      body: Column(
-        children: [
-          _buildHeaderMap(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 20.h),
-                  _buildTabSwitcher(),
-                  SizedBox(height: 20.h),
-                  _buildAddReportButton(),
-                  SizedBox(height: 20.h),
-                  _buildPendingSyncCard(),
-                  SizedBox(height: 10.h),
-                  Text(
-                    "My Reports",
-                    style: getTextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
+        Get.offAllNamed(AppRoute.homeMainScreen);
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundDarkColor,
+        body: Column(
+          children: [
+            _buildHeaderMap(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 20.h),
+                    _buildTabSwitcher(),
+                    SizedBox(height: 20.h),
+                    _buildAddReportButton(),
+                    SizedBox(height: 20.h),
+                    _buildPendingSyncCard(),
+                    SizedBox(height: 10.h),
+                    Text(
+                      "My Reports",
+                      style: getTextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                  Text(
-                    "Track your fishing activity",
-                    style: getTextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.grey8B95A5Color,
+                    Text(
+                      "Track your fishing activity",
+                      style: getTextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.grey8B95A5Color,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 20.h),
-                  _buildFilterRow(),
-                  SizedBox(height: 20.h),
-                  _buildPatternLine(),
-                  SizedBox(height: 5.h),
-                  _buildReportList(),
-                  SizedBox(height: 50.h),
-                ],
+                    SizedBox(height: 20.h),
+                    _buildFilterRow(),
+                    SizedBox(height: 20.h),
+                    _buildPatternLine(),
+                    SizedBox(height: 5.h),
+                    _buildReportList(),
+                    SizedBox(height: 50.h),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -91,6 +99,19 @@ class OfflineReportsScreen extends GetView<OfflineReportsTabController> {
                   ),
                 )
               : const SizedBox(),
+        ),
+        Positioned(
+          top: 16.h,
+          left: 16.w,
+          child: SafeArea(
+            child: CircleAvatar(
+              backgroundColor: AppColors.blue1B2134Color,
+              child: IconButton(
+                icon: Icon(Icons.arrow_back, color: Colors.white, size: 18.sp),
+                onPressed: () => Get.offAllNamed(AppRoute.homeMainScreen),
+              ),
+            ),
+          ),
         ),
       ],
     );

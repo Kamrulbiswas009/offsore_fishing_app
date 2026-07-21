@@ -24,6 +24,8 @@ const kGridLineLayerId  = 'zone-grid-line-layer';
 const kGridLabelLayerId = 'zone-grid-label-layer';
 
 class MapScreenController extends GetxController {
+  static MapScreenController get to => Get.find<MapScreenController>();
+
   // Map centre – Gulf of Mexico offshore
   final LatLng mapCenter = const LatLng(28.5, -88.5);
 
@@ -777,6 +779,26 @@ class MapScreenController extends GetxController {
       } else {
         isLoading.value = false;
       }
+    }
+  }
+
+  void forceRefreshZones() {
+    final bounds = _cameraBounds.value;
+    if (bounds != null) {
+      fetchZones(
+        south: bounds['south'],
+        north: bounds['north'],
+        west: bounds['west'],
+        east: bounds['east'],
+        map: bounds['map'],
+      );
+    } else {
+      fetchZones(
+        south: 28.0,
+        north: 29.0,
+        west: -90.0,
+        east: -88.0,
+      );
     }
   }
 

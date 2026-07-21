@@ -40,6 +40,10 @@ class ReportSuccessController extends GetxController {
   }
 
   void close() {
-    Get.offAll(() =>  MainScreen());
+    if (Get.currentRoute == AppRoute.succesScreen) {
+      Get.back();
+    } else {
+      Get.offAll(() => MainScreen());
+    }
   }
 }
