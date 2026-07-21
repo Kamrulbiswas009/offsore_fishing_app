@@ -33,6 +33,14 @@ class MapScreenController extends GetxController {
   List<String> _lastRenderedZoneIds = [];
   String _lastActiveStateSignature = '';
 
+  // Caching variables for API requests to avoid redundant calls
+  double? _lastSouth;
+  double? _lastNorth;
+  double? _lastWest;
+  double? _lastEast;
+  bool? _lastIsFiltering;
+  String? _lastFilterSignature;
+
   // cell-id → {level, count}
   final Map<String, Map<String, dynamic>> activityMap = {};
 
@@ -277,6 +285,15 @@ class MapScreenController extends GetxController {
     // Instantly draw/update the local grid boundaries for the viewport
     await drawLocalGridInBounds(map, sw, ne);
 
+    // Keep camera bounds updated
+    _cameraBounds.value = {
+      'south': sw.latitude,
+      'north': ne.latitude,
+      'west': sw.longitude,
+      'east': ne.longitude,
+      'map': map,
+    };
+
     if (isInitialFetch) {
       isInitialFetch = false;
       await fetchZones(
@@ -286,15 +303,6 @@ class MapScreenController extends GetxController {
         east: ne.longitude,
         map: map,
       );
-    } else {
-      // API call debounce
-      _cameraBounds.value = {
-        'south': sw.latitude,
-        'north': ne.latitude,
-        'west': sw.longitude,
-        'east': ne.longitude,
-        'map': map,
-      };
     }
   }
 
@@ -696,6 +704,29 @@ class MapScreenController extends GetxController {
         eastParam = (east / 0.5).ceil() * 0.5;
       }
 
+      final filterSignature = isFiltering
+          ? "sp_${speciesParam}_time_${timeRange}_m_${methodParam}_depth_${depthMin}_${depthMax}_v_${visibilityParam}"
+          : "none";
+
+      // Check if we can skip this request because it's identical to the last successful fetch
+      final isIdenticalCall = _lastIsFiltering == isFiltering &&
+          (isFiltering
+              ? _lastFilterSignature == filterSignature
+              : (_lastSouth == southParam &&
+                  _lastNorth == northParam &&
+                  _lastWest == westParam &&
+                  _lastEast == eastParam));
+
+      if (isIdenticalCall) {
+        // If we skipped the fetch, we still want to make sure the grid is drawn/refreshed on the map
+        if (map != null) {
+          await refreshGridOnMap(map);
+        }
+        _isFetching = false;
+        isLoading.value = false;
+        return;
+      }
+
       final String url;
       if (isFiltering) {
         url = ApiConstants.getFilteredRegionReportsApi(
@@ -727,6 +758,12 @@ class MapScreenController extends GetxController {
         final cachedData = await cacheService.getCache(cacheKey, ignoreExpiry: true);
         if (cachedData != null && cachedData is Map && cachedData['data'] is List) {
           await _parseAndApplyZonesList(cachedData['data'] as List, isFiltering, map);
+          _lastSouth = southParam;
+          _lastNorth = northParam;
+          _lastWest = westParam;
+          _lastEast = eastParam;
+          _lastIsFiltering = isFiltering;
+          _lastFilterSignature = filterSignature;
         }
       } catch (e) {
         debugPrint("Instant local cache load error (zones): $e");
@@ -746,6 +783,12 @@ class MapScreenController extends GetxController {
         final data = response.responseData['data'] as List?;
         if (data != null) {
           await _parseAndApplyZonesList(data, isFiltering, map);
+          _lastSouth = southParam;
+          _lastNorth = northParam;
+          _lastWest = westParam;
+          _lastEast = eastParam;
+          _lastIsFiltering = isFiltering;
+          _lastFilterSignature = filterSignature;
         }
       } else {
         AppLoggerHelper.error(
@@ -1087,6 +1130,7 @@ class MapScreenController extends GetxController {
   }
 
   Future<void> refreshMapWithFilters() async {
+    deselectZone(); // Auto-close selected zone details panel/alert when filters update
     final bounds = _cameraBounds.value;
     if (bounds != null) {
       await fetchZones(
