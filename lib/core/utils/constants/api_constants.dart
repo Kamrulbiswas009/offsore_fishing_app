@@ -156,7 +156,7 @@ class ApiConstants {
       'regionCode': regionCode,
       'scope': scope,
       if (species != null && species.isNotEmpty) 'species': species,
-      if (timeframe != null && timeframe.isNotEmpty) 'timeframe': timeframe,
+      if (timeframe != null && timeframe.isNotEmpty) 'timeRange': timeframe,
       if (fishingMethod != null && fishingMethod.isNotEmpty)
         'fishingMethod': fishingMethod,
       if (depthMinFt != null) 'depthMinFt': depthMinFt.toString(),

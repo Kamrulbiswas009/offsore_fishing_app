@@ -10,7 +10,7 @@ class FilterController extends GetxController {
   final List<String> speciesList = speciesHierarchy.expand((node) => node.allSelectableLeafNames).toList();
 
   // Depth Range
-  var depthValue = 250.0.obs;
+  var depthValue = 625.0.obs;
 
   // Method Selection
   var selectedMethods = <String>[].obs;
@@ -80,7 +80,7 @@ class FilterController extends GetxController {
 
   void resetFilters() {
     selectedSpecies.clear();
-    depthValue.value = 250.0;
+    depthValue.value = 625.0;
     selectedMethods.clear();
     selectedVisibilities.assign("Public");
     selectedTime.value = "24h";

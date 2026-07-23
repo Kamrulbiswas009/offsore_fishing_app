@@ -655,8 +655,8 @@ class MapScreenController extends GetxController {
         final allMethodsSelected = filterController.isAllMethodsSelected;
         isFiltering = (filterController.selectedSpecies.isNotEmpty && !allSpeciesSelected) ||
             (filterController.selectedMethods.isNotEmpty && !allMethodsSelected) ||
-            filterController.selectedTime.value != "24h" ||
-            filterController.depthValue.value != 250.0 ||
+            filterController.selectedTime.value.isNotEmpty ||
+            filterController.depthValue.value != 625.0 ||
             filterController.selectedVisibilities.length != 1 ||
             !filterController.selectedVisibilities.contains("Public");
         speciesParam = (filterController.selectedSpecies.isEmpty || allSpeciesSelected)
