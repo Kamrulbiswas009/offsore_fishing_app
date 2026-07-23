@@ -58,6 +58,7 @@ class MapScreenController extends GetxController {
   double? _pendingWest;
   double? _pendingEast;
   mapbox.MapboxMap? _pendingMap;
+  bool _pendingForceRefresh = false;
 
   // ── Debounce Workers & State ──────────────────────────────────────────
   final _cameraBounds = Rxn<Map<String, dynamic>>();
@@ -621,6 +622,7 @@ class MapScreenController extends GetxController {
     double west = -90.0,
     double east = -88.0,
     mapbox.MapboxMap? map,
+    bool forceRefresh = false,
   }) async {
     if (_isFetching) {
       _pendingSouth = south;
@@ -628,6 +630,7 @@ class MapScreenController extends GetxController {
       _pendingWest = west;
       _pendingEast = east;
       _pendingMap = map;
+      _pendingForceRefresh = _pendingForceRefresh || forceRefresh;
       return;
     }
 
@@ -709,7 +712,8 @@ class MapScreenController extends GetxController {
           : "none";
 
       // Check if we can skip this request because it's identical to the last successful fetch
-      final isIdenticalCall = _lastIsFiltering == isFiltering &&
+      final isIdenticalCall = !forceRefresh &&
+          _lastIsFiltering == isFiltering &&
           (isFiltering
               ? _lastFilterSignature == filterSignature
               : (_lastSouth == southParam &&
@@ -774,6 +778,7 @@ class MapScreenController extends GetxController {
         url,
         token: token,
         cacheKey: cacheKey,
+        forceRefresh: forceRefresh,
       );
 
       if (response.isSuccess) {
@@ -805,12 +810,14 @@ class MapScreenController extends GetxController {
         final pWest = _pendingWest!;
         final pEast = _pendingEast!;
         final pMap = _pendingMap;
+        final pForce = _pendingForceRefresh;
 
         _pendingSouth = null;
         _pendingNorth = null;
         _pendingWest = null;
         _pendingEast = null;
         _pendingMap = null;
+        _pendingForceRefresh = false;
 
         await fetchZones(
           south: pSouth,
@@ -818,6 +825,7 @@ class MapScreenController extends GetxController {
           west: pWest,
           east: pEast,
           map: pMap,
+          forceRefresh: pForce,
         );
       } else {
         isLoading.value = false;
@@ -834,6 +842,7 @@ class MapScreenController extends GetxController {
         west: bounds['west'],
         east: bounds['east'],
         map: bounds['map'],
+        forceRefresh: true,
       );
     } else {
       fetchZones(
@@ -841,6 +850,7 @@ class MapScreenController extends GetxController {
         north: 29.0,
         west: -90.0,
         east: -88.0,
+        forceRefresh: true,
       );
     }
   }
