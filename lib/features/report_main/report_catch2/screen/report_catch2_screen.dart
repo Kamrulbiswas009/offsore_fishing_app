@@ -461,7 +461,7 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
                   Icon(Icons.add, color: AppColors.blue00F0FFColor, size: 20.sp),
                   SizedBox(width: 8.w),
                   Text(
-                    "+ Add Species",
+                    "Add Species",
                     style: getTextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
