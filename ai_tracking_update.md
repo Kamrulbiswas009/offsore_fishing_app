@@ -367,11 +367,11 @@ class ResponseData {
 
 | Field | Value |
 |:---|:---|
-| **Endpoint** | `GET /reports?groupId={groupId}&species=...&timeframe=...&fishingMethod=...&depthMinFt=...&depthMaxFt=...&page=1&limit=20` |
+| **Endpoint** | `GET /reports?groupId={groupId}&page=1&limit=20` (fetches all reports for group) |
 | **Headers** | `Authorization: Bearer {accessToken}` |
 | **Success Response** | `{"data": [{report_object}, ...]}` |
 | **Parses Into** | `List<GroupReportItem>` via `GroupReportItem.fromJson()` |
-| **Filters** | Species, Depth (0-125ft etc.), Method (Trolling etc.), Time (6h/24h/3d/7d) |
+| **Filters** | Handled locally on the frontend (Species list from taxonomy, depth range 0-625ft, master methods, and timeframes) |
 
 ---
 

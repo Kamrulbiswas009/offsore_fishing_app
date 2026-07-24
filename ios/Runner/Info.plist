@@ -41,6 +41,10 @@
 	<string>Allow camera access to scan payment cards securely.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>We request your location so we can enable location-based map features in a future update.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>We request your location so we can provide background weather alerts for your saved fishing zones.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Allow photo library access to attach catch photos to your reports.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -13,6 +13,7 @@ import 'package:paytonpieper/features/groups/model/group_details_model.dart';
 import 'package:paytonpieper/features/groups/model/group_model.dart';
 import 'package:paytonpieper/core/common/widgets/common_message.dart';
 import 'package:paytonpieper/features/groups/controller/group_main_screen_controller.dart';
+import 'package:paytonpieper/core/models/species_node.dart';
 
 enum GroupDetailsTab { reports, chat, members }
 
@@ -135,12 +136,7 @@ class GroupDetailsScreenController extends GetxController {
     label: 'Species',
     options: [
       'All Species',
-      'Tuna',
-      'Snapper',
-      'Grouper',
-      'Mahi',
-      'Wahoo',
-      'Marlin',
+      ...speciesHierarchy.expand((node) => node.allSelectableLeafNames).toList(),
     ],
   );
   final GroupReportFilterOption depthFilter = const GroupReportFilterOption(
@@ -158,11 +154,12 @@ class GroupDetailsScreenController extends GetxController {
     label: 'Method',
     options: [
       'All Methods',
-      'Trolling',
-      'Bottom Fishing',
-      'Jigging',
-      'Live Bait',
+      'Anchor/Spot Fishing',
+      'Casting',
       'Chunking',
+      'Jigging',
+      'Spearing',
+      'Trolling',
     ],
   );
   final GroupReportFilterOption timeFilter = const GroupReportFilterOption(
@@ -170,6 +167,7 @@ class GroupDetailsScreenController extends GetxController {
     options: ['All Time', '6h', '24h', '3d', '7d'],
   );
 
+  final RxList<GroupReportItem> allReports = <GroupReportItem>[].obs;
   final RxList<GroupReportItem> reports = <GroupReportItem>[].obs;
 
   final RxList<GroupChatMessage> messages = <GroupChatMessage>[
@@ -482,12 +480,11 @@ class GroupDetailsScreenController extends GetxController {
     final id = groupId ?? _groupId ?? groupDetail.value?.groupId;
     if (id == null || id.isEmpty) return;
 
-    final fetchKey = _buildReportFetchKey(id);
-    if (_lastReportFetchKey == fetchKey || isReportsLoading.value) return;
+    if (_lastReportFetchKey == id || isReportsLoading.value) return;
     fetchReportForGroup(groupId: id);
   }
 
-  Future<void> fetchReportForGroup({String? groupId}) async {
+  Future<void> fetchReportForGroup({String? groupId, bool forceRefresh = false}) async {
     final id = groupId ?? _groupId ?? groupDetail.value?.groupId;
     if (id == null || id.isEmpty) {
       AppLoggerHelper.error(
@@ -496,8 +493,7 @@ class GroupDetailsScreenController extends GetxController {
       return;
     }
 
-    final fetchKey = _buildReportFetchKey(id);
-    _lastReportFetchKey = fetchKey;
+    _lastReportFetchKey = id;
     isReportsLoading.value = true;
     reportsErrorMessage.value = '';
 
@@ -509,17 +505,13 @@ class GroupDetailsScreenController extends GetxController {
 
       final url = ApiConstants.getReportForGroupApi(
         groupId: id,
-        species: _selectedSpeciesQuery,
-        timeframe: _selectedTimeQuery,
-        fishingMethod: _selectedMethodQuery,
-        depthMinFt: _selectedDepthRange?[0],
-        depthMaxFt: _selectedDepthRange?[1],
       );
 
       final response = await _networkCaller.cachedGetRequest(
         url,
         token: token,
-        cacheKey: "group_reports_$fetchKey",
+        cacheKey: "group_reports_$id",
+        forceRefresh: forceRefresh,
       );
 
       if (response.isSuccess) {
@@ -539,12 +531,15 @@ class GroupDetailsScreenController extends GetxController {
                     GroupReportItem.fromJson(Map<String, dynamic>.from(item)),
               )
               .toList();
-          reports.assignAll(fetchedReports);
+          allReports.assignAll(fetchedReports);
+          applyLocalFilters();
         } else {
+          allReports.clear();
           reports.clear();
         }
       } else {
         reportsErrorMessage.value = response.errorMessage;
+        allReports.clear();
         reports.clear();
         AppLoggerHelper.error(
           '[GroupDetails] fetchReportForGroup failed | '
@@ -554,6 +549,7 @@ class GroupDetailsScreenController extends GetxController {
       }
     } catch (e) {
       reportsErrorMessage.value = 'Something went wrong. Please try again.';
+      allReports.clear();
       reports.clear();
       AppLoggerHelper.error('[GroupDetails] fetchReportForGroup exception', e);
     } finally {
@@ -785,33 +781,7 @@ class GroupDetailsScreenController extends GetxController {
     return detail.createdBy == currentUserId;
   }
 
-  String _buildReportFetchKey(String groupId) {
-    return [
-      groupId,
-      _selectedSpeciesQuery ?? '',
-      _selectedTimeQuery ?? '',
-      _selectedMethodQuery ?? '',
-      _selectedDepthRange?.join('-') ?? '',
-    ].join('|');
-  }
 
-  String? get _selectedSpeciesQuery {
-    final value = selectedReportSpecies.value;
-    if (value == null || value == 'All Species') return null;
-    return value;
-  }
-
-  String? get _selectedTimeQuery {
-    final value = selectedReportTime.value;
-    if (value == null || value == 'All Time') return null;
-    return value;
-  }
-
-  String? get _selectedMethodQuery {
-    final value = selectedReportMethod.value;
-    if (value == null || value == 'All Methods') return null;
-    return value.trim().toUpperCase().replaceAll(' ', '_');
-  }
 
   List<int?>? get _selectedDepthRange {
     final value = selectedReportDepth.value;
@@ -824,30 +794,88 @@ class GroupDetailsScreenController extends GetxController {
     return [min, isPlus ? null : int.parse(maxStr)];
   }
 
+  void applyLocalFilters() {
+    if (allReports.isEmpty) {
+      reports.clear();
+      return;
+    }
+
+    final List<GroupReportItem> filtered = allReports.where((report) {
+      // 1. Species Filter
+      final species = selectedReportSpecies.value;
+      if (species != null && species != 'All Species') {
+        if (!report.title.toLowerCase().contains(species.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // 2. Depth Filter
+      final depth = selectedReportDepth.value;
+      if (depth != null && depth != 'All Depths') {
+        final cleanReportDepth = int.tryParse(report.depth.replaceAll(RegExp(r'[^0-9]'), ''));
+        if (cleanReportDepth != null) {
+          final range = _selectedDepthRange;
+          if (range != null) {
+            final min = range[0] ?? 0;
+            final max = range[1];
+            if (cleanReportDepth < min) return false;
+            if (max != null && cleanReportDepth > max) return false;
+          }
+        }
+      }
+
+      // 3. Method Filter
+      final method = selectedReportMethod.value;
+      if (method != null && method != 'All Methods') {
+        if (report.technique.toLowerCase() != method.toLowerCase()) {
+          return false;
+        }
+      }
+
+      // 4. Time Filter
+      final time = selectedReportTime.value;
+      if (time != null && time != 'All Time') {
+        if (report.timeAgo.contains('day')) {
+          final days = int.tryParse(report.timeAgo.replaceAll(RegExp(r'[^0-9]'), ''));
+          if (days != null) {
+            if (time == '6h' || time == '24h') return false;
+            if (time == '3d' && days > 3) return false;
+            if (time == '7d' && days > 7) return false;
+          } else {
+            return false;
+          }
+        } else if (report.timeAgo.contains('hour')) {
+          final hours = int.tryParse(report.timeAgo.replaceAll(RegExp(r'[^0-9]'), ''));
+          if (hours != null) {
+            if (time == '6h' && hours > 6) return false;
+          }
+        }
+      }
+
+      return true;
+    }).toList();
+
+    reports.assignAll(filtered);
+  }
+
   void selectReportSpecies(String species) {
     selectedReportSpecies.value = species == 'All Species' ? null : species;
-    _refetchReportsForCurrentGroup();
+    applyLocalFilters();
   }
 
   void selectReportDepth(String depth) {
     selectedReportDepth.value = depth == 'All Depths' ? null : depth;
-    _refetchReportsForCurrentGroup();
+    applyLocalFilters();
   }
 
   void selectReportMethod(String method) {
     selectedReportMethod.value = method == 'All Methods' ? null : method;
-    _refetchReportsForCurrentGroup();
+    applyLocalFilters();
   }
 
   void selectReportTime(String time) {
     selectedReportTime.value = time == 'All Time' ? null : time;
-    _refetchReportsForCurrentGroup();
-  }
-
-  void _refetchReportsForCurrentGroup() {
-    final id = _groupId ?? groupDetail.value?.groupId;
-    if (id == null || id.isEmpty) return;
-    fetchReportForGroup(groupId: id);
+    applyLocalFilters();
   }
 
   void resetReportFilters() {
@@ -856,6 +884,7 @@ class GroupDetailsScreenController extends GetxController {
     selectedReportMethod.value = null;
     selectedReportTime.value = null;
     _lastReportFetchKey = null;
+    applyLocalFilters();
   }
 
   void selectInviteMethod(GroupInviteMethod method) {

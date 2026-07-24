@@ -13,6 +13,7 @@ import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/main_screen/widgets/filter_dialog.dart';
+import 'package:paytonpieper/features/main_screen/controller/filter_controller.dart';
 import 'package:paytonpieper/features/report_main/report_catch/screen/report_catch_screen.dart';
 import 'package:paytonpieper/features/report_main/summary/screen/summary_details.dart';
 import 'package:paytonpieper/core/services/sync_service.dart';
@@ -763,60 +764,65 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
   }
 
   Widget _filterButton() {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 56.r,
-          height: 56.r,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppColors.blue134D67Color.withValues(alpha: 0.9),
-            border: Border.all(color: AppColors.blue00F0FFColor, width: 1.5.w),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.blue00F0FFColor.withValues(alpha: 0.25),
-                blurRadius: 10,
-                spreadRadius: 1,
+    final filterController = Get.put(FilterController());
+    return Obx(() {
+      final count = filterController.activeFilterCount;
+      return Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 56.r,
+            height: 56.r,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.blue134D67Color.withValues(alpha: 0.9),
+              border: Border.all(color: AppColors.blue00F0FFColor, width: 1.5.w),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.blue00F0FFColor.withValues(alpha: 0.25),
+                  blurRadius: 10,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+            child: Center(
+              child: Image.asset(
+                IconPath.filterIcon, 
+                height: 24.r, 
+                width: 24.r,
+                color: AppColors.blue00F0FFColor,
               ),
-            ],
-          ),
-          child: Center(
-            child: Image.asset(
-              IconPath.filterIcon, 
-              height: 24.r, 
-              width: 24.r,
-              color: AppColors.blue00F0FFColor,
             ),
           ),
-        ),
-        // Positioned(
-        //   top: -2.r,
-        //   right: -2.r,
-        //   child: Container(
-        //     padding: EdgeInsets.all(4.r),
-        //     decoration: const BoxDecoration(
-        //       shape: BoxShape.circle,
-        //       color: Color(0xFFFF5252), // vibrant red badge
-        //     ),
-        //     constraints: BoxConstraints(
-        //       minWidth: 18.r,
-        //       minHeight: 18.r,
-        //     ),
-        //     child: Center(
-        //       child: Text(
-        //         '3',
-        //         style: TextStyle(
-        //           fontSize: 10.sp, 
-        //           color: Colors.white, 
-        //           fontWeight: FontWeight.bold,
-        //         ),
-        //       ),
-        //     ),
-        //   ),
-        // ),
-      ],
-    );
+          if (count > 0)
+            Positioned(
+              top: -2.r,
+              right: -2.r,
+              child: Container(
+                padding: EdgeInsets.all(4.r),
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0xFFFF5252), // vibrant red badge
+                ),
+                constraints: BoxConstraints(
+                  minWidth: 18.r,
+                  minHeight: 18.r,
+                ),
+                child: Center(
+                  child: Text(
+                    '$count',
+                    style: TextStyle(
+                      fontSize: 10.sp, 
+                      color: Colors.white, 
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      );
+    });
   }
 
   Widget _addButton() {

@@ -7,6 +7,7 @@ import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/features/groups/controller/group_details_screen_controller.dart';
 import 'package:paytonpieper/features/groups/model/group_details_model.dart';
 import 'package:paytonpieper/features/report_main/report_catch/screen/report_catch_screen.dart';
+import 'package:paytonpieper/features/report_main/report_catch2/screen/species_drill_down_bottom_sheet.dart';
 
 class GroupDetailsReportsTab extends GetView<GroupDetailsScreenController> {
   const GroupDetailsReportsTab({super.key});
@@ -18,17 +19,30 @@ class GroupDetailsReportsTab extends GetView<GroupDetailsScreenController> {
       children: [
         Row(
           children: [
-            Expanded(
-              child: Text(
-                'Group Reports',
-                style: getTextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.whiteColor,
-                  lineHeight: 12,
-                ),
+            Text(
+              'Group Reports',
+              style: getTextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: AppColors.whiteColor,
+                lineHeight: 12,
               ),
             ),
+            SizedBox(width: 8.w),
+            IconButton(
+              onPressed: () {
+                controller.resetReportFilters();
+                controller.fetchReportForGroup(forceRefresh: true);
+              },
+              icon: Icon(
+                Icons.refresh,
+                color: AppColors.whiteColor,
+                size: 22.r,
+              ),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+            const Spacer(),
             CustomButton(
               ontap: () {
                 Get.to(()=>ReportCatchStep1Screen());
@@ -50,10 +64,53 @@ class GroupDetailsReportsTab extends GetView<GroupDetailsScreenController> {
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              _ReportFilterDropdown(
-                selectedValue: controller.selectedReportSpecies,
-                filter: controller.speciesFilter,
-                onSelected: controller.selectReportSpecies,
+              GestureDetector(
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => SpeciesDrillDownBottomSheet(
+                      showAllOption: true,
+                      onSpeciesSelected: (species) {
+                        controller.selectReportSpecies(species);
+                        Navigator.pop(context);
+                      },
+                    ),
+                  );
+                },
+                child: Obx(() {
+                  final String text = controller.selectedReportSpecies.value ?? controller.speciesFilter.label;
+                  return Container(
+                    height: 38.h,
+                    padding: EdgeInsets.symmetric(horizontal: 8.w),
+                    decoration: BoxDecoration(
+                      color: AppColors.blue1B2134Color,
+                      borderRadius: BorderRadius.circular(8.r),
+                      border: Border.all(color: AppColors.grey8B95A5Color),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          text,
+                          style: getTextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.whiteColor,
+                            lineHeight: 10,
+                          ),
+                        ),
+                        SizedBox(width: 5.w),
+                        Icon(
+                          Icons.keyboard_arrow_down,
+                          color: AppColors.whiteColor,
+                          size: 17.r,
+                        ),
+                      ],
+                    ),
+                  );
+                }),
               ),
               SizedBox(width: 6.w),
               _ReportFilterDropdown(

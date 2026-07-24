@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -11,25 +12,49 @@ import 'package:paytonpieper/firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await StorageService.init();
 
-  // Initialize FCM push notifications
-  await AppNotificationInitializer.init();
+  // --- Critical, fast init that MUST complete before the first frame ---
+  try {
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
+  } catch (e) {
+    debugPrint('[main] Firebase init error: $e');
+  }
+
+  try {
+    await StorageService.init();
+  } catch (e) {
+    debugPrint('[main] StorageService init error: $e');
+  }
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  // edgeToEdge is cross-platform safe.
+  // immersiveSticky is Android-only and breaks Flutter rendering on iOS,
+  // causing a permanent white blank screen on physical iPhones.
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
   initializeMapbox();
+
+  // --- Launch the widget tree FIRST, then do non-critical async work ---
   runApp(const Paytonpieper());
 
-  // Start background weather monitoring after the widget tree is ready.
-  // WeatherAlertService is registered in ControllerBinder, so we wait for
-  // the first frame to ensure GetX DI is fully set up.
-  WidgetsBinding.instance.addPostFrameCallback((_) {
+  // Defer FCM and weather monitoring to after the first frame so that
+  // permission dialogs and network calls can never block the initial render.
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    // FCM push notification setup (may show a permission dialog on iOS)
+    try {
+      await AppNotificationInitializer.init();
+    } catch (e) {
+      debugPrint('[main] FCM init error: $e');
+    }
+
+    // Start background weather monitoring.
+    // WeatherAlertService is registered in ControllerBinder, so we wait for
+    // the first frame to ensure GetX DI is fully set up.
     try {
       Get.find<WeatherAlertService>().startMonitoring();
     } catch (_) {
