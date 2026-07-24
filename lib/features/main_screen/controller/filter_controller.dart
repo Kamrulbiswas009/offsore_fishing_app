@@ -24,70 +24,115 @@ class FilterController extends GetxController {
   ];
 
   // Visibility
-  var selectedVisibilities = <String>["Public"].obs;
+  var selectedVisibilities = <String>["Public", "Group"].obs;
 
   // Time Range
-  var selectedTime = "24h".obs;
+  var selectedTime = "".obs;
   final List<String> timeRanges = ["6h", "24h", "3d", "7d"];
 
-  void toggleSpecies(String name) {
-    selectedSpecies.contains(name) ? selectedSpecies.remove(name) : selectedSpecies.add(name);
+  // Temporary state for the filter dialog UI
+  var tempSelectedSpecies = <String>[].obs;
+  var tempDepthValue = 625.0.obs;
+  var tempSelectedMethods = <String>[].obs;
+  var tempSelectedVisibilities = <String>["Public", "Group"].obs;
+  var tempTimeValue = "".obs;
+
+  void initTempFields() {
+    tempSelectedSpecies.assignAll(selectedSpecies);
+    tempDepthValue.value = depthValue.value;
+    tempSelectedMethods.assignAll(selectedMethods);
+    tempSelectedVisibilities.assignAll(selectedVisibilities);
+    tempTimeValue.value = selectedTime.value;
   }
 
-  bool get isAllSpeciesSelected => selectedSpecies.length == speciesList.length;
-
-  void selectAllSpecies() {
-    selectedSpecies.assignAll(speciesList);
+  void commitTempFilters() {
+    selectedSpecies.assignAll(tempSelectedSpecies);
+    depthValue.value = tempDepthValue.value;
+    selectedMethods.assignAll(tempSelectedMethods);
+    selectedVisibilities.assignAll(tempSelectedVisibilities);
+    selectedTime.value = tempTimeValue.value;
   }
 
-  void clearAllSpecies() {
-    selectedSpecies.clear();
+  void toggleTempSpecies(String name) {
+    tempSelectedSpecies.contains(name) ? tempSelectedSpecies.remove(name) : tempSelectedSpecies.add(name);
   }
 
-  void toggleSelectAllSpecies() {
-    if (isAllSpeciesSelected) {
-      clearAllSpecies();
+  bool get isAllTempSpeciesSelected => tempSelectedSpecies.length == speciesList.length;
+
+  void selectAllTempSpecies() {
+    tempSelectedSpecies.assignAll(speciesList);
+  }
+
+  void clearAllTempSpecies() {
+    tempSelectedSpecies.clear();
+  }
+
+  void toggleSelectAllTempSpecies() {
+    if (isAllTempSpeciesSelected) {
+      clearAllTempSpecies();
     } else {
-      selectAllSpecies();
+      selectAllTempSpecies();
     }
   }
 
-  void toggleMethod(String name) {
-    selectedMethods.contains(name) ? selectedMethods.remove(name) : selectedMethods.add(name);
+  void toggleTempMethod(String name) {
+    tempSelectedMethods.contains(name) ? tempSelectedMethods.remove(name) : tempSelectedMethods.add(name);
   }
 
-  bool get isAllMethodsSelected => selectedMethods.length == methods.length;
+  bool get isAllTempMethodsSelected => tempSelectedMethods.length == methods.length;
 
-  void selectAllMethods() {
-    selectedMethods.assignAll(methods);
+  void selectAllTempMethods() {
+    tempSelectedMethods.assignAll(methods);
   }
 
-  void clearAllMethods() {
-    selectedMethods.clear();
+  void clearAllTempMethods() {
+    tempSelectedMethods.clear();
   }
 
-  void toggleSelectAllMethods() {
-    if (isAllMethodsSelected) {
-      clearAllMethods();
+  void toggleSelectAllTempMethods() {
+    if (isAllTempMethodsSelected) {
+      clearAllTempMethods();
     } else {
-      selectAllMethods();
+      selectAllTempMethods();
     }
   }
 
-  void toggleVisibility(String name) {
-    selectedVisibilities.contains(name) ? selectedVisibilities.remove(name) : selectedVisibilities.add(name);
+  void toggleTempVisibility(String name) {
+    tempSelectedVisibilities.contains(name) ? tempSelectedVisibilities.remove(name) : tempSelectedVisibilities.add(name);
   }
+
+  bool get isAllTempVisibilitiesSelected =>
+      tempSelectedVisibilities.contains("Public") && tempSelectedVisibilities.contains("Group");
 
   void resetFilters() {
-    selectedSpecies.clear();
-    depthValue.value = 625.0;
-    selectedMethods.clear();
-    selectedVisibilities.assign("Public");
-    selectedTime.value = "24h";
+    tempSelectedSpecies.clear();
+    tempDepthValue.value = 625.0;
+    tempSelectedMethods.clear();
+    tempSelectedVisibilities.assignAll(["Public", "Group"]);
+    tempTimeValue.value = "";
     applyFilters();
   }
 
+  /// Whether both visibilities are selected (default = no filter).
+  bool get isAllVisibilitiesSelected =>
+      selectedVisibilities.contains("Public") && selectedVisibilities.contains("Group");
+
+  bool get isAllSpeciesSelected => selectedSpecies.length == speciesList.length;
+  bool get isAllMethodsSelected => selectedMethods.length == methods.length;
+
+  /// Returns the number of active filter categories (0 = no filters active).
+  int get activeFilterCount {
+    int count = 0;
+    if (selectedSpecies.isNotEmpty && !isAllSpeciesSelected) count++;
+    if (depthValue.value != 625.0) count++;
+    if (selectedMethods.isNotEmpty && !isAllMethodsSelected) count++;
+    if (!isAllVisibilitiesSelected) count++;
+    if (selectedTime.value.isNotEmpty) count++;
+    return count;
+  }
+
   Future<void> applyFilters() async {
+    commitTempFilters();
     await EasyLoading.show(status: 'Applying filters...');
     try {
       // Trigger map refresh with filters directly to avoid duplicate fetches and latency
@@ -96,8 +141,11 @@ class FilterController extends GetxController {
         await mapController.refreshMapWithFilters();
       }
 
+      final count = activeFilterCount;
       await EasyLoading.showSuccess(
-        "Filters applied successfully!",
+        count > 0
+            ? "$count filter${count > 1 ? 's' : ''} applied!"
+            : "Showing all data",
         duration: const Duration(seconds: 1),
       );
       Get.back();

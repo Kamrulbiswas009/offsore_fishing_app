@@ -28,8 +28,12 @@ class AppDeviceUtility {
   }
 
   static void setFullScreen(bool enable) {
-    SystemChrome.setEnabledSystemUIMode(
-        enable ? SystemUiMode.immersiveSticky : SystemUiMode.edgeToEdge);
+    if (enable && Platform.isAndroid) {
+      // immersiveSticky is Android-only; on iOS it breaks Flutter rendering.
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    } else {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
   }
 
   static double getScreenHeight() {

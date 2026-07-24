@@ -13,6 +13,7 @@ class FilterDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(FilterController());
+    controller.initTempFields();
 
     return Dialog(
       backgroundColor: AppColors.backgroundDarkColor,
@@ -75,9 +76,9 @@ class FilterDialog extends StatelessWidget {
                           builder: (context) => SpeciesDrillDownBottomSheet(
                             onSpeciesSelected: (_) {},
                             isMultiSelect: true,
-                            initialSelectedSpecies: controller.selectedSpecies.toList(),
+                            initialSelectedSpecies: controller.tempSelectedSpecies.toList(),
                             onMultiSpeciesSelected: (selected) {
-                              controller.selectedSpecies.assignAll(selected);
+                              controller.tempSelectedSpecies.assignAll(selected);
                             },
                           ),
                         );
@@ -97,14 +98,14 @@ class FilterDialog extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                controller.selectedSpecies.isEmpty
+                                controller.tempSelectedSpecies.isEmpty
                                     ? "Select Species"
-                                    : controller.isAllSpeciesSelected
+                                    : controller.isAllTempSpeciesSelected
                                         ? "All Species Selected"
-                                        : "${controller.selectedSpecies.length} Species Selected",
+                                        : "${controller.tempSelectedSpecies.length} Species Selected",
                                 style: getTextStyle(
                                   fontSize: 14,
-                                  color: controller.selectedSpecies.isEmpty
+                                  color: controller.tempSelectedSpecies.isEmpty
                                       ? AppColors.grey8B95A5Color
                                       : Colors.white,
                                 ),
@@ -121,26 +122,26 @@ class FilterDialog extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (controller.selectedSpecies.isNotEmpty) ...[
+                    if (controller.tempSelectedSpecies.isNotEmpty) ...[
                       SizedBox(height: 15.h),
                       Wrap(
                         spacing: 10.w,
                         runSpacing: 10.h,
-                        children: controller.isAllSpeciesSelected
+                        children: controller.isAllTempSpeciesSelected
                             ? [
                                 _choiceChip(
                                   "All Species",
                                   true,
-                                  () => controller.clearAllSpecies(),
+                                  () => controller.clearAllTempSpecies(),
                                   showCloseIcon: true,
                                 ),
                               ]
-                            : controller.selectedSpecies
+                            : controller.tempSelectedSpecies
                                 .map(
                                   (s) => _choiceChip(
                                     s,
                                     true,
-                                    () => controller.toggleSpecies(s),
+                                    () => controller.toggleTempSpecies(s),
                                     showCloseIcon: true,
                                   ),
                                 )
@@ -158,9 +159,9 @@ class FilterDialog extends StatelessWidget {
                   _sectionHeader(IconPath.waveIcon, "Depth Range"),
                   Obx(
                     () => Text(
-                      controller.depthValue.value.toInt() >= 625
+                      controller.tempDepthValue.value.toInt() >= 625
                           ? "0ft - 625+ ft"
-                          : "0ft - ${controller.depthValue.value.toInt()}ft",
+                          : "0ft - ${controller.tempDepthValue.value.toInt()}ft",
                       style: getTextStyle(
                         fontSize: 14,
                         color: AppColors.grey8B95A5Color,
@@ -179,9 +180,9 @@ class FilterDialog extends StatelessWidget {
                     overlayColor: AppColors.orangeColor.withValues(alpha: 0.2),
                   ),
                   child: Slider(
-                    value: controller.depthValue.value,
+                    value: controller.tempDepthValue.value,
                     max: 625,
-                    onChanged: (v) => controller.depthValue.value = v,
+                    onChanged: (v) => controller.tempDepthValue.value = v,
                   ),
                 ),
               ),
@@ -234,15 +235,15 @@ class FilterDialog extends StatelessWidget {
                                     "All Methods (Select All)",
                                     style: getTextStyle(
                                       fontSize: 14,
-                                      color: controller.isAllMethodsSelected
+                                      color: controller.isAllTempMethodsSelected
                                           ? AppColors.blue00F0FFColor
                                           : Colors.white,
-                                      fontWeight: controller.isAllMethodsSelected
+                                      fontWeight: controller.isAllTempMethodsSelected
                                           ? FontWeight.bold
                                           : FontWeight.normal,
                                     ),
                                   ),
-                                  if (controller.isAllMethodsSelected)
+                                  if (controller.isAllTempMethodsSelected)
                                     Icon(
                                       Icons.check_circle,
                                       color: AppColors.blue00F0FFColor,
@@ -252,7 +253,7 @@ class FilterDialog extends StatelessWidget {
                               ),
                             ),
                             ...controller.methods.map((String value) {
-                              final isSelected = controller.selectedMethods.contains(value);
+                              final isSelected = controller.tempSelectedMethods.contains(value);
                               return DropdownMenuItem<String>(
                                 value: value,
                                 child: Row(
@@ -283,34 +284,34 @@ class FilterDialog extends StatelessWidget {
                           ],
                           onChanged: (value) {
                             if (value == "all_methods") {
-                              controller.toggleSelectAllMethods();
+                              controller.toggleSelectAllTempMethods();
                             } else if (value != null) {
-                              controller.toggleMethod(value);
+                              controller.toggleTempMethod(value);
                             }
                           },
                         ),
                       ),
                     ),
-                    if (controller.selectedMethods.isNotEmpty) ...[
+                    if (controller.tempSelectedMethods.isNotEmpty) ...[
                       SizedBox(height: 15.h),
                       Wrap(
                         spacing: 10.w,
                         runSpacing: 10.h,
-                        children: controller.isAllMethodsSelected
+                        children: controller.isAllTempMethodsSelected
                             ? [
                                 _choiceChip(
                                   "All Methods",
                                   true,
-                                  () => controller.clearAllMethods(),
+                                  () => controller.clearAllTempMethods(),
                                   showCloseIcon: true,
                                 ),
                               ]
-                            : controller.selectedMethods
+                            : controller.tempSelectedMethods
                                 .map(
                                   (m) => _choiceChip(
                                     m,
                                     true,
-                                    () => controller.toggleMethod(m),
+                                    () => controller.toggleTempMethod(m),
                                     showCloseIcon: true,
                                   ),
                                 )
@@ -332,14 +333,14 @@ class FilterDialog extends StatelessWidget {
                   children: [
                     _visibilityOption(
                       "Public",
-                      controller.selectedVisibilities.contains("Public"),
-                      () => controller.toggleVisibility("Public"),
+                      controller.tempSelectedVisibilities.contains("Public"),
+                      () => controller.toggleTempVisibility("Public"),
                     ),
                     SizedBox(width: 20.w),
                     _visibilityOption(
                       "Group",
-                      controller.selectedVisibilities.contains("Group"),
-                      () => controller.toggleVisibility("Group"),
+                      controller.tempSelectedVisibilities.contains("Group"),
+                      () => controller.toggleTempVisibility("Group"),
                     ),
                   ],
                 ),
@@ -354,8 +355,14 @@ class FilterDialog extends StatelessWidget {
                       .map(
                         (t) => _timeButton(
                           t,
-                          controller.selectedTime.value == t,
-                          () => controller.selectedTime.value = t,
+                          controller.tempTimeValue.value == t,
+                          () {
+                            if (controller.tempTimeValue.value == t) {
+                              controller.tempTimeValue.value = ""; // Deselect = show all data
+                            } else {
+                              controller.tempTimeValue.value = t;
+                            }
+                          },
                         ),
                       )
                       .toList(),

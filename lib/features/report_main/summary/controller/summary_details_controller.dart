@@ -13,6 +13,8 @@ import 'package:paytonpieper/core/utils/constants/api_constants.dart';
 import 'package:paytonpieper/core/utils/logging/logger.dart';
 import 'package:paytonpieper/core/models/species_node.dart';
 import 'package:paytonpieper/core/utils/helpers/app_helper.dart';
+import 'package:intl/intl.dart';
+import 'package:paytonpieper/features/profile_and_setting/controller/profile_main_screen_controller.dart';
 
 
 class SummaryController extends GetxController {
@@ -835,7 +837,7 @@ class SummaryController extends GetxController {
         weatherData.value = cachedData;
         final hours = cachedData['hours'] as List?;
         if (hours != null) {
-          _populateDaysList(hours);
+          populateDaysList(hours);
         }
       }
     } catch (e) {
@@ -865,7 +867,7 @@ class SummaryController extends GetxController {
           weatherData.value = data;
           final hours = data['hours'] as List?;
           if (hours != null) {
-            _populateDaysList(hours);
+            populateDaysList(hours);
           }
         }
       } else {
@@ -878,28 +880,43 @@ class SummaryController extends GetxController {
     }
   }
 
-  void _populateDaysList(List hours) {
+  void populateDaysList(List hours) {
     final List<String> computed = ["Today"];
     final Set<String> uniqueDates = {};
-    final nowStr = DateTime.now().toIso8601String().substring(0, 10);
-    final List<String> weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+    if (hours.isEmpty) {
+      days.assignAll(computed);
+      return;
+    }
+
+    final firstTimeStr = hours.first['time'] as String?;
+    String nowStr = DateTime.now().toUtc().toIso8601String().substring(0, 10);
+    if (firstTimeStr != null) {
+      try {
+        final dt = _parseDateTimeUtc(firstTimeStr);
+        nowStr = dt.toIso8601String().substring(0, 10);
+      } catch (_) {}
+    }
 
     for (var item in hours) {
       final timeStr = item['time'] as String?;
       if (timeStr == null) continue;
       try {
-        final dt = DateTime.parse(timeStr).toLocal();
+        final dt = _parseDateTimeUtc(timeStr);
         final dateStr = dt.toIso8601String().substring(0, 10);
         if (dateStr == nowStr) continue;
         if (uniqueDates.contains(dateStr)) continue;
 
         uniqueDates.add(dateStr);
-        final label = "${weekdays[dt.weekday % 7]} ${dt.day}";
+        final label = DateFormat('EEE d').format(dt);
         computed.add(label);
       } catch (_) {}
     }
 
-    days.assignAll(computed.take(5).toList());
+    final isPremium = _isPremium;
+    final limit = isPremium ? computed.length : 3;
+
+    days.assignAll(computed.take(limit).toList());
     if (!days.contains(selectedDay.value)) {
       selectedDay.value = "Today";
     }
@@ -909,24 +926,30 @@ class SummaryController extends GetxController {
     final hours = weatherData.value?['hours'] as List?;
     if (hours == null || hours.isEmpty) return null;
 
-    DateTime targetDate = DateTime.now();
+    DateTime targetDate = DateTime.now().toUtc();
     if (dayLabel != "Today") {
-      final List<String> weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
       for (var item in hours) {
         final timeStr = item['time'] as String?;
         if (timeStr == null) continue;
         try {
-          final dt = DateTime.parse(timeStr).toLocal();
-          final label = "${weekdays[dt.weekday % 7]} ${dt.day}";
+          final dt = _parseDateTimeUtc(timeStr);
+          final label = DateFormat('EEE d').format(dt);
           if (label == dayLabel) {
             targetDate = dt;
             break;
           }
         } catch (_) {}
       }
+    } else {
+      final firstTimeStr = hours.first['time'] as String?;
+      if (firstTimeStr != null) {
+        try {
+          targetDate = _parseDateTimeUtc(firstTimeStr);
+        } catch (_) {}
+      }
     }
 
-    final targetHour = DateTime.now().hour;
+    final targetHour = DateTime.now().toUtc().hour;
     Map<String, dynamic>? bestMatch;
     double minDiff = double.infinity;
 
@@ -934,9 +957,9 @@ class SummaryController extends GetxController {
       final timeStr = item['time'] as String?;
       if (timeStr == null) continue;
       try {
-        final dt = DateTime.parse(timeStr).toLocal();
-        final diff = DateTime(dt.year, dt.month, dt.day, dt.hour)
-            .difference(DateTime(targetDate.year, targetDate.month, targetDate.day, targetHour))
+        final dt = _parseDateTimeUtc(timeStr);
+        final diff = DateTime.utc(dt.year, dt.month, dt.day, dt.hour)
+            .difference(DateTime.utc(targetDate.year, targetDate.month, targetDate.day, targetHour))
             .inHours
             .abs();
         if (diff < minDiff) {
@@ -1079,19 +1102,25 @@ class SummaryController extends GetxController {
     final hours = weatherData.value?['hours'] as List?;
     if (hours == null || hours.isEmpty) return null;
 
-    DateTime targetDate = DateTime.now();
+    DateTime targetDate = DateTime.now().toUtc();
     if (dayLabel != "Today") {
-      final List<String> weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
       for (var item in hours) {
         final timeStr = item['time'] as String?;
         if (timeStr == null) continue;
         try {
-          final dt = DateTime.parse(timeStr).toLocal();
-          final label = "${weekdays[dt.weekday % 7]} ${dt.day}";
+          final dt = _parseDateTimeUtc(timeStr);
+          final label = DateFormat('EEE d').format(dt);
           if (label == dayLabel) {
             targetDate = dt;
             break;
           }
+        } catch (_) {}
+      }
+    } else {
+      final firstTimeStr = hours.first['time'] as String?;
+      if (firstTimeStr != null) {
+        try {
+          targetDate = _parseDateTimeUtc(firstTimeStr);
         } catch (_) {}
       }
     }
@@ -1107,9 +1136,9 @@ class SummaryController extends GetxController {
       final timeStr = item['time'] as String?;
       if (timeStr == null) continue;
       try {
-        final dt = DateTime.parse(timeStr).toLocal();
-        final diff = DateTime(dt.year, dt.month, dt.day, dt.hour)
-            .difference(DateTime(targetDate.year, targetDate.month, targetDate.day, targetHour))
+        final dt = _parseDateTimeUtc(timeStr);
+        final diff = DateTime.utc(dt.year, dt.month, dt.day, dt.hour)
+            .difference(DateTime.utc(targetDate.year, targetDate.month, targetDate.day, targetHour))
             .inHours
             .abs();
         if (diff < minDiff) {
@@ -1204,5 +1233,43 @@ class SummaryController extends GetxController {
 
     offlineZones.remove(zone.name);
     await StorageService.saveOfflineZones(offlineZones.toList());
+  }
+
+  DateTime _parseDateTimeUtc(String timeStr) {
+    try {
+      final parts = timeStr.split('T');
+      final dateParts = parts[0].split('-');
+      final year = int.parse(dateParts[0]);
+      final month = int.parse(dateParts[1]);
+      final day = int.parse(dateParts[2]);
+
+      int hour = 0;
+      int minute = 0;
+      int second = 0;
+
+      if (parts.length > 1) {
+        final timeClean = parts[1].replaceAll('Z', '');
+        final timePartsOnly = timeClean.split(RegExp(r'[+\-]'));
+        final timeParts = timePartsOnly[0].split(':');
+        if (timeParts.length >= 1) hour = int.parse(timeParts[0]);
+        if (timeParts.length >= 2) minute = int.parse(timeParts[1]);
+        if (timeParts.length >= 3) {
+          final secPart = timeParts[2].split('.')[0];
+          second = int.parse(secPart);
+        }
+      }
+      return DateTime.utc(year, month, day, hour, minute, second);
+    } catch (_) {
+      return DateTime.parse(timeStr).toUtc();
+    }
+  }
+
+  bool get _isPremium {
+    try {
+      final profileCtrl = Get.find<ProfileMainScreenController>();
+      return profileCtrl.isPremiumAccount;
+    } catch (_) {
+      return false;
+    }
   }
 }

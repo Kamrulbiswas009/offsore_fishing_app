@@ -20,6 +20,7 @@ class SpeciesDrillDownBottomSheet extends StatefulWidget {
   final bool isMultiSelect;
   final List<String> initialSelectedSpecies;
   final Function(List<String>)? onMultiSpeciesSelected;
+  final bool showAllOption;
 
   const SpeciesDrillDownBottomSheet({
     super.key,
@@ -27,6 +28,7 @@ class SpeciesDrillDownBottomSheet extends StatefulWidget {
     this.isMultiSelect = false,
     this.initialSelectedSpecies = const [],
     this.onMultiSpeciesSelected,
+    this.showAllOption = false,
   });
 
   @override
@@ -104,6 +106,18 @@ class _SpeciesDrillDownBottomSheetState
     if (_nodeHistory.isEmpty) {
       // ── Root level ────────────────────────────────────────────────────────
       final items = <_DisplayItem>[];
+
+      if (widget.showAllOption) {
+        items.add(
+          _DisplayItem(
+            label: 'All Species',
+            isCategory: false,
+            isRecent: false,
+            isLeaf: true,
+            onTap: () => _toggleLeafSpecies('All Species'),
+          ),
+        );
+      }
 
       final recents = _recentSelections;
       if (recents.isNotEmpty) {

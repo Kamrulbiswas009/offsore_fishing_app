@@ -660,8 +660,7 @@ class MapScreenController extends GetxController {
             (filterController.selectedMethods.isNotEmpty && !allMethodsSelected) ||
             filterController.selectedTime.value.isNotEmpty ||
             filterController.depthValue.value != 625.0 ||
-            filterController.selectedVisibilities.length != 1 ||
-            !filterController.selectedVisibilities.contains("Public");
+            !filterController.isAllVisibilitiesSelected;
         speciesParam = (filterController.selectedSpecies.isEmpty || allSpeciesSelected)
             ? null
             : filterController.selectedSpecies.join(',');
@@ -681,15 +680,16 @@ class MapScreenController extends GetxController {
         }).toList();
         methodParam = (mappedMethods.isEmpty || allMethodsSelected) ? null : mappedMethods.join(',');
 
+        // When both Public and Group are selected (default), send null so backend returns all data
         final upperVis = filterController.selectedVisibilities
             .map((v) => v.trim().toUpperCase())
             .toList();
-        if (upperVis.contains("PUBLIC") && !upperVis.contains("GROUP")) {
+        if (filterController.isAllVisibilitiesSelected) {
+          visibilityParam = null; // null = backend returns all visibility data
+        } else if (upperVis.contains("PUBLIC")) {
           visibilityParam = "PUBLIC";
-        } else if (upperVis.contains("GROUP") && !upperVis.contains("PUBLIC")) {
+        } else if (upperVis.contains("GROUP")) {
           visibilityParam = "GROUP";
-        } else if (upperVis.contains("PUBLIC") && upperVis.contains("GROUP")) {
-          visibilityParam = "PUBLIC,GROUP";
         }
         timeRange = filterController.selectedTime.value;
       }
