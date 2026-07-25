@@ -51,18 +51,19 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyDcc38IofGiek6U63nC4ZI226gLjtnxNNQ',
-    appId: '1:411800532163:android:8cf39c52d226d5e4f1de76',
+    appId: '1:411800532163:android:80f14c1dfdb8f461f1de76',
     messagingSenderId: '411800532163',
     projectId: 'on-the-bite',
     storageBucket: 'on-the-bite.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCUHxKWSEcjej5tShEHyJrQEU1sK_VSLJg',
-    appId: '1:411800532163:ios:5529636739fe80a1f1de76',
+    appId: '1:411800532163:ios:49d8c403c38a1fdcf1de76',
     messagingSenderId: '411800532163',
     projectId: 'on-the-bite',
     storageBucket: 'on-the-bite.firebasestorage.app',
-    iosBundleId: 'com.onthebite.app',
+    androidClientId: '411800532163-2fang0crbcvsj0ler3dktmbuud8cvhuo.apps.googleusercontent.com',
+    iosClientId: '411800532163-bb1auu1ii9lnb527ct56d28019cg2u47.apps.googleusercontent.com',
+    iosBundleId: 'com.onthebite.app.ios',
   );
 }

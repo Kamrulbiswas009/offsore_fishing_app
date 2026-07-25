@@ -4,7 +4,6 @@ import 'dart:developer';
 import 'dart:io';
 import 'package:get/get.dart' hide Response, MultipartFile;
 import 'package:http/http.dart';
-import 'package:http_parser/http_parser.dart';
 
 import '../models/response_data.dart';
 import 'offline_cache_service.dart';
@@ -37,7 +36,9 @@ class NetworkCaller {
 
   Future<ResponseData> _executeGetRequest(String url, String? token) async {
     log('GET Request: $url');
-    log('GET Token: ${token == null || token.isEmpty ? '[MISSING]' : '[PRESENT]'}');
+    log(
+      'GET Token: ${token == null || token.isEmpty ? '[MISSING]' : '[PRESENT]'}',
+    );
     try {
       final Response response = await get(
         Uri.parse(url),
@@ -95,9 +96,14 @@ class NetworkCaller {
     if (!isOnline) {
       try {
         final cacheService = Get.find<OfflineCacheService>();
-        final cachedData = await cacheService.getCache(cacheKey, ignoreExpiry: true);
+        final cachedData = await cacheService.getCache(
+          cacheKey,
+          ignoreExpiry: true,
+        );
         if (cachedData != null) {
-          log('Returning cached fallback data for key: $cacheKey (offline mode)');
+          log(
+            'Returning cached fallback data for key: $cacheKey (offline mode)',
+          );
           return ResponseData(
             isSuccess: true,
             statusCode: 200,
@@ -123,7 +129,11 @@ class NetworkCaller {
       // Save cache
       try {
         final cacheService = Get.find<OfflineCacheService>();
-        await cacheService.saveCache(cacheKey, response.responseData, ttlMinutes: ttlMinutes);
+        await cacheService.saveCache(
+          cacheKey,
+          response.responseData,
+          ttlMinutes: ttlMinutes,
+        );
       } catch (e) {
         log('Failed to save to cache: $e');
       }
@@ -132,7 +142,10 @@ class NetworkCaller {
       // 2. Fallback to cache if failure (timeout, server error, etc.)
       try {
         final cacheService = Get.find<OfflineCacheService>();
-        final cachedData = await cacheService.getCache(cacheKey, ignoreExpiry: true);
+        final cachedData = await cacheService.getCache(
+          cacheKey,
+          ignoreExpiry: true,
+        );
         if (cachedData != null) {
           log('Returning cached fallback data for key: $cacheKey');
           return ResponseData(
@@ -154,7 +167,9 @@ class NetworkCaller {
   // DELETE method
   Future<ResponseData> deleteRequest(String url, {String? token}) async {
     log('DELETE Request: $url');
-    log('DELETE Token: ${token == null || token.isEmpty ? '[MISSING]' : '[PRESENT]'}');
+    log(
+      'DELETE Token: ${token == null || token.isEmpty ? '[MISSING]' : '[PRESENT]'}',
+    );
     try {
       final Response response = await delete(
         Uri.parse(url),
@@ -177,7 +192,9 @@ class NetworkCaller {
     String? token,
   }) async {
     log('POST Request: $url');
-    log('Request Body: ${body != null ? jsonEncode(_redactSensitiveData(body)) : 'EMPTY'}');
+    log(
+      'Request Body: ${body != null ? jsonEncode(_redactSensitiveData(body)) : 'EMPTY'}',
+    );
 
     try {
       final Response response = await post(
@@ -201,7 +218,9 @@ class NetworkCaller {
     String? token,
   }) async {
     log('PATCH Request: $url');
-    log('Request Body: ${body != null ? jsonEncode(_redactSensitiveData(body)) : 'EMPTY'}');
+    log(
+      'Request Body: ${body != null ? jsonEncode(_redactSensitiveData(body)) : 'EMPTY'}',
+    );
 
     try {
       final Response response = await patch(
@@ -225,7 +244,9 @@ class NetworkCaller {
     String? token,
   }) async {
     log('PUT Request: $url');
-    log('Request Body: ${body != null ? jsonEncode(_redactSensitiveData(body)) : 'EMPTY'}');
+    log(
+      'Request Body: ${body != null ? jsonEncode(_redactSensitiveData(body)) : 'EMPTY'}',
+    );
 
     try {
       final Response response = await put(
@@ -241,7 +262,6 @@ class NetworkCaller {
       return _handleError(e);
     }
   }
-
 
   // PATCH multipart/form-data method (for file uploads)
   Future<ResponseData> patchMultipartRequest(
@@ -325,7 +345,6 @@ class NetworkCaller {
     }
   }
 
-
   String _guessMimeType(String path) {
     final ext = path.split('.').last.toLowerCase();
     switch (ext) {
@@ -346,7 +365,7 @@ class NetworkCaller {
   // Handle response
   ResponseData _handleResponse(Response response) {
     log('Response Status: ${response.statusCode}');
-    
+
     dynamic decodedResponse;
     bool isJson = false;
 
@@ -354,7 +373,9 @@ class NetworkCaller {
       if (response.body.isNotEmpty) {
         decodedResponse = jsonDecode(response.body);
         isJson = true;
-        log('Response Body: ${jsonEncode(_redactSensitiveData(decodedResponse))}');
+        log(
+          'Response Body: ${jsonEncode(_redactSensitiveData(decodedResponse))}',
+        );
       } else {
         decodedResponse = '';
       }
@@ -401,8 +422,8 @@ class NetworkCaller {
         errorMessage: isMap && decodedResponse['message'] != null
             ? decodedResponse['message']
             : (decodedResponse is String && decodedResponse.isNotEmpty
-                ? decodedResponse
-                : 'An unknown error occurred'),
+                  ? decodedResponse
+                  : 'An unknown error occurred'),
       );
     }
   }
@@ -424,6 +445,8 @@ class NetworkCaller {
         final isSensitive =
             normalizedKey == 'password' ||
             normalizedKey == 'otp' ||
+            normalizedKey == 'idtoken' ||
+            normalizedKey == 'fcmtoken' ||
             normalizedKey == 'accesstoken' ||
             normalizedKey == 'refreshtoken';
         return MapEntry(
