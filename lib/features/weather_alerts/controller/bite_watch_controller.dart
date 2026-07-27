@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
 import 'package:paytonpieper/core/services/network_caller.dart';
@@ -188,6 +190,13 @@ class BiteWatchController extends GetxController {
   Future<void> uploadFcmToken() async {
     if (_token == null) return;
     try {
+      if (Platform.isIOS) {
+        final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+        if (apnsToken == null) {
+          AppLoggerHelper.warning('[FCM] APNS token is not available yet on this iOS device/simulator. Skipping FCM upload.');
+          return;
+        }
+      }
       final fcmToken = await FirebaseMessaging.instance.getToken();
       if (fcmToken == null || fcmToken.isEmpty) return;
 
@@ -202,8 +211,18 @@ class BiteWatchController extends GetxController {
       } else {
         AppLoggerHelper.warning('[FCM] Device token registration failed: ${response.errorMessage}');
       }
+    } on FirebaseException catch (e) {
+      if (e.code == 'apns-token-not-set') {
+        AppLoggerHelper.warning('[FCM] APNS token is not available on this iOS device/simulator.');
+      } else {
+        AppLoggerHelper.error('[FCM] FirebaseException uploading FCM token', e);
+      }
     } catch (e) {
-      AppLoggerHelper.error('[FCM] Exception uploading FCM token', e);
+      if (e.toString().contains('apns-token-not-set')) {
+        AppLoggerHelper.warning('[FCM] APNS token is not available on this iOS device/simulator.');
+      } else {
+        AppLoggerHelper.error('[FCM] Exception uploading FCM token', e);
+      }
     }
   }
 
