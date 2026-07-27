@@ -250,7 +250,7 @@ class _ReportFilterDropdown extends StatelessWidget {
                 text,
                 style: getTextStyle(
                   fontSize: 14,
-                  fontWeight: FontWeight.w400,
+                  fontWeight: FontWeight.w400, 
                   color: AppColors.whiteColor,
                   lineHeight: 10,
                 ),

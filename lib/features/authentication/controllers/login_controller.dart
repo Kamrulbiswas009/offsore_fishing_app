@@ -9,6 +9,8 @@ import 'package:paytonpieper/core/utils/constants/api_constants.dart';
 import 'package:paytonpieper/core/utils/logging/logger.dart';
 import 'package:paytonpieper/features/main_screen/screen/home_main_screen.dart';
 import 'package:paytonpieper/routes/app_routes.dart';
+import 'package:paytonpieper/features/authentication/controllers/apple_login_controller.dart';
+import 'package:paytonpieper/features/authentication/controllers/google_login_controller.dart';
 import 'package:paytonpieper/features/weather_alerts/controller/bite_watch_controller.dart';
 
 class LoginController extends GetxController {
@@ -139,9 +141,13 @@ class LoginController extends GetxController {
     Get.offNamed(AppRoute.getForgotPasswordScreen());
   }
 
-  void continueWithGoogle() {}
+  void continueWithGoogle() {
+    Get.find<GoogleLoginController>().continueWithGoogle();
+  }
 
-  void continueWithApple() {}
+  void continueWithApple() {
+    Get.find<AppleLoginController>().continueWithApple();
+  }
 
   @override
   void onClose() {

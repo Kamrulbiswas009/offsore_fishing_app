@@ -7,6 +7,8 @@ import 'package:paytonpieper/core/services/network_caller.dart';
 import 'package:paytonpieper/core/utils/constants/api_constants.dart';
 import 'package:paytonpieper/core/utils/logging/logger.dart';
 import 'package:paytonpieper/features/authentication/presentation/screens/verify_email_otp_screen.dart';
+import 'package:paytonpieper/features/authentication/controllers/apple_login_controller.dart';
+import 'package:paytonpieper/features/authentication/controllers/google_login_controller.dart';
 import 'package:paytonpieper/routes/app_routes.dart';
 
 class CreateAccountScreenController extends GetxController {
@@ -164,9 +166,13 @@ class CreateAccountScreenController extends GetxController {
 
   void backToLogin() => Get.offAllNamed(AppRoute.getLoginScreen());
 
-  void continueWithGoogle() {}
+  void continueWithGoogle() {
+    Get.find<GoogleLoginController>().continueWithGoogle();
+  }
 
-  void continueWithApple() {}
+  void continueWithApple() {
+    Get.find<AppleLoginController>().continueWithApple();
+  }
 
   String _responseMessage(dynamic data, String fallback) {
     if (data is Map && data['message'] is String) {
