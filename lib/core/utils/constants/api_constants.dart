@@ -13,6 +13,7 @@ class ApiConstants {
   static const String verifyEmailApi = "$baseUrl/auth/verify-email";
 
   static const String loginApi = "$baseUrl/auth/login";
+  static const String socialLoginApi = "$baseUrl/auth/social-login";
 
   static const String authMeApi = "$baseUrl/user/me";
   static const String updateProfileApi = "$baseUrl/user/profile-update";

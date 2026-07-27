@@ -126,12 +126,11 @@ class LoginScreen extends StatelessWidget {
                       ),
                       SizedBox(width: 12.w),
                       Expanded(
-                        child: AuthSocialButton(
-                          title: 'Apple',
-                          iconPath: IconPath.appleIcon,
-                          onTap: controller.continueWithApple,
+                        child: AppleSignInButton(
+                          controller: appleLoginController,
                         ),
                       ),
+
                     ],
                   ),
                   SizedBox(height: 21.h),
