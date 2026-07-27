@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -106,7 +107,14 @@ class AppleLoginController extends GetxController {
       // Fetch FCM token if available
       String? fcmToken;
       try {
-        fcmToken = await FirebaseMessaging.instance.getToken();
+        if (Platform.isIOS) {
+          final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+          if (apnsToken != null) {
+            fcmToken = await FirebaseMessaging.instance.getToken();
+          }
+        } else {
+          fcmToken = await FirebaseMessaging.instance.getToken();
+        }
         if (fcmToken != null && fcmToken.isNotEmpty) {
           await StorageService.saveFcmToken(fcmToken);
         }
