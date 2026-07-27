@@ -1,0 +1,80 @@
+name: Deploy to TestFlight
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual trigger'
+        required: false
+        default: 'Manual TestFlight deployment'
+
+jobs:
+  deploy-ios-testflight:
+    name: Build & Upload iOS to TestFlight
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java Environment
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Flutter Dependencies
+        run: flutter pub get
+
+      - name: Setup Ruby & Bundler
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+          working-directory: ios
+
+      - name: Install iOS Pods
+        run: |
+          cd ios
+          pod install
+
+      - name: Decode Code Signing Credentials
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          mkdir -p /tmp/certs
+          echo "$BUILD_CERTIFICATE_BASE64" | base64 --decode > /tmp/certs/dist_cert.p12
+          echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > /tmp/certs/app.mobileprovision
+
+          # Copy Provisioning Profile to Xcode provisioning profiles folder
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp /tmp/certs/app.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: Run Fastlane Beta
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          CERTIFICATE_PATH: '/tmp/certs/dist_cert.p12'
+          PROVISIONING_PROFILE_PATH: '/tmp/certs/app.mobileprovision'
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          cd ios
+          bundle exec fastlane beta
+
+      - name: Clean up Temporary Files
+        if: always()
+        run: |
+          rm -rf /tmp/certs
