@@ -123,15 +123,21 @@ class ReportCatchStep1Screen extends GetView<ReportCatchController> {
               children: [
                 Icon(
                   online ? Icons.wifi : Icons.wifi_off,
-                  color: online ? AppColors.green10B981Color : AppColors.yellowFCEA74Color,
+                  color: online
+                      ? AppColors.green10B981Color
+                      : AppColors.yellowFCEA74Color,
                   size: 16.sp,
                 ),
                 SizedBox(width: 8.w),
                 Text(
-                  online ? "Online - Report will sync instantly" : "Offline - Queueing reports locally",
+                  online
+                      ? "Online - Report will sync instantly"
+                      : "Offline - Queueing reports locally",
                   style: getTextStyle(
                     fontSize: 13,
-                    color: online ? AppColors.green10B981Color : AppColors.yellowFCEA74Color,
+                    color: online
+                        ? AppColors.green10B981Color
+                        : AppColors.yellowFCEA74Color,
                   ),
                 ),
               ],

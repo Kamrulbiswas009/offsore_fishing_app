@@ -1,5 +1,4 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -32,10 +31,7 @@ Future<void> main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // edgeToEdge is cross-platform safe.
-  // immersiveSticky is Android-only and breaks Flutter rendering on iOS,
-  // causing a permanent white blank screen on physical iPhones.
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
   initializeMapbox();
 

@@ -7,6 +7,7 @@ import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/features/report_main/report/model/report_model.dart';
+import 'package:paytonpieper/routes/app_routes.dart';
 
 import '../controller/summary_details_controller.dart';
 
@@ -339,6 +340,62 @@ class ReportTabWidget extends GetView<SummaryController> {
           ],
 
           SizedBox(height: 12.h),
+
+          // View Report Button
+          InkWell(
+            onTap: () {
+              Get.toNamed(
+                AppRoute.reportDetailsScreen,
+                arguments: {
+                  'reportId': report.id,
+                  'zone': report.zone,
+                  'depth': report.depth,
+                  'method': report.technique,
+                  'bait': report.bait,
+                  'time': report.timeAgo,
+                  'author': report.author,
+                  'note': report.note,
+                  'speciesList': [
+                    {'name': report.title, 'qty': '1'}
+                  ],
+                },
+              );
+            },
+            borderRadius: BorderRadius.circular(10.r),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: 10.h),
+              decoration: BoxDecoration(
+                color: AppColors.blue1B2134Color,
+                borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(
+                  color: AppColors.blue00D4FFColor.withValues(alpha: 0.5),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.visibility_outlined,
+                    color: AppColors.blue00D4FFColor,
+                    size: 18.sp,
+                  ),
+                  SizedBox(width: 6.w),
+                  Text(
+                    "View Report",
+                    style: getTextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.blue00D4FFColor,
+                      lineHeight: 20,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(height: 10.h),
 
           // Action Buttons
           Row(

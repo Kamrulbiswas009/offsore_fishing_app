@@ -31,7 +31,21 @@ class SummaryController extends GetxController {
   ];
 
   void changeTimeRange(String range) {
-    selectedTimeRange.value = range;
+    if (selectedTimeRange.value != range) {
+      selectedTimeRange.value = range;
+      fetchSummary(forceRefresh: true);
+    }
+  }
+
+  String _mapTimeRangeToParam(String range) {
+    final clean = range.trim().toLowerCase();
+    if (clean == "last 24 hours" || clean == "24h") return "24h";
+    if (clean == "last 3 days" || clean == "3d") return "3d";
+    if (clean == "last 7 days" || clean == "7d") return "7d";
+    if (clean == "last 30 days" || clean == "30d") return "30d";
+    if (clean == "this month" || clean == "month") return "month";
+    if (clean == "custom range" || clean == "custom") return "custom";
+    return "24h";
   }
 
   var selectedZone = Rxn<MapZoneModel>();
@@ -624,9 +638,11 @@ class SummaryController extends GetxController {
   Future<void> fetchSummary({int? customTtl, bool forceRefresh = false}) async {
     isSummaryLoading.value = true;
     
+    final timeRangeParam = _mapTimeRangeToParam(selectedTimeRange.value);
+
     final cacheKey = selectedZone.value != null
-        ? "zone_summary_${selectedZone.value!.name}"
-        : "zone_summary_region";
+        ? "zone_summary_${selectedZone.value!.name}_$timeRangeParam"
+        : "zone_summary_region_$timeRangeParam";
 
     // Load from cache instantly if available
     try {
@@ -649,9 +665,19 @@ class SummaryController extends GetxController {
 
       final String url;
       if (selectedZone.value != null) {
-        url = "${ApiConstants.getZoneSummaryApi}?zoneId=${selectedZone.value!.name}&page=1&limit=20";
+        url = ApiConstants.getFilteredZoneSummaryApi(
+          zoneId: selectedZone.value!.name,
+          timeRange: timeRangeParam,
+          page: 1,
+          limit: 20,
+        );
       } else {
-        url = "${ApiConstants.getZoneSummaryApi}?regionCode=GOM&page=1&limit=20";
+        url = ApiConstants.getFilteredZoneSummaryApi(
+          regionCode: "GOM",
+          timeRange: timeRangeParam,
+          page: 1,
+          limit: 20,
+        );
       }
 
       final ttl = customTtl ?? (isCurrentZoneOffline ? 52560000 : 1440);

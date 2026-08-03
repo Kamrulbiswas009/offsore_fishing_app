@@ -10,6 +10,7 @@ import 'package:paytonpieper/core/services/network_caller.dart';
 import 'package:paytonpieper/core/services/storage_service.dart';
 import 'package:paytonpieper/core/utils/constants/api_constants.dart';
 import 'package:paytonpieper/routes/app_routes.dart';
+import 'package:paytonpieper/features/profile_and_setting/controller/profile_main_screen_controller.dart';
 import 'package:paytonpieper/features/report_main/summary/controller/summary_details_controller.dart';
 import 'package:paytonpieper/features/map/controller/map_screen_controller.dart';
 
@@ -44,14 +45,41 @@ class SyncService extends GetxService {
       final database = await openDatabase(
         path,
         version: 1,
-        onCreate: (databaseInstance, version) async {
+        onOpen: (databaseInstance) async {
           await databaseInstance.execute('''
-            CREATE TABLE pending_reports (
+            CREATE TABLE IF NOT EXISTS pending_reports (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               frontendReportId TEXT UNIQUE,
               payload TEXT,
               createdAt TEXT,
               queueStatus TEXT
+            )
+          ''');
+          await databaseInstance.execute('''
+            CREATE TABLE IF NOT EXISTS pending_profile_updates (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              name TEXT,
+              imagePath TEXT,
+              createdAt TEXT
+            )
+          ''');
+        },
+        onCreate: (databaseInstance, version) async {
+          await databaseInstance.execute('''
+            CREATE TABLE IF NOT EXISTS pending_reports (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              frontendReportId TEXT UNIQUE,
+              payload TEXT,
+              createdAt TEXT,
+              queueStatus TEXT
+            )
+          ''');
+          await databaseInstance.execute('''
+            CREATE TABLE IF NOT EXISTS pending_profile_updates (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              name TEXT,
+              imagePath TEXT,
+              createdAt TEXT
             )
           ''');
         },
@@ -176,10 +204,13 @@ class SyncService extends GetxService {
   Future<void> _updatePendingCount() async {
     try {
       final database = await db;
-      final count = Sqflite.firstIntValue(
+      final reportCount = Sqflite.firstIntValue(
         await database.rawQuery('SELECT COUNT(*) FROM pending_reports'),
-      );
-      pendingCount.value = count ?? 0;
+      ) ?? 0;
+      final profileCount = Sqflite.firstIntValue(
+        await database.rawQuery('SELECT COUNT(*) FROM pending_profile_updates'),
+      ) ?? 0;
+      pendingCount.value = reportCount + profileCount;
     } catch (e) {
       debugPrint("Failed to update pending count: $e");
     }
@@ -223,6 +254,110 @@ class SyncService extends GetxService {
     }
   }
 
+  // Save pending profile update locally
+  Future<void> saveProfileUpdateLocally({
+    required String name,
+    String? imagePath,
+  }) async {
+    try {
+      final database = await db;
+      // Keep only the latest pending profile update
+      await database.delete('pending_profile_updates');
+      await database.insert(
+        'pending_profile_updates',
+        {
+          'name': name,
+          'imagePath': imagePath,
+          'createdAt': DateTime.now().toUtc().toIso8601String(),
+        },
+      );
+
+      await _updatePendingCount();
+      debugPrint("=== Profile update saved locally (Offline Mode) | Name: $name ===");
+    } catch (e) {
+      debugPrint("Failed to save profile update locally: $e");
+    }
+  }
+
+  Future<void> _syncPendingProfileUpdates() async {
+    try {
+      final database = await db;
+      final pendingUpdates = await database.query('pending_profile_updates', orderBy: 'id ASC');
+      if (pendingUpdates.isEmpty) return;
+
+      for (final row in pendingUpdates) {
+        final id = row['id'];
+        final name = row['name'] as String?;
+        final imagePath = row['imagePath'] as String?;
+
+        if (name == null || name.isEmpty) {
+          await database.delete('pending_profile_updates', where: 'id = ?', whereArgs: [id]);
+          continue;
+        }
+
+        File? fileToUpload;
+        if (imagePath != null && imagePath.isNotEmpty) {
+          final file = File(imagePath);
+          if (file.existsSync()) {
+            fileToUpload = file;
+          }
+        }
+
+        final accessToken = StorageService.token;
+        final token = (accessToken != null && accessToken.isNotEmpty)
+            ? 'Bearer $accessToken'
+            : null;
+
+        var response = await _networkCaller.patchMultipartRequest(
+          ApiConstants.updateProfileApi,
+          fields: {'userName': name},
+          file: fileToUpload,
+          fileFieldName: 'file',
+          token: token,
+        );
+
+        if (response.statusCode == 401) {
+          final didRefresh = await _refreshAccessToken();
+          if (didRefresh) {
+            final newAccessToken = StorageService.token;
+            final newToken = (newAccessToken != null && newAccessToken.isNotEmpty)
+                ? 'Bearer $newAccessToken'
+                : null;
+            response = await _networkCaller.patchMultipartRequest(
+              ApiConstants.updateProfileApi,
+              fields: {'userName': name},
+              file: fileToUpload,
+              fileFieldName: 'file',
+              token: newToken,
+            );
+          }
+        }
+
+        if (response.isSuccess) {
+          debugPrint("=== OFFLINE PROFILE UPDATE SYNC SUCCESS for name: $name ===");
+          await database.delete('pending_profile_updates', where: 'id = ?', whereArgs: [id]);
+
+          if (Get.isRegistered<ProfileMainScreenController>()) {
+            Get.find<ProfileMainScreenController>().getAuthMe();
+          }
+
+          Get.snackbar(
+            "Profile Synced",
+            "Your offline profile changes have been automatically synced!",
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: const Color(0xFF00E676),
+            colorText: Colors.white,
+            duration: const Duration(seconds: 4),
+          );
+        } else {
+          debugPrint("=== OFFLINE PROFILE UPDATE SYNC FAILED: ${response.errorMessage} ===");
+        }
+      }
+    } catch (e) {
+      debugPrint("Failed to sync pending profile updates: $e");
+    }
+  }
+
   // Background Sync logic
   Future<void> triggerBackgroundSync() async {
     if (isSyncing.value) return;
@@ -232,10 +367,18 @@ class SyncService extends GetxService {
     isOnline.value = online;
     if (!online) return;
 
-    final pending = await getPendingReports();
-    if (pending.isEmpty) return;
-
     isSyncing.value = true;
+
+    // 1. Sync pending profile updates first
+    await _syncPendingProfileUpdates();
+
+    final pending = await getPendingReports();
+    if (pending.isEmpty) {
+      await _updatePendingCount();
+      isSyncing.value = false;
+      return;
+    }
+
     debugPrint("=== STARTING BACKGROUND SYNC: ${pending.length} reports pending ===");
 
     bool didSyncAny = false;

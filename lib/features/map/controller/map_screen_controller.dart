@@ -87,11 +87,12 @@ class MapScreenController extends GetxController {
     );
 
     fetchZones(
-      south: 28.0,
-      north: 29.0,
-      west: -90.0,
-      east: -88.0,
+      south: 24.0,
+      north: 31.0,
+      west: -98.0,
+      east: -81.0,
     );
+
   }
 
   @override

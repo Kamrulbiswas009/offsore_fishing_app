@@ -196,9 +196,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
               enabled: false,
             ),
           );
-          if (!isGranted) {
-            await controller.toggleMockUserLocation(_mapboxMap!, true);
-          }
+          await controller.toggleMockUserLocation(_mapboxMap!, true);
         }
       }
     } catch (e) {
@@ -246,17 +244,32 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
       await _updateLocationTracking();
 
       if (isGranted && _mapboxMap != null) {
-        final pos = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
-        );
-        await _mapboxMap!.setCamera(
-          mapbox.CameraOptions(
-            center: mapbox.Point(
-              coordinates: mapbox.Position(pos.longitude, pos.latitude),
+        try {
+          final pos = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high,
+            timeLimit: const Duration(seconds: 3),
+          );
+          await _mapboxMap!.setCamera(
+            mapbox.CameraOptions(
+              center: mapbox.Point(
+                coordinates: mapbox.Position(pos.longitude, pos.latitude),
+              ),
+              zoom: 10.0,
             ),
-            zoom: 10.0,
-          ),
-        );
+          );
+        } catch (_) {
+          await _mapboxMap!.setCamera(
+            mapbox.CameraOptions(
+              center: mapbox.Point(
+                coordinates: mapbox.Position(
+                  controller.mapCenter.longitude,
+                  controller.mapCenter.latitude,
+                ),
+              ),
+              zoom: 8.0,
+            ),
+          );
+        }
       } else if (_mapboxMap != null) {
         await _mapboxMap!.setCamera(
           mapbox.CameraOptions(
@@ -277,6 +290,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
     // Populate grid for the initial camera position
     await _updateGridForViewport();
   }
+
 
   /// Requests permission then flies camera to the device position.
   Future<void> _goToMyLocation() async {
@@ -355,12 +369,10 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
       await _updateLocationTracking();
 
       if (isGranted) {
-        // Get user position
         final pos = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
         );
 
-        // Animate camera to the real location
         await map.easeTo(
           mapbox.CameraOptions(
             center: mapbox.Point(
@@ -374,7 +386,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
           mapbox.MapAnimationOptions(duration: 1200),
         );
       } else {
-        // Animate camera to the Gulf of Mexico offshore (mock device location)
+        // Animate camera to the Gulf of Mexico offshore (default location fallback)
         await map.easeTo(
           mapbox.CameraOptions(
             center: mapbox.Point(
@@ -383,9 +395,19 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
                 controller.mapCenter.latitude,
               ),
             ),
-            zoom: 10.0,
+            zoom: 9.0,
           ),
           mapbox.MapAnimationOptions(duration: 1000),
+        );
+        Get.snackbar(
+          '🌊 Gulf of Mexico Location',
+          'Location access denied. Displaying default Gulf of Mexico ocean location.',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: const Color(0xFF0D2B43),
+          colorText: Colors.white,
+          borderColor: const Color(0xFF117A88),
+          borderWidth: 1,
+          duration: const Duration(seconds: 4),
         );
       }
     } catch (e) {

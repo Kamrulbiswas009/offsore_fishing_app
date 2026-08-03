@@ -23,6 +23,8 @@ class ReportDetailsController extends GetxController {
   String fallbackMethod = "Trolling";
   String fallbackBait = "Ballyhoo";
   String fallbackTime = "10:30 AM";
+  String? fallbackAuthor;
+  String? fallbackNote;
 
   String? reportId;
 
@@ -42,6 +44,8 @@ class ReportDetailsController extends GetxController {
     fallbackMethod = args?['method'] ?? "Trolling";
     fallbackBait = args?['bait'] ?? "Ballyhoo";
     fallbackTime = args?['time'] ?? "10:30 AM";
+    fallbackAuthor = args?['author'];
+    fallbackNote = args?['note'];
 
     reportId = args?['reportId'];
     if (reportId != null && reportId!.isNotEmpty) {
@@ -95,6 +99,9 @@ class ReportDetailsController extends GetxController {
       final user = data['user'] as Map?;
       final name = user?['name']?.toString();
       if (name != null && name.isNotEmpty) return name;
+    }
+    if (fallbackAuthor != null && fallbackAuthor!.isNotEmpty) {
+      return fallbackAuthor!;
     }
     // Fall back to profile controller
     try {
