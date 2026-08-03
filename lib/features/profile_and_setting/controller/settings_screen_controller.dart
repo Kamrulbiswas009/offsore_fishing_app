@@ -53,16 +53,17 @@ class SettingsScreenController extends GetxController {
       final token = StorageService.token;
       if (token == null || token.isEmpty) return;
       final response = await _networkCaller.getRequest(
-        ApiConstants.generalNotificationSettingsApi,
+        ApiConstants.notificationSettingsApi,
         token: 'Bearer $token',
       );
       if (response.isSuccess) {
         final data = response.responseData['data'];
         if (data != null) {
-          isNotificationsEnabled.value = data['enableNotification'] ?? false;
-          isGroupActivityEnabled.value = data['groupActivity'] ?? false;
-          isHotZoneAlertsEnabled.value = data['hotZoneAlert'] ?? false;
-          isOfflineModeEnabled.value = data['enableOfflineMap'] ?? false;
+          final userSettings = data['userSettings'] ?? data;
+          isNotificationsEnabled.value = userSettings['enableNotification'] ?? false;
+          isGroupActivityEnabled.value = userSettings['groupActivity'] ?? false;
+          isHotZoneAlertsEnabled.value = userSettings['hotZoneAlert'] ?? false;
+          isOfflineModeEnabled.value = userSettings['enableOfflineMap'] ?? false;
         }
       }
     } catch (e) {
@@ -93,6 +94,7 @@ class SettingsScreenController extends GetxController {
       if (!response.isSuccess) {
         EasyLoading.showError('Failed to update settings');
       }
+      await fetchGeneralSettings();
     } catch (e) {
       AppLoggerHelper.error('Failed to update general settings', e);
     }

@@ -364,7 +364,15 @@ class EditProfileDialog extends StatelessWidget {
       );
     }
     if (networkPath.isNotEmpty) {
-      return Image.asset(networkPath, fit: BoxFit.cover);
+      final localFile = File(networkPath);
+      if (localFile.existsSync()) {
+        return Image.file(localFile, fit: BoxFit.cover);
+      }
+      return Image.asset(
+        networkPath,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => _placeholderIcon(),
+      );
     }
     return _placeholderIcon();
   }

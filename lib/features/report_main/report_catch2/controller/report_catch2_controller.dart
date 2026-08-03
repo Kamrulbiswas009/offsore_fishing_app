@@ -509,9 +509,10 @@ class ReportCatch2Controller extends GetxController {
       "${dt.toUtc().toIso8601String().split('.').first}Z";
 
   Map<String, dynamic> buildReportPayload({required String visibility, String? groupId}) {
-    final lat = selectedLat.value ?? 28.4521;
-    final lng = selectedLng.value ?? -89.1234;
+    final lat = selectedLat.value ?? 28.5;
+    final lng = selectedLng.value ?? -88.5;
     final zoneInfo = ZoneCalculator.fromLatLng(lat, lng);
+    final resolvedZoneId = zoneInfo?.zoneId ?? "GOM-R74-C88";
 
     final catchDateTime = _getCatchDateTime(selectedDate.value, selectedTime.value);
 
@@ -555,13 +556,14 @@ class ReportCatch2Controller extends GetxController {
 
     final payload = <String, dynamic>{
       "frontendReportId": _generateUuid(),
-      "zoneId": zoneInfo?.zoneId,
+      "zoneId": resolvedZoneId,
       "reportLat": lat,
       "reportLng": lng,
       "visibility": visibility,
       "catchTimestamp": _toTimestamp(catchDateTime),
       "notes": notesController.text,
       "fishingPatterns": fishingPatterns,
+
       // Device / queue metadata
       "capturedOfflineAt": null,
       "queueStatus": "PENDING",

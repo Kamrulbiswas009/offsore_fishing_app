@@ -86,6 +86,46 @@ class AuthMeModel {
         'updatedAt': updatedAt?.toIso8601String(),
         'subscription': subscription?.toJson(),
       };
+
+  AuthMeModel copyWith({
+    String? userId,
+    String? name,
+    String? email,
+    String? role,
+    String? status,
+    String? profileImage,
+    String? provider,
+    String? providerId,
+    DateTime? otpExpiredAt,
+    bool? isVerified,
+    bool? isActive,
+    bool? isDeleted,
+    DateTime? deletedAt,
+    DateTime? lastActive,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    UserSubscriptionModel? subscription,
+  }) {
+    return AuthMeModel(
+      userId: userId ?? this.userId,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      role: role ?? this.role,
+      status: status ?? this.status,
+      profileImage: profileImage ?? this.profileImage,
+      provider: provider ?? this.provider,
+      providerId: providerId ?? this.providerId,
+      otpExpiredAt: otpExpiredAt ?? this.otpExpiredAt,
+      isVerified: isVerified ?? this.isVerified,
+      isActive: isActive ?? this.isActive,
+      isDeleted: isDeleted ?? this.isDeleted,
+      deletedAt: deletedAt ?? this.deletedAt,
+      lastActive: lastActive ?? this.lastActive,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      subscription: subscription ?? this.subscription,
+    );
+  }
 }
 
 class UserSubscriptionModel {

@@ -106,6 +106,10 @@ class ReportDetailsScreen extends GetView<ReportDetailsController> {
                   }
                 }
 
+                final String? notes = report != null
+                    ? (report['notes']?.toString() ?? report['note']?.toString())
+                    : controller.fallbackNote;
+
                 return SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
                   padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
@@ -162,6 +166,11 @@ class ReportDetailsScreen extends GetView<ReportDetailsController> {
                       // Card 3: Fishing Details
                       _buildFishingDetailsCard(depth, position, method, bait),
                       
+                      if (notes != null && notes.isNotEmpty) ...[
+                        SizedBox(height: 20.h),
+                        _buildNotesCard(notes),
+                      ],
+
                       SizedBox(height: 30.h),
                     ],
                   ),
@@ -529,6 +538,26 @@ class ReportDetailsScreen extends GetView<ReportDetailsController> {
               fontSize: 13,
               fontWeight: FontWeight.w500,
               color: AppColors.greyC8D0DBColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotesCard(String notes) {
+    return _buildCardContainer(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionTitle("Captain Notes"),
+          Text(
+            notes,
+            style: getTextStyle(
+              fontSize: 13,
+              color: Colors.white,
+              fontWeight: FontWeight.w400,
+              lineHeight: 18,
             ),
           ),
         ],

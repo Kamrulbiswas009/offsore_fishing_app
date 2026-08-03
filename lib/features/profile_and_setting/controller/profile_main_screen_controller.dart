@@ -18,6 +18,7 @@ import 'package:paytonpieper/core/common/widgets/common_message.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/constants/icon_path.dart';
 import 'package:paytonpieper/core/utils/constants/image_path.dart';
+import 'package:paytonpieper/core/services/sync_service.dart';
 import 'package:paytonpieper/features/notification/presentation/screen/notification_screen.dart';
 import 'package:paytonpieper/features/profile_and_setting/presentation/screen/settings_screen.dart';
 import 'package:paytonpieper/features/profile_and_setting/presentation/widget/profile_main_screen_widget/edit_profile_dialog.dart';
@@ -438,6 +439,43 @@ class ProfileMainScreenController extends GetxController {
 
     if (name.isEmpty) {
       AppLoggerHelper.warning('Profile update skipped: name is empty.');
+      return;
+    }
+
+    final syncService = Get.isRegistered<SyncService>() ? SyncService.to : null;
+    final isOffline = syncService != null && !syncService.isOnline.value;
+
+    if (isOffline) {
+      AppLoggerHelper.info('Updating profile in OFFLINE mode for name: "$name"');
+
+      // 1. Save update locally in SQLite queue
+      await syncService.saveProfileUpdateLocally(
+        name: name,
+        imagePath: imageFile?.path,
+      );
+
+      // 2. Optimistically update local profile model & SharedPreferences cache
+      if (authMe.value != null) {
+        final current = authMe.value!;
+        authMe.value = current.copyWith(
+          name: name,
+          profileImage: imageFile?.path ?? current.profileImage,
+        );
+        await StorageService.saveProfileCache(
+          jsonEncode(authMe.value!.toJson()),
+        );
+      }
+
+      Get.back(); // close dialog
+
+      Get.snackbar(
+        "Offline Profile Updated",
+        "Your profile changes were saved locally and will sync automatically when online.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFF00E676),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 4),
+      );
       return;
     }
 

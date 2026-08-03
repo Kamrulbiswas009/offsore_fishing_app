@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
@@ -50,7 +52,15 @@ class ProfileInfoCardWidget extends StatelessWidget {
                       errorBuilder: (_, _, _) =>
                           const Icon(Icons.person, color: AppColors.whiteColor),
                     )
-                  : Image.asset(ImagePath.profileDefaultImage,fit: BoxFit.cover,),
+                  : (File(imagePath).existsSync()
+                      ? Image.file(
+                          File(imagePath),
+                          fit: BoxFit.cover,
+                        )
+                      : Image.asset(
+                          ImagePath.profileDefaultImage,
+                          fit: BoxFit.cover,
+                        )),
             ),
           ),
           SizedBox(width: 14.w),

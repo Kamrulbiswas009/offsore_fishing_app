@@ -314,7 +314,26 @@ class SummaryTabWidget extends StatelessWidget {
     );
   }
 
+  String _getTimeRangeTitle(String range) {
+    final clean = range.trim();
+    final lower = clean.toLowerCase();
+    if (lower == "last 24 hours" || lower == "24h") {
+      return "LAST 24H";
+    }
+    if (lower == "last 3 days" || lower == "3d") {
+      return "LAST 3 DAYS";
+    }
+    if (lower == "last 7 days" || lower == "7d") {
+      return "LAST 7 DAYS";
+    }
+    if (lower == "last 30 days" || lower == "30d") {
+      return "LAST 30 DAYS";
+    }
+    return clean.toUpperCase();
+  }
+
   Widget _buildActivityOverview(MapZoneModel? zone) {
+    final timeTitle = _getTimeRangeTitle(controller.selectedTimeRange.value);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -324,7 +343,7 @@ class SummaryTabWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _statCard(
-                label: "LAST 24H",
+                label: timeTitle,
                 //"${zone?.reports ?? 8}",
                 sub: "Reports",
                 borderColor: AppColors.blue00F0FFColor,
@@ -942,7 +961,7 @@ class SummaryTabWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "TOP SPECIES (LAST 24H)",
+            "TOP SPECIES (${_getTimeRangeTitle(controller.selectedTimeRange.value)})",
             style: getTextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
