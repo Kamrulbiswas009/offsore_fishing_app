@@ -23,6 +23,8 @@ class ApiConstants {
   static const String verifyForgotPasswordWithOtpApi =
       "$baseUrl/auth/reset-password";
 
+  static const String socialLoginApi = "$baseUrl/auth/social-login";
+
   //Group Flow ->
   static const String featchGroupListApi = "$baseUrl/groups";
   static String featchSingleGroupDetailsApi(String groupId) =>

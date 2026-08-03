@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>411800532163-drq4ursdk7rlc56ldmjmhtimsugkgn51.apps.googleusercontent.com</string>
+	<string>411800532163-bb1auu1ii9lnb527ct56d28019cg2u47.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.411800532163-drq4ursdk7rlc56ldmjmhtimsugkgn51</string>
+	<string>com.googleusercontent.apps.411800532163-bb1auu1ii9lnb527ct56d28019cg2u47</string>
 	<key>ANDROID_CLIENT_ID</key>
 	<string>411800532163-2fang0crbcvsj0ler3dktmbuud8cvhuo.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
@@ -15,7 +15,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.onthebite.app</string>
+	<string>com.onthebite.app.ios</string>
 	<key>PROJECT_ID</key>
 	<string>on-the-bite</string>
 	<key>STORAGE_BUCKET</key>
@@ -31,6 +31,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:411800532163:ios:5529636739fe80a1f1de76</string>
+	<string>1:411800532163:ios:49d8c403c38a1fdcf1de76</string>
 </dict>
 </plist>
