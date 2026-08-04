@@ -431,12 +431,12 @@ class _UnifiedZoneCard extends StatelessWidget {
                     _ThresholdPill(
                       icon: Icons.waves_rounded,
                       color: const Color(0xFF00D4FF),
-                      label: '>${weatherConfig!.waveHeightThresholdFt.toStringAsFixed(0)} ft',
+                      label: '<${weatherConfig!.waveHeightThresholdFt.toStringAsFixed(0)} ft',
                     ),
                     _ThresholdPill(
                       icon: Icons.air_rounded,
                       color: const Color(0xFF10B981),
-                      label: '>${weatherConfig!.windSpeedThresholdMph.toStringAsFixed(0)} mph',
+                      label: '<${weatherConfig!.windSpeedThresholdMph.toStringAsFixed(0)} mph',
                     ),
                     _ThresholdPill(
                       icon: Icons.thermostat_rounded,

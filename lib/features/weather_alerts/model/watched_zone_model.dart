@@ -9,10 +9,10 @@ class WatchedZoneConfig {
   final bool alertsEnabled;
 
   // --- Thresholds ---
-  /// Alert fires when wave height crosses this value (feet).
+  /// Alert fires when wave height is less than this value (feet).
   final double waveHeightThresholdFt;
 
-  /// Alert fires when wind speed crosses this value (mph).
+  /// Alert fires when wind speed is less than this value (mph).
   final double windSpeedThresholdMph;
 
   /// Alert fires when water temperature changes by more than this value (°F).
