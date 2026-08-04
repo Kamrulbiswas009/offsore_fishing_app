@@ -194,10 +194,10 @@ class WeatherAlertService extends GetxService {
 
       // Determine what changed meaningfully
       final List<String> changes = [];
-      if (waveHeightFt >= zone.waveHeightThresholdFt) {
+      if (waveHeightFt < zone.waveHeightThresholdFt) {
         changes.add('Wave height ${waveHeightFt.toStringAsFixed(1)} ft');
       }
-      if (windSpeedMph >= zone.windSpeedThresholdMph) {
+      if (windSpeedMph < zone.windSpeedThresholdMph) {
         changes.add('Wind ${windSpeedMph.toStringAsFixed(0)} mph');
       }
       if (waterTempF != null && prevSnapshot != null) {
