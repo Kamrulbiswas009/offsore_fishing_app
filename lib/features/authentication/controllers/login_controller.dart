@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
@@ -44,11 +46,30 @@ class LoginController extends GetxController {
 
     await EasyLoading.show(status: 'Logging in...');
     try {
+      // Fetch FCM token if available
+      String? fcmToken;
+      try {
+        if (Platform.isIOS) {
+          final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+          if (apnsToken != null) {
+            fcmToken = await FirebaseMessaging.instance.getToken();
+          }
+        } else {
+          fcmToken = await FirebaseMessaging.instance.getToken();
+        }
+        if (fcmToken != null && fcmToken.isNotEmpty) {
+          await StorageService.saveFcmToken(fcmToken);
+        }
+      } catch (_) {
+        fcmToken = StorageService.fcmToken;
+      }
+
       final response = await _networkCaller.postRequest(
         ApiConstants.loginApi,
         body: {
           'email': emailController.text.trim(),
           'password': passwordController.text,
+          if (fcmToken != null && fcmToken.isNotEmpty) 'fcmToken': fcmToken,
         },
       );
 
@@ -99,6 +120,9 @@ class LoginController extends GetxController {
 
       emailController.clear();
       passwordController.clear();
+      AppLoggerHelper.info('Fcm Token : $fcmToken');
+      
+      
     } catch (error) {
       AppLoggerHelper.error('Login failed unexpectedly', error);
       CommonMessage.showMessage(
