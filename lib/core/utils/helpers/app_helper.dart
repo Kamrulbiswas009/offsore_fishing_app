@@ -1,9 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:paytonpieper/core/services/firebase/notification_service.dart';
 
 class AppHelperFunctions{
  AppHelperFunctions._();
+
+ static Future<void> sendLocalNotification({
+  required String title,
+  required String body,
+  String? payload,
+  String? imageUrl,
+ }) async {
+  await NotificationService.sendLocalNotification(
+   title: title,
+   body: body,
+   payload: payload,
+   imageUrl: imageUrl,
+  );
+ }
+
  static void showSnackBar(String message) {
   ScaffoldMessenger.of(Get.context!).showSnackBar(
    SnackBar(content: Text(message)),
