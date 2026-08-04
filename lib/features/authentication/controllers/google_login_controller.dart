@@ -17,30 +17,28 @@ import 'package:paytonpieper/features/weather_alerts/controller/bite_watch_contr
 class GoogleLoginController extends GetxController {
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   final NetworkCaller _networkCaller = NetworkCaller();
 
   final RxBool isLoading = false.obs;
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  final NetworkCaller _networkCaller = NetworkCaller();
 
   Future<void>? _initialization;
   bool _isSigningIn = false;
 
   Future<void> continueWithGoogle() async {
-    isLoading.value = true;
-    await EasyLoading.show(status: 'Signing in with Google...');
     if (_isSigningIn) return;
     _isSigningIn = true;
+    isLoading.value = true;
 
     var loginSucceeded = false;
-    await EasyLoading.show(status: 'Signing in...');
+    await EasyLoading.show(status: 'Signing in with Google...');
+
     try {
       await _ensureInitialized();
 
       final googleUser = await _googleSignIn.authenticate();
-
       final googleAuth = googleUser.authentication;
-      final idToken = googleAuth.idToken;
+      final googleIdToken = googleAuth.idToken;
 
       AppLoggerHelper.info(
         'Google Sign-In success: '
@@ -48,8 +46,6 @@ class GoogleLoginController extends GetxController {
         'name=${googleUser.displayName}, '
         'id=${googleUser.id}',
       );
-
-      final googleIdToken = googleAuth.idToken;
 
       if (googleIdToken == null || googleIdToken.isEmpty) {
         AppLoggerHelper.error(
@@ -64,60 +60,8 @@ class GoogleLoginController extends GetxController {
       }
 
       AppLoggerHelper.info('Google account id: ${googleUser.id}');
-      AppLoggerHelper.info('Google idToken: $idToken');
+      AppLoggerHelper.info('Google idToken: $googleIdToken');
 
-      final credential = GoogleAuthProvider.credential(idToken: idToken);
-      final userCredential = await _firebaseAuth.signInWithCredential(
-        credential,
-      );
-      final user = userCredential.user;
-
-      AppLoggerHelper.info(
-        'Firebase Google auth success: uid=${user?.uid}',
-      );
-
-      // Fetch FCM token if available
-      String? fcmToken;
-      try {
-        if (Platform.isIOS) {
-          final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-          if (apnsToken != null) {
-            fcmToken = await FirebaseMessaging.instance.getToken();
-          }
-        } else {
-          fcmToken = await FirebaseMessaging.instance.getToken();
-        }
-        if (fcmToken != null && fcmToken.isNotEmpty) {
-          await StorageService.saveFcmToken(fcmToken);
-        }
-      } catch (_) {
-        fcmToken = StorageService.fcmToken;
-      }
-
-      // Extract user name
-      final String name = googleUser.displayName ?? user?.displayName ?? '';
-      final userId = user?.uid ?? googleUser.id;
-
-      // Call backend socialLogin API matching schema:
-      // { "idToken": "...", "provider": "GOOGLE", "fcmToken": "...", "name": "..." }
-      final Map<String, dynamic> requestBody = {
-        'idToken': idToken,
-        'provider': 'GOOGLE',
-        if (fcmToken != null && fcmToken.isNotEmpty) 'fcmToken': fcmToken,
-        if (name.isNotEmpty) 'name': name,
-      };
-
-      AppLoggerHelper.info('Social login request body: $requestBody');
-
-      final response = await _networkCaller.postRequest(
-        ApiConstants.socialLoginApi,
-        body: requestBody,
-      );
-
-      if (!response.isSuccess) {
-        AppLoggerHelper.error('Social Login failed: ${response.errorMessage}');
-        CommonMessage.showMessage(
-          title: 'Google Sign-In Failed',
       final credential = GoogleAuthProvider.credential(idToken: googleIdToken);
       final userCredential = await _firebaseAuth.signInWithCredential(
         credential,
@@ -140,38 +84,44 @@ class GoogleLoginController extends GetxController {
         return;
       }
 
-      final freshFcmToken = await _firebaseMessaging.getToken();
-      final fcmToken = freshFcmToken ?? StorageService.fcmToken;
-      if (fcmToken == null || fcmToken.isEmpty) {
-        AppLoggerHelper.error(
-          'Google social login could not obtain an FCM token.',
-        );
-        CommonMessage.showMessage(
-          title: 'Google Sign-In failed',
-          message: 'Unable to register this device. Please try again.',
-          backgroundColor: Colors.red,
-        );
-        return;
-      }
-
-      if (freshFcmToken != null && freshFcmToken.isNotEmpty) {
-        await StorageService.saveFcmToken(freshFcmToken);
+      // Fetch FCM token if available
+      String? fcmToken;
+      try {
+        if (Platform.isIOS) {
+          final apnsToken = await _firebaseMessaging.getAPNSToken();
+          if (apnsToken != null) {
+            fcmToken = await _firebaseMessaging.getToken();
+          }
+        } else {
+          fcmToken = await _firebaseMessaging.getToken();
+        }
+        if (fcmToken != null && fcmToken.isNotEmpty) {
+          await StorageService.saveFcmToken(fcmToken);
+        }
+      } catch (_) {
+        fcmToken = StorageService.fcmToken;
       }
 
       final displayName = googleUser.displayName?.trim().isNotEmpty == true
           ? googleUser.displayName!.trim()
           : (firebaseUser.displayName?.trim().isNotEmpty == true
-                ? firebaseUser.displayName!.trim()
-                : googleUser.email.split('@').first);
+              ? firebaseUser.displayName!.trim()
+              : googleUser.email.split('@').first);
+
+      final userId = firebaseUser.uid;
+
+      final Map<String, dynamic> requestBody = {
+        'idToken': googleIdToken,
+        'provider': 'GOOGLE',
+        if (fcmToken != null && fcmToken.isNotEmpty) 'fcmToken': fcmToken,
+        if (displayName.isNotEmpty) 'name': displayName,
+      };
+
+      AppLoggerHelper.info('Social login request body: $requestBody');
 
       final response = await _networkCaller.postRequest(
         ApiConstants.socialLoginApi,
-        body: {
-          'idToken': googleIdToken,
-          'provider': 'GOOGLE',
-          'fcmToken': fcmToken,
-          'name': displayName,
-        },
+        body: requestBody,
       );
 
       if (!response.isSuccess) {
@@ -188,7 +138,6 @@ class GoogleLoginController extends GetxController {
 
       final responseBody = response.responseData;
       AppLoggerHelper.info('Social login response: $responseBody');
-
 
       final data = responseBody is Map ? responseBody['data'] : null;
       final accessToken = data is Map ? data['accessToken'] : null;
@@ -215,7 +164,7 @@ class GoogleLoginController extends GetxController {
           );
         }
 
-        Get.offAll(() => MainScreen());
+        loginSucceeded = true;
       } else {
         AppLoggerHelper.error(
           'Social Login response missing accessToken. Full response: $responseBody',
@@ -227,29 +176,6 @@ class GoogleLoginController extends GetxController {
           backgroundColor: Colors.red,
         );
       }
-      if (accessToken is! String ||
-          accessToken.isEmpty ||
-          refreshToken is! String ||
-          refreshToken.isEmpty) {
-        AppLoggerHelper.error(
-          'Google social login response did not contain valid auth tokens.',
-        );
-        CommonMessage.showMessage(
-          title: 'Google Sign-In failed',
-          message: 'The server returned an invalid login response.',
-          backgroundColor: Colors.red,
-        );
-        return;
-      }
-
-      await StorageService.saveAuthTokens(
-        accessToken: accessToken,
-        refreshToken: refreshToken,
-      );
-      AppLoggerHelper.info(
-        'Google social login successful and auth tokens saved.',
-      );
-      loginSucceeded = true;
     } on GoogleSignInException catch (error) {
       if (error.code == GoogleSignInExceptionCode.canceled) {
         AppLoggerHelper.info('Google Sign-In cancelled by user.');
