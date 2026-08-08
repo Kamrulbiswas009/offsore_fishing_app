@@ -108,7 +108,13 @@ class AppleLoginController extends GetxController {
       String? fcmToken;
       try {
         if (Platform.isIOS) {
-          final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+          String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+          int attempts = 0;
+          while (apnsToken == null && attempts < 3) {
+            await Future.delayed(const Duration(seconds: 1));
+            apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+            attempts++;
+          }
           if (apnsToken != null) {
             fcmToken = await FirebaseMessaging.instance.getToken();
           }
