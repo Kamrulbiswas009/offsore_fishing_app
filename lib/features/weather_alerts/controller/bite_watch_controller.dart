@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
@@ -191,7 +190,13 @@ class BiteWatchController extends GetxController {
     if (_token == null) return;
     try {
       if (Platform.isIOS) {
-        final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+        String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+        int attempts = 0;
+        while (apnsToken == null && attempts < 3) {
+          await Future.delayed(const Duration(seconds: 1));
+          apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+          attempts++;
+        }
         if (apnsToken == null) {
           AppLoggerHelper.warning('[FCM] APNS token is not available yet on this iOS device/simulator. Skipping FCM upload.');
           return;

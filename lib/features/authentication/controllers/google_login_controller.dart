@@ -88,7 +88,13 @@ class GoogleLoginController extends GetxController {
       String? fcmToken;
       try {
         if (Platform.isIOS) {
-          final apnsToken = await _firebaseMessaging.getAPNSToken();
+          String? apnsToken = await _firebaseMessaging.getAPNSToken();
+          int attempts = 0;
+          while (apnsToken == null && attempts < 3) {
+            await Future.delayed(const Duration(seconds: 1));
+            apnsToken = await _firebaseMessaging.getAPNSToken();
+            attempts++;
+          }
           if (apnsToken != null) {
             fcmToken = await _firebaseMessaging.getToken();
           }
