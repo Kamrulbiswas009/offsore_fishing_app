@@ -915,22 +915,16 @@ class SummaryController extends GetxController {
       return;
     }
 
-    final firstTimeStr = hours.first['time'] as String?;
-    String nowStr = DateTime.now().toUtc().toIso8601String().substring(0, 10);
-    if (firstTimeStr != null) {
-      try {
-        final dt = _parseDateTimeUtc(firstTimeStr);
-        nowStr = dt.toIso8601String().substring(0, 10);
-      } catch (_) {}
-    }
+    final nowLocal = DateTime.now();
+    final todayStr = "${nowLocal.year}-${nowLocal.month.toString().padLeft(2, '0')}-${nowLocal.day.toString().padLeft(2, '0')}";
 
     for (var item in hours) {
       final timeStr = item['time'] as String?;
       if (timeStr == null) continue;
       try {
-        final dt = _parseDateTimeUtc(timeStr);
-        final dateStr = dt.toIso8601String().substring(0, 10);
-        if (dateStr == nowStr) continue;
+        final dt = _parseDateTimeLocal(timeStr);
+        final dateStr = "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}";
+        if (dateStr == todayStr) continue;
         if (uniqueDates.contains(dateStr)) continue;
 
         uniqueDates.add(dateStr);
@@ -952,13 +946,14 @@ class SummaryController extends GetxController {
     final hours = weatherData.value?['hours'] as List?;
     if (hours == null || hours.isEmpty) return null;
 
-    DateTime targetDate = DateTime.now().toUtc();
+    final nowLocal = DateTime.now();
+    DateTime targetDate = nowLocal;
     if (dayLabel != "Today") {
       for (var item in hours) {
         final timeStr = item['time'] as String?;
         if (timeStr == null) continue;
         try {
-          final dt = _parseDateTimeUtc(timeStr);
+          final dt = _parseDateTimeLocal(timeStr);
           final label = DateFormat('EEE d').format(dt);
           if (label == dayLabel) {
             targetDate = dt;
@@ -970,12 +965,12 @@ class SummaryController extends GetxController {
       final firstTimeStr = hours.first['time'] as String?;
       if (firstTimeStr != null) {
         try {
-          targetDate = _parseDateTimeUtc(firstTimeStr);
+          targetDate = _parseDateTimeLocal(firstTimeStr);
         } catch (_) {}
       }
     }
 
-    final targetHour = DateTime.now().toUtc().hour;
+    final targetHour = nowLocal.hour;
     Map<String, dynamic>? bestMatch;
     double minDiff = double.infinity;
 
@@ -983,11 +978,9 @@ class SummaryController extends GetxController {
       final timeStr = item['time'] as String?;
       if (timeStr == null) continue;
       try {
-        final dt = _parseDateTimeUtc(timeStr);
-        final diff = DateTime.utc(dt.year, dt.month, dt.day, dt.hour)
-            .difference(DateTime.utc(targetDate.year, targetDate.month, targetDate.day, targetHour))
-            .inHours
-            .abs();
+        final dt = _parseDateTimeLocal(timeStr);
+        final targetDt = DateTime(targetDate.year, targetDate.month, targetDate.day, targetHour);
+        final diff = dt.difference(targetDt).inHours.abs();
         if (diff < minDiff) {
           minDiff = diff.toDouble();
           bestMatch = item as Map<String, dynamic>?;
@@ -1128,13 +1121,14 @@ class SummaryController extends GetxController {
     final hours = weatherData.value?['hours'] as List?;
     if (hours == null || hours.isEmpty) return null;
 
-    DateTime targetDate = DateTime.now().toUtc();
+    final nowLocal = DateTime.now();
+    DateTime targetDate = nowLocal;
     if (dayLabel != "Today") {
       for (var item in hours) {
         final timeStr = item['time'] as String?;
         if (timeStr == null) continue;
         try {
-          final dt = _parseDateTimeUtc(timeStr);
+          final dt = _parseDateTimeLocal(timeStr);
           final label = DateFormat('EEE d').format(dt);
           if (label == dayLabel) {
             targetDate = dt;
@@ -1146,7 +1140,7 @@ class SummaryController extends GetxController {
       final firstTimeStr = hours.first['time'] as String?;
       if (firstTimeStr != null) {
         try {
-          targetDate = _parseDateTimeUtc(firstTimeStr);
+          targetDate = _parseDateTimeLocal(firstTimeStr);
         } catch (_) {}
       }
     }
@@ -1162,11 +1156,9 @@ class SummaryController extends GetxController {
       final timeStr = item['time'] as String?;
       if (timeStr == null) continue;
       try {
-        final dt = _parseDateTimeUtc(timeStr);
-        final diff = DateTime.utc(dt.year, dt.month, dt.day, dt.hour)
-            .difference(DateTime.utc(targetDate.year, targetDate.month, targetDate.day, targetHour))
-            .inHours
-            .abs();
+        final dt = _parseDateTimeLocal(timeStr);
+        final targetDt = DateTime(targetDate.year, targetDate.month, targetDate.day, targetHour);
+        final diff = dt.difference(targetDt).inHours.abs();
         if (diff < minDiff) {
           minDiff = diff.toDouble();
           bestMatch = item as Map<String, dynamic>?;
@@ -1261,7 +1253,7 @@ class SummaryController extends GetxController {
     await StorageService.saveOfflineZones(offlineZones.toList());
   }
 
-  DateTime _parseDateTimeUtc(String timeStr) {
+  DateTime _parseDateTimeLocal(String timeStr) {
     try {
       final parts = timeStr.split('T');
       final dateParts = parts[0].split('-');
@@ -1284,9 +1276,9 @@ class SummaryController extends GetxController {
           second = int.parse(secPart);
         }
       }
-      return DateTime.utc(year, month, day, hour, minute, second);
+      return DateTime.utc(year, month, day, hour, minute, second).toLocal();
     } catch (_) {
-      return DateTime.parse(timeStr).toUtc();
+      return DateTime.parse(timeStr).toLocal();
     }
   }
 

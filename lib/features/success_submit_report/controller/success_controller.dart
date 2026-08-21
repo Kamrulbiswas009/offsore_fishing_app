@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:paytonpieper/features/main_screen/screen/home_main_screen.dart';
+import 'package:paytonpieper/features/report_main/report_catch/screen/report_catch_screen.dart';
 import 'package:paytonpieper/routes/app_routes.dart';
 
 
@@ -36,7 +37,7 @@ class ReportSuccessController extends GetxController {
 
   void addAnother() {
     // Navigate back to the start of report flow
-    Get.offNamed('/reportCatchStep1');
+    Get.to(()=>ReportCatchStep1Screen());
   }
 
   void close() {
