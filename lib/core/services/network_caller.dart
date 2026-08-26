@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response, MultipartFile;
 import 'package:http/http.dart';
 
@@ -12,8 +14,108 @@ import 'sync_service.dart';
 class NetworkCaller {
   final int timeoutDuration = 30;
 
-  // Static map to keep track of active, in-flight GET requests to prevent duplicates
+  // Static map to keep track of active, in-flight GET requests to prevent duplicate network traffic
   static final Map<String, Future<ResponseData>> _inFlightRequests = {};
+
+  // Concurrency control / serialization queue to manage traffic and prevent 429 Too Many Requests
+  static int _activeRequests = 0;
+  static const int _maxConcurrentRequests = 4;
+  static final List<Completer<void>> _requestQueue = [];
+  static DateTime _lastRequestDispatchTime = DateTime.now();
+
+  static Future<void> _acquireSlot() async {
+    if (_activeRequests < _maxConcurrentRequests) {
+      _activeRequests++;
+      // Subtle inter-request pacing (40ms) to prevent TCP packet collisions on burst
+      final now = DateTime.now();
+      final diff = now.difference(_lastRequestDispatchTime).inMilliseconds;
+      if (diff < 40) {
+        await Future.delayed(Duration(milliseconds: 40 - diff));
+      }
+      _lastRequestDispatchTime = DateTime.now();
+      return;
+    }
+
+    final completer = Completer<void>();
+    _requestQueue.add(completer);
+    await completer.future;
+
+    final now = DateTime.now();
+    final diff = now.difference(_lastRequestDispatchTime).inMilliseconds;
+    if (diff < 40) {
+      await Future.delayed(Duration(milliseconds: 40 - diff));
+    }
+    _lastRequestDispatchTime = DateTime.now();
+  }
+
+  static void _releaseSlot() {
+    if (_requestQueue.isNotEmpty) {
+      final next = _requestQueue.removeAt(0);
+      next.complete();
+    } else {
+      if (_activeRequests > 0) {
+        _activeRequests--;
+      }
+    }
+  }
+
+  // Wrapper that handles slot acquisition, retry on 429 / 408 / timeouts, and slot release
+  Future<ResponseData> _executeWithTrafficControl(
+    Future<ResponseData> Function() requestFn, {
+    int maxRetries = 2,
+    String? url,
+  }) async {
+    int attempt = 0;
+
+    while (true) {
+      attempt++;
+      await _acquireSlot();
+
+      ResponseData? response;
+      dynamic caughtException;
+
+      try {
+        response = await requestFn();
+      } catch (e) {
+        caughtException = e;
+      } finally {
+        _releaseSlot();
+      }
+
+      // If we caught a network exception (TimeoutException, SocketException, ClientException)
+      if (caughtException != null) {
+        final isRetryableException = caughtException is TimeoutException ||
+            caughtException is SocketException ||
+            caughtException is ClientException;
+
+        if (isRetryableException && attempt <= maxRetries) {
+          final backoffMs = (math.pow(2, attempt) * 500 + math.Random().nextInt(300)).toInt();
+          debugPrint('[NetworkCaller] Transient exception on $url: $caughtException. Retrying in ${backoffMs}ms (Attempt $attempt of $maxRetries)...');
+          await Future.delayed(Duration(milliseconds: backoffMs));
+          continue;
+        }
+        return _handleError(caughtException);
+      }
+
+      if (response != null) {
+        // If HTTP 429 (Too Many Requests) or HTTP 408 (Request Timeout)
+        if ((response.statusCode == 429 || response.statusCode == 408) && attempt <= maxRetries) {
+          final backoffMs = (math.pow(2, attempt) * 1000 + math.Random().nextInt(500)).toInt();
+          debugPrint('[NetworkCaller] Rate limited / timeout (HTTP ${response.statusCode}) on $url. Retrying in ${backoffMs}ms (Attempt $attempt of $maxRetries)...');
+          await Future.delayed(Duration(milliseconds: backoffMs));
+          continue;
+        }
+        return response;
+      }
+
+      return ResponseData(
+        isSuccess: false,
+        statusCode: 500,
+        responseData: '',
+        errorMessage: 'An unexpected request error occurred.',
+      );
+    }
+  }
 
   // GET method
   Future<ResponseData> getRequest(String url, {String? token}) async {
@@ -24,7 +126,10 @@ class NetworkCaller {
       return _inFlightRequests[requestKey]!;
     }
 
-    final Future<ResponseData> future = _executeGetRequest(url, token);
+    final Future<ResponseData> future = _executeWithTrafficControl(
+      () => _executeGetRequest(url, token),
+      url: url,
+    );
     _inFlightRequests[requestKey] = future;
 
     try {
@@ -50,7 +155,7 @@ class NetworkCaller {
 
       return _handleResponse(response);
     } catch (e) {
-      return _handleError(e);
+      rethrow;
     }
   }
 
@@ -166,11 +271,11 @@ class NetworkCaller {
 
   // DELETE method
   Future<ResponseData> deleteRequest(String url, {String? token}) async {
-    log('DELETE Request: $url');
-    log(
-      'DELETE Token: ${token == null || token.isEmpty ? '[MISSING]' : '[PRESENT]'}',
-    );
-    try {
+    return _executeWithTrafficControl(() async {
+      log('DELETE Request: $url');
+      log(
+        'DELETE Token: ${token == null || token.isEmpty ? '[MISSING]' : '[PRESENT]'}',
+      );
       final Response response = await delete(
         Uri.parse(url),
         headers: {
@@ -180,9 +285,7 @@ class NetworkCaller {
       ).timeout(Duration(seconds: timeoutDuration));
 
       return _handleResponse(response);
-    } catch (e) {
-      return _handleError(e);
-    }
+    }, url: url);
   }
 
   // POST method
@@ -191,12 +294,12 @@ class NetworkCaller {
     Map<String, dynamic>? body,
     String? token,
   }) async {
-    log('POST Request: $url');
-    log(
-      'Request Body: ${body != null ? jsonEncode(_redactSensitiveData(body)) : 'EMPTY'}',
-    );
+    return _executeWithTrafficControl(() async {
+      log('POST Request: $url');
+      log(
+        'Request Body: ${body != null ? jsonEncode(_redactSensitiveData(body)) : 'EMPTY'}',
+      );
 
-    try {
       final Response response = await post(
         Uri.parse(url),
         headers: {
@@ -206,9 +309,7 @@ class NetworkCaller {
         body: body != null ? jsonEncode(body) : null,
       ).timeout(Duration(seconds: timeoutDuration));
       return _handleResponse(response);
-    } catch (e) {
-      return _handleError(e);
-    }
+    }, url: url);
   }
 
   // PATCH method
@@ -217,12 +318,12 @@ class NetworkCaller {
     Map<String, dynamic>? body,
     String? token,
   }) async {
-    log('PATCH Request: $url');
-    log(
-      'Request Body: ${body != null ? jsonEncode(_redactSensitiveData(body)) : 'EMPTY'}',
-    );
+    return _executeWithTrafficControl(() async {
+      log('PATCH Request: $url');
+      log(
+        'Request Body: ${body != null ? jsonEncode(_redactSensitiveData(body)) : 'EMPTY'}',
+      );
 
-    try {
       final Response response = await patch(
         Uri.parse(url),
         headers: {
@@ -232,9 +333,7 @@ class NetworkCaller {
         body: body != null ? jsonEncode(body) : null,
       ).timeout(Duration(seconds: timeoutDuration));
       return _handleResponse(response);
-    } catch (e) {
-      return _handleError(e);
-    }
+    }, url: url);
   }
 
   // PUT method
@@ -243,12 +342,12 @@ class NetworkCaller {
     Map<String, dynamic>? body,
     String? token,
   }) async {
-    log('PUT Request: $url');
-    log(
-      'Request Body: ${body != null ? jsonEncode(_redactSensitiveData(body)) : 'EMPTY'}',
-    );
+    return _executeWithTrafficControl(() async {
+      log('PUT Request: $url');
+      log(
+        'Request Body: ${body != null ? jsonEncode(_redactSensitiveData(body)) : 'EMPTY'}',
+      );
 
-    try {
       final Response response = await put(
         Uri.parse(url),
         headers: {
@@ -258,9 +357,7 @@ class NetworkCaller {
         body: body != null ? jsonEncode(body) : null,
       ).timeout(Duration(seconds: timeoutDuration));
       return _handleResponse(response);
-    } catch (e) {
-      return _handleError(e);
-    }
+    }, url: url);
   }
 
   // PATCH multipart/form-data method (for file uploads)
@@ -271,8 +368,8 @@ class NetworkCaller {
     String fileFieldName = 'file',
     String? token,
   }) async {
-    log('PATCH Multipart Request: $url');
-    try {
+    return _executeWithTrafficControl(() async {
+      log('PATCH Multipart Request: $url');
       final request = MultipartRequest('PATCH', Uri.parse(url));
 
       if (token != null && token.isNotEmpty) {
@@ -299,9 +396,7 @@ class NetworkCaller {
       );
       final response = await Response.fromStream(streamedResponse);
       return _handleResponse(response);
-    } catch (e) {
-      return _handleError(e);
-    }
+    }, url: url);
   }
 
   // POST multipart/form-data method (for file uploads)
@@ -312,8 +407,8 @@ class NetworkCaller {
     String fileFieldName = 'file',
     String? token,
   }) async {
-    log('POST Multipart Request: $url');
-    try {
+    return _executeWithTrafficControl(() async {
+      log('POST Multipart Request: $url');
       final request = MultipartRequest('POST', Uri.parse(url));
 
       if (token != null && token.isNotEmpty) {
@@ -340,9 +435,7 @@ class NetworkCaller {
       );
       final response = await Response.fromStream(streamedResponse);
       return _handleResponse(response);
-    } catch (e) {
-      return _handleError(e);
-    }
+    }, url: url);
   }
 
   String _guessMimeType(String path) {

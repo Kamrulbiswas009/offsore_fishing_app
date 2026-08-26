@@ -677,6 +677,7 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
             "Water Depth (ft)",
             "",
             controller: e.depthCtrl,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
           SizedBox(height: 12.h),
           Padding(
@@ -965,6 +966,7 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
                 "Water Depth (ft)",
                 "",
                 controller: controller.depthController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
               ),
             ),
             // SizedBox(width: 15.w),
@@ -1078,6 +1080,7 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
     String label,
     String hint, {
     TextEditingController? controller,
+    TextInputType? keyboardType,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1089,6 +1092,7 @@ class ReportCatch2Screen extends GetView<ReportCatch2Controller> {
         SizedBox(height: 8.h),
         TextField(
           controller: controller,
+          keyboardType: keyboardType,
           style: getTextStyle(color: Colors.white),
           decoration: InputDecoration(
             hintText: hint,
