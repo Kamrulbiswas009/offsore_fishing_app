@@ -212,23 +212,45 @@ class ReportCatch2Controller extends GetxController {
   List<String> get filteredBaitOptions => getFilteredBaitOptions(selectedMethod.value);
 
   List<String> getFilteredBaitOptions(String method) {
-    if (method.isEmpty || method == "Select Method") return ["Other"];
+    if (method.isEmpty || method == "Select Method") {
+      return ["Other"];
+    }
     final list = <String>[];
-    if (method == "Trolling") list.add("Diving Lure");
+    if (method == "Trolling") {
+      list.add("Diving Lure");
+    }
     if (method == "Anchor/Spot Fishing" ||
         method == "Casting" ||
         method == "Chunking" ||
-        method == "Trolling") list.add("Cut Bait");
+        method == "Trolling") {
+      list.add("Cut Bait");
+    }
     if (method == "Anchor/Spot Fishing" ||
         method == "Casting" ||
-        method == "Trolling") list.add("Live Bait");
-    if (method == "Casting") list.add("Popper");
-    if (method == "Trolling") list.add("Plug Lure");
-    if (method == "Trolling") list.add("Skirted Lure");
-    if (method == "Jigging") list.add("Slow Jig");
-    if (method == "Casting") list.add("Soft Plastic");
-    if (method == "Casting") list.add("Stickbait");
-    if (method == "Jigging") list.add("Vertical Jig");
+        method == "Trolling") {
+      list.add("Live Bait");
+    }
+    if (method == "Casting") {
+      list.add("Popper");
+    }
+    if (method == "Trolling") {
+      list.add("Plug Lure");
+    }
+    if (method == "Trolling") {
+      list.add("Skirted Lure");
+    }
+    if (method == "Jigging") {
+      list.add("Slow Jig");
+    }
+    if (method == "Casting") {
+      list.add("Soft Plastic");
+    }
+    if (method == "Casting") {
+      list.add("Stickbait");
+    }
+    if (method == "Jigging") {
+      list.add("Vertical Jig");
+    }
     list.add("Other");
     return list;
   }
@@ -508,6 +530,71 @@ class ReportCatch2Controller extends GetxController {
   String _toTimestamp(DateTime dt) =>
       "${dt.toUtc().toIso8601String().split('.').first}Z";
 
+  /// Validates all required fields before moving forward or submitting
+  String? validateInputs() {
+    if (isNothingCaught.value) {
+      return null;
+    }
+
+    if (isSamePattern.value) {
+      if (selectedSpeciesList.isEmpty) {
+        return "Please select at least one species.";
+      }
+
+      final depthStr = depthController.text.trim();
+      if (depthStr.isEmpty) {
+        return "Please enter water depth.";
+      }
+      final depthVal = num.tryParse(depthStr);
+      if (depthVal == null || depthVal < 1) {
+        return "Water depth must not be less than 1 ft.";
+      }
+
+      if (selectedMethod.value.trim().isEmpty ||
+          selectedMethod.value == "Select Method") {
+        return "Please select a fishing method.";
+      }
+
+      if (selectedBait.value.trim().isEmpty ||
+          selectedBait.value == "Select bait") {
+        return "Please select a bait / lure type.";
+      }
+    } else {
+      if (speciesEntries.isEmpty) {
+        return "Please add at least one species entry.";
+      }
+
+      for (int i = 0; i < speciesEntries.length; i++) {
+        final entry = speciesEntries[i];
+        final label = "Species ${i + 1}";
+
+        if (entry.speciesName.trim().isEmpty ||
+            entry.speciesName == "Select Species") {
+          return "Please select a species for $label.";
+        }
+
+        final depthStr = entry.depthCtrl.text.trim();
+        if (depthStr.isEmpty) {
+          return "Please enter water depth for $label.";
+        }
+        final depthVal = num.tryParse(depthStr);
+        if (depthVal == null || depthVal < 1) {
+          return "Water depth for $label must not be less than 1 ft.";
+        }
+
+        if (entry.method.trim().isEmpty || entry.method == "Select Method") {
+          return "Please select a fishing method for $label.";
+        }
+
+        if (entry.bait.trim().isEmpty || entry.bait == "Select bait") {
+          return "Please select a bait / lure type for $label.";
+        }
+      }
+    }
+
+    return null;
+  }
+
   Map<String, dynamic> buildReportPayload({required String visibility, String? groupId}) {
     final lat = selectedLat.value ?? 28.5;
     final lng = selectedLng.value ?? -88.5;
@@ -533,22 +620,24 @@ class ReportCatch2Controller extends GetxController {
       final speciesList = selectedSpeciesList
           .map((name) => {"speciesName": name, "quantity": quantities[name] ?? 1})
           .toList();
+      final depthVal = num.tryParse(depthController.text.trim());
       fishingPatterns.add({
         "species": speciesList,
         "fishingMethod": _mapMethod(selectedMethod.value),
         "baitLureType": _mapBait(selectedBait.value, selectedMethod.value),
-        "waterDepthFt": int.tryParse(depthController.text),
+        "waterDepthFt": depthVal,
         "waterColumn": _mapWaterColumn(waterPosition.value),
       });
     } else {
       // NO mode — one pattern per species entry
       for (final entry in speciesEntries) {
         if (entry.speciesName.isEmpty) continue;
+        final depthVal = num.tryParse(entry.depthCtrl.text.trim());
         fishingPatterns.add({
           "species": [{"speciesName": entry.speciesName, "quantity": entry.quantity}],
           "fishingMethod": _mapMethod(entry.method),
           "baitLureType": _mapBait(entry.bait, entry.method),
-          "waterDepthFt": int.tryParse(entry.depthCtrl.text),
+          "waterDepthFt": depthVal,
           "waterColumn": _mapWaterColumn(entry.waterPosition),
         });
       }
@@ -582,6 +671,18 @@ class ReportCatch2Controller extends GetxController {
   }
 
   Future<void> submitReport() async {
+    final validationError = validateInputs();
+    if (validationError != null) {
+      Get.snackbar(
+        "Required Field Missing",
+        validationError,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFFDA605C),
+        colorText: Colors.white,
+      );
+      return;
+    }
+
     final syncService = Get.find<SyncService>();
     final online = syncService.isOnline.value;
 

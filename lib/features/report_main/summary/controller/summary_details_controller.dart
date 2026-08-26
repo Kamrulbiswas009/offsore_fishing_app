@@ -16,7 +16,6 @@ import 'package:paytonpieper/core/utils/helpers/app_helper.dart';
 import 'package:intl/intl.dart';
 import 'package:paytonpieper/features/profile_and_setting/controller/profile_main_screen_controller.dart';
 
-
 class SummaryController extends GetxController {
   var selectedTab = "Summary".obs;
   var selectedTimeRange = "Last 3 Days".obs;
@@ -56,7 +55,9 @@ class SummaryController extends GetxController {
   var isDownloadingZone = false.obs;
   var downloadingZoneName = "".obs;
 
-  bool get isCurrentZoneOffline => selectedZone.value != null && offlineZones.contains(selectedZone.value!.name);
+  bool get isCurrentZoneOffline =>
+      selectedZone.value != null &&
+      offlineZones.contains(selectedZone.value!.name);
 
   // Summary Tab API States
   var isSummaryLoading = false.obs;
@@ -64,7 +65,7 @@ class SummaryController extends GetxController {
   var summaryHitRate = "78%".obs;
   var summaryNetworksCount = 3.obs;
   var summaryHotZonesCount = 2.obs;
-  
+
   var summaryTopSpecies = <Map<String, dynamic>>[
     {"name": "Tuna", "count": 16},
     {"name": "Snapper", "count": 12},
@@ -81,10 +82,32 @@ class SummaryController extends GetxController {
 
   var peakWindow = "6.00 AM - 10.00 AM".obs;
   var effectiveMethod = "Trolling".obs;
-  
+
   var hourlyHistogram = <double>[
-    0.0, 0.0, 3.0, 2.0, 1.0, 0.0, 1.0, 0.0, 0.0, 45.0, 0.0, 0.0,
-    0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0,
+    0.0,
+    3.0,
+    2.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    45.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
   ].obs;
 
   var speciesDistribution = <Map<String, dynamic>>[
@@ -195,7 +218,9 @@ class SummaryController extends GetxController {
     selectedReportType.value = "";
   }
 
-  final List<String> speciesList = speciesHierarchy.expand((node) => node.allSelectableLeafNames).toList();
+  final List<String> speciesList = speciesHierarchy
+      .expand((node) => node.allSelectableLeafNames)
+      .toList();
   final List<String> depthList = [
     "0-50 ft",
     "50-100 ft",
@@ -254,8 +279,13 @@ class SummaryController extends GetxController {
     // Load from cache instantly if available
     try {
       final cacheService = Get.find<OfflineCacheService>();
-      final cachedData = await cacheService.getCache("region_reports", ignoreExpiry: true);
-      if (cachedData != null && cachedData is Map && cachedData['data'] is List) {
+      final cachedData = await cacheService.getCache(
+        "region_reports",
+        ignoreExpiry: true,
+      );
+      if (cachedData != null &&
+          cachedData is Map &&
+          cachedData['data'] is List) {
         _parseReportsList(cachedData['data'] as List);
       }
     } catch (e) {
@@ -266,7 +296,8 @@ class SummaryController extends GetxController {
       final network = NetworkCaller();
       var accessToken = StorageService.token;
       if (accessToken == null || accessToken.isEmpty) {
-        accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhMDYxM2ViMC0zY2E4LTQ1MjItOTA4MC1hODM1NzFkZDdkODAiLCJlbWFpbCI6InVzZXJAZ21haWwuY29tIiwiaWF0IjoxNzgzMzAyMzM0LCJleHAiOjE3ODM5MDcxMzR9.3d1C44JOmw7aIpq6gna6kIrzXNfwVlaWkFfZxuaHYFo";
+        accessToken =
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhMDYxM2ViMC0zY2E4LTQ1MjItOTA4MC1hODM1NzFkZDdkODAiLCJlbWFpbCI6InVzZXJAZ21haWwuY29tIiwiaWF0IjoxNzgzMzAyMzM0LCJleHAiOjE3ODM5MDcxMzR9.3d1C44JOmw7aIpq6gna6kIrzXNfwVlaWkFfZxuaHYFo";
       }
       final token = 'Bearer $accessToken';
 
@@ -290,7 +321,8 @@ class SummaryController extends GetxController {
         }
         final timestampStr = response.responseData['timestamp'] as String?;
         if (timestampStr != null) {
-          lastUpdatedTime.value = DateTime.tryParse(timestampStr) ?? DateTime.now();
+          lastUpdatedTime.value =
+              DateTime.tryParse(timestampStr) ?? DateTime.now();
         } else {
           lastUpdatedTime.value = DateTime.now();
         }
@@ -339,21 +371,26 @@ class SummaryController extends GetxController {
         final confirms = item['biteConfirmations']?['confirmed'] ?? 0;
         final author = item['user']?['name'];
         final type = item['visibility']?.toString().toLowerCase() ?? 'public';
-        final id = item['id']?.toString() ?? item['reportId']?.toString() ?? item['_id']?.toString();
+        final id =
+            item['id']?.toString() ??
+            item['reportId']?.toString() ??
+            item['_id']?.toString();
 
-        fetchedList.add(FishingReport(
-          id: id,
-          title: title,
-          timeAgo: timeAgo,
-          depth: depth,
-          zone: zone,
-          technique: technique,
-          bait: bait,
-          note: note,
-          confirms: confirms,
-          author: author,
-          type: type,
-        ));
+        fetchedList.add(
+          FishingReport(
+            id: id,
+            title: title,
+            timeAgo: timeAgo,
+            depth: depth,
+            zone: zone,
+            technique: technique,
+            bait: bait,
+            note: note,
+            confirms: confirms,
+            author: author,
+            type: type,
+          ),
+        );
       } catch (e) {
         debugPrint("Error parsing report item: $e");
       }
@@ -390,12 +427,15 @@ class SummaryController extends GetxController {
     if (clean == "JIGGING") return "Jigging";
     if (clean == "TROLLING") return "Trolling";
     if (clean == "DRIFTING") return "Drifting";
-    
+
     // Capitalize first letter of each word if not specifically mapped
-    return clean.split('_').map((word) {
-      if (word.isEmpty) return '';
-      return word[0] + word.substring(1).toLowerCase();
-    }).join(' ');
+    return clean
+        .split('_')
+        .map((word) {
+          if (word.isEmpty) return '';
+          return word[0] + word.substring(1).toLowerCase();
+        })
+        .join(' ');
   }
 
   String _mapBackendBaitToUser(String? bait) {
@@ -405,20 +445,28 @@ class SummaryController extends GetxController {
     if (clean == "CUT_BAIT") return "Cut Bait";
     if (clean == "VERTICAL_JIG") return "Vertical Jig";
     if (clean == "SKIRTED_LURE") return "Skirted Lure";
-    
-    return clean.split('_').map((word) {
-      if (word.isEmpty) return '';
-      return word[0] + word.substring(1).toLowerCase();
-    }).join(' ');
+
+    return clean
+        .split('_')
+        .map((word) {
+          if (word.isEmpty) return '';
+          return word[0] + word.substring(1).toLowerCase();
+        })
+        .join(' ');
   }
 
   int get reportsLast24h {
     final list = selectedZone.value != null
-        ? reports.where((r) => r.zone.toLowerCase() == selectedZone.value!.name.toLowerCase())
+        ? reports.where(
+            (r) =>
+                r.zone.toLowerCase() == selectedZone.value!.name.toLowerCase(),
+          )
         : reports;
     int count = 0;
     for (var r in list) {
-      if (r.timeAgo.contains("hour") || r.timeAgo.contains("minute") || r.timeAgo.contains("now")) {
+      if (r.timeAgo.contains("hour") ||
+          r.timeAgo.contains("minute") ||
+          r.timeAgo.contains("now")) {
         count++;
       } else if (r.timeAgo.contains("1 day")) {
         count++;
@@ -429,7 +477,13 @@ class SummaryController extends GetxController {
 
   List<FishingReport> get filteredReports {
     final zoneFiltered = selectedZone.value != null
-        ? reports.where((r) => r.zone.toLowerCase() == selectedZone.value!.name.toLowerCase()).toList()
+        ? reports
+              .where(
+                (r) =>
+                    r.zone.toLowerCase() ==
+                    selectedZone.value!.name.toLowerCase(),
+              )
+              .toList()
         : reports;
 
     if (selectedSpecies.isEmpty &&
@@ -541,7 +595,9 @@ class SummaryController extends GetxController {
       EasyLoading.dismiss();
 
       if (response.isSuccess) {
-        AppLoggerHelper.info("Bite confirmed successfully for report ID: $reportId");
+        AppLoggerHelper.info(
+          "Bite confirmed successfully for report ID: $reportId",
+        );
         EasyLoading.showSuccess("Bite confirmed successfully!");
         fetchReports();
       } else {
@@ -556,7 +612,10 @@ class SummaryController extends GetxController {
       }
     } catch (e) {
       EasyLoading.dismiss();
-      AppLoggerHelper.error("Error confirming bite for report ID: $reportId", e);
+      AppLoggerHelper.error(
+        "Error confirming bite for report ID: $reportId",
+        e,
+      );
       EasyLoading.showError("An unexpected error occurred.");
     }
   }
@@ -591,7 +650,9 @@ class SummaryController extends GetxController {
       EasyLoading.dismiss();
 
       if (response.isSuccess) {
-        AppLoggerHelper.info("Bite rejected successfully for report ID: $reportId");
+        AppLoggerHelper.info(
+          "Bite rejected successfully for report ID: $reportId",
+        );
         EasyLoading.showSuccess("Bite rejected successfully!");
         fetchReports();
       } else {
@@ -622,7 +683,15 @@ class SummaryController extends GetxController {
 
   static List<String> _generateInitialDays() {
     final List<String> list = ["Today"];
-    final List<String> weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    final List<String> weekdays = [
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+    ];
     for (int i = 1; i <= 4; i++) {
       final futureDate = DateTime.now().add(Duration(days: i));
       final label = "${weekdays[futureDate.weekday % 7]} ${futureDate.day}";
@@ -637,7 +706,7 @@ class SummaryController extends GetxController {
 
   Future<void> fetchSummary({int? customTtl, bool forceRefresh = false}) async {
     isSummaryLoading.value = true;
-    
+
     final timeRangeParam = _mapTimeRangeToParam(selectedTimeRange.value);
 
     final cacheKey = selectedZone.value != null
@@ -647,8 +716,13 @@ class SummaryController extends GetxController {
     // Load from cache instantly if available
     try {
       final cacheService = Get.find<OfflineCacheService>();
-      final cachedData = await cacheService.getCache(cacheKey, ignoreExpiry: true);
-      if (cachedData != null && cachedData is Map && cachedData['data'] is Map<String, dynamic>) {
+      final cachedData = await cacheService.getCache(
+        cacheKey,
+        ignoreExpiry: true,
+      );
+      if (cachedData != null &&
+          cachedData is Map &&
+          cachedData['data'] is Map<String, dynamic>) {
         parseSummaryData(cachedData['data'] as Map<String, dynamic>);
       }
     } catch (e) {
@@ -659,7 +733,8 @@ class SummaryController extends GetxController {
       final network = NetworkCaller();
       var accessToken = StorageService.token;
       if (accessToken == null || accessToken.isEmpty) {
-        accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhMDYxM2ViMC0zY2E4LTQ1MjItOTA4MC1hODM1NzFkZDdkODAiLCJlbWFpbCI6InVzZXJAZ21haWwuY29tIiwiaWF0IjoxNzgzMzAyMzM0LCJleHAiOjE3ODM5MDcxMzR9.3d1C44JOmw7aIpq6gna6kIrzXNfwVlaWkFfZxuaHYFo";
+        accessToken =
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhMDYxM2ViMC0zY2E4LTQ1MjItOTA4MC1hODM1NzFkZDdkODAiLCJlbWFpbCI6InVzZXJAZ21haWwuY29tIiwiaWF0IjoxNzgzMzAyMzM0LCJleHAiOjE3ODM5MDcxMzR9.3d1C44JOmw7aIpq6gna6kIrzXNfwVlaWkFfZxuaHYFo";
       }
       final token = 'Bearer $accessToken';
 
@@ -700,7 +775,8 @@ class SummaryController extends GetxController {
         }
         final timestampStr = response.responseData['timestamp'] as String?;
         if (timestampStr != null) {
-          lastUpdatedTime.value = DateTime.tryParse(timestampStr) ?? DateTime.now();
+          lastUpdatedTime.value =
+              DateTime.tryParse(timestampStr) ?? DateTime.now();
         } else {
           lastUpdatedTime.value = DateTime.now();
         }
@@ -727,18 +803,24 @@ class SummaryController extends GetxController {
 
     // Update selectedZone dynamically with backend details if available
     final singleZone = data['singleZoneDetails'];
-    if (singleZone != null && singleZone is Map<String, dynamic> && selectedZone.value != null) {
+    if (singleZone != null &&
+        singleZone is Map<String, dynamic> &&
+        selectedZone.value != null) {
       final current = selectedZone.value!;
-      double scoreVal = (singleZone['activityScore'] as num?)?.toDouble() ?? (current.activityScore * 100);
+      double scoreVal =
+          (singleZone['activityScore'] as num?)?.toDouble() ??
+          (current.activityScore * 100);
       if (scoreVal > 1.0) {
         scoreVal = scoreVal / 100.0;
       }
       final trendStr = singleZone['trendDirection'] as String?;
       TrendDirection trendDir = TrendDirection.stable;
       if (trendStr != null) {
-        if (trendStr.toUpperCase() == "RISING" || trendStr.toUpperCase() == "UP") {
+        if (trendStr.toUpperCase() == "RISING" ||
+            trendStr.toUpperCase() == "UP") {
           trendDir = TrendDirection.rising;
-        } else if (trendStr.toUpperCase() == "FALLING" || trendStr.toUpperCase() == "DOWN") {
+        } else if (trendStr.toUpperCase() == "FALLING" ||
+            trendStr.toUpperCase() == "DOWN") {
           trendDir = TrendDirection.falling;
         }
       }
@@ -750,7 +832,9 @@ class SummaryController extends GetxController {
         name: current.name,
         location: current.location,
         count: current.count,
-        level: scoreVal >= 0.7 ? ActivityLevel.high : (scoreVal >= 0.4 ? ActivityLevel.medium : ActivityLevel.low),
+        level: scoreVal >= 0.7
+            ? ActivityLevel.high
+            : (scoreVal >= 0.4 ? ActivityLevel.medium : ActivityLevel.low),
         reports: reportsCount,
         lastUpdated: current.lastUpdated,
         activityScore: scoreVal,
@@ -767,12 +851,14 @@ class SummaryController extends GetxController {
     // 2. Top Species
     final topSp = data['topSpecies'] as List?;
     if (topSp != null) {
-      summaryTopSpecies.assignAll(topSp.map((item) {
-        return {
-          "name": item['name'] ?? 'Unknown',
-          "count": item['count'] ?? 0,
-        };
-      }).toList());
+      summaryTopSpecies.assignAll(
+        topSp.map((item) {
+          return {
+            "name": item['name'] ?? 'Unknown',
+            "count": item['count'] ?? 0,
+          };
+        }).toList(),
+      );
     }
 
     // 3. Pattern Intelligence
@@ -789,29 +875,39 @@ class SummaryController extends GetxController {
 
       patternBait.value = _mapBackendBaitToUser(pattern['topBaitLure']);
       patternMethod.value = _mapBackendMethodToUser(pattern['dominantMethod']);
-      patternStrikeZone.value = _mapBackendColumnToUser(pattern['topWaterColumn']);
+      patternStrikeZone.value = _mapBackendColumnToUser(
+        pattern['topWaterColumn'],
+      );
     }
 
     // 4. Activity Timing
     final timing = data['activityTiming'];
     if (timing != null && timing is Map<String, dynamic>) {
-      effectiveMethod.value = _mapBackendMethodToUser(timing['mostEffectiveMethod']);
+      effectiveMethod.value = _mapBackendMethodToUser(
+        timing['mostEffectiveMethod'],
+      );
 
       final histogram = timing['hourlyHistogram'] as List?;
-      final localHistogram = AppHelperFunctions.shiftHistogramToLocal(histogram);
+      final localHistogram = AppHelperFunctions.shiftHistogramToLocal(
+        histogram,
+      );
       hourlyHistogram.assignAll(localHistogram);
-      peakWindow.value = AppHelperFunctions.calculateLocalPeakWindowFromLocal(localHistogram);
+      peakWindow.value = AppHelperFunctions.calculateLocalPeakWindowFromLocal(
+        localHistogram,
+      );
     }
 
     // 5. Species Distribution
     final dist = data['speciesDistribution'] as List?;
     if (dist != null) {
-      speciesDistribution.assignAll(dist.map((item) {
-        return {
-          "name": item['name'] ?? 'Others',
-          "percentage": (item['percentage'] as num).toDouble(),
-        };
-      }).toList());
+      speciesDistribution.assignAll(
+        dist.map((item) {
+          return {
+            "name": item['name'] ?? 'Others',
+            "percentage": (item['percentage'] as num).toDouble(),
+          };
+        }).toList(),
+      );
     }
   }
 
@@ -821,11 +917,14 @@ class SummaryController extends GetxController {
     if (clean == "MID_COLUMN") return "Mid Column";
     if (clean == "TOP_COLUMN" || clean == "SURFACE") return "Top Column";
     if (clean == "BOTTOM" || clean == "BOTTOM_COLUMN") return "Bottom";
-    
-    return clean.split('_').map((word) {
-      if (word.isEmpty) return '';
-      return word[0] + word.substring(1).toLowerCase();
-    }).join(' ');
+
+    return clean
+        .split('_')
+        .map((word) {
+          if (word.isEmpty) return '';
+          return word[0] + word.substring(1).toLowerCase();
+        })
+        .join(' ');
   }
 
   /// Computes the geographic centre of the zone boundary.
@@ -853,12 +952,16 @@ class SummaryController extends GetxController {
   Future<void> fetchWeather({int? customTtl, bool forceRefresh = false}) async {
     isWeatherLoading.value = true;
     final (lat, lng) = _weatherLatLng;
-    final cacheKey = "weather_${lat.toStringAsFixed(3)}_${lng.toStringAsFixed(3)}";
+    final cacheKey =
+        "weather_${lat.toStringAsFixed(3)}_${lng.toStringAsFixed(3)}";
 
     // Load from cache instantly if available
     try {
       final cacheService = Get.find<OfflineCacheService>();
-      final cachedData = await cacheService.getCache(cacheKey, ignoreExpiry: true);
+      final cachedData = await cacheService.getCache(
+        cacheKey,
+        ignoreExpiry: true,
+      );
       if (cachedData != null && cachedData is Map<String, dynamic>) {
         weatherData.value = cachedData;
         final hours = cachedData['hours'] as List?;
@@ -872,7 +975,8 @@ class SummaryController extends GetxController {
 
     try {
       final network = NetworkCaller();
-      final url = "https://api.stormglass.io/v2/weather/point?lat=$lat&lng=$lng&params=windSpeed,windDirection,waveHeight,waterTemperature,airTemperature,cloudCover,swellDirection,swellPeriod";
+      final url =
+          "https://api.stormglass.io/v2/weather/point?lat=$lat&lng=$lng&params=windSpeed,windDirection,waveHeight,waterTemperature,airTemperature,cloudCover,swellDirection,swellPeriod";
 
       final ttl = customTtl ?? (isCurrentZoneOffline ? 52560000 : 1440);
 
@@ -897,7 +1001,9 @@ class SummaryController extends GetxController {
           }
         }
       } else {
-        debugPrint("Failed to fetch weather from StormGlass: ${response.errorMessage}");
+        debugPrint(
+          "Failed to fetch weather from StormGlass: ${response.errorMessage}",
+        );
       }
     } catch (e) {
       debugPrint("Exception fetching weather: $e");
@@ -916,14 +1022,16 @@ class SummaryController extends GetxController {
     }
 
     final nowLocal = DateTime.now();
-    final todayStr = "${nowLocal.year}-${nowLocal.month.toString().padLeft(2, '0')}-${nowLocal.day.toString().padLeft(2, '0')}";
+    final todayStr =
+        "${nowLocal.year}-${nowLocal.month.toString().padLeft(2, '0')}-${nowLocal.day.toString().padLeft(2, '0')}";
 
     for (var item in hours) {
       final timeStr = item['time'] as String?;
       if (timeStr == null) continue;
       try {
         final dt = _parseDateTimeLocal(timeStr);
-        final dateStr = "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}";
+        final dateStr =
+            "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}";
         if (dateStr == todayStr) continue;
         if (uniqueDates.contains(dateStr)) continue;
 
@@ -979,7 +1087,12 @@ class SummaryController extends GetxController {
       if (timeStr == null) continue;
       try {
         final dt = _parseDateTimeLocal(timeStr);
-        final targetDt = DateTime(targetDate.year, targetDate.month, targetDate.day, targetHour);
+        final targetDt = DateTime(
+          targetDate.year,
+          targetDate.month,
+          targetDate.day,
+          targetHour,
+        );
         final diff = dt.difference(targetDt).inHours.abs();
         if (diff < minDiff) {
           minDiff = diff.toDouble();
@@ -1157,7 +1270,12 @@ class SummaryController extends GetxController {
       if (timeStr == null) continue;
       try {
         final dt = _parseDateTimeLocal(timeStr);
-        final targetDt = DateTime(targetDate.year, targetDate.month, targetDate.day, targetHour);
+        final targetDt = DateTime(
+          targetDate.year,
+          targetDate.month,
+          targetDate.day,
+          targetHour,
+        );
         final diff = dt.difference(targetDt).inHours.abs();
         if (diff < minDiff) {
           minDiff = diff.toDouble();
@@ -1174,7 +1292,8 @@ class SummaryController extends GetxController {
     if (offlineZones.contains(name)) {
       Get.defaultDialog(
         title: "Remove Offline Cache",
-        middleText: "Are you sure you want to remove the offline cache for $name?",
+        middleText:
+            "Are you sure you want to remove the offline cache for $name?",
         textConfirm: "Remove",
         textCancel: "Cancel",
         confirmTextColor: Colors.white,
@@ -1222,7 +1341,7 @@ class SummaryController extends GetxController {
   Future<void> _downloadOfflineZone(MapZoneModel zone) async {
     // Fetch and save with a custom long TTL (e.g. 52560000 minutes = 100 years)
     final longTtl = 52560000;
-    
+
     await Future.wait([
       fetchReports(customTtl: longTtl),
       fetchSummary(customTtl: longTtl),
@@ -1246,7 +1365,8 @@ class SummaryController extends GetxController {
     await cacheService.deleteCache(summaryKey);
 
     // 2. weather_${lat.toStringAsFixed(3)}_${lng.toStringAsFixed(3)}
-    final weatherKey = "weather_${lat.toStringAsFixed(3)}_${lng.toStringAsFixed(3)}";
+    final weatherKey =
+        "weather_${lat.toStringAsFixed(3)}_${lng.toStringAsFixed(3)}";
     await cacheService.deleteCache(weatherKey);
 
     offlineZones.remove(zone.name);

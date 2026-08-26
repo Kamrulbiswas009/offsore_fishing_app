@@ -19,21 +19,32 @@ class MainScreen extends StatelessWidget {
       extendBody: true, // Allows content to flow behind the floating nav bar
       body: Stack(
         children: [
-          // The body switches based on Nav Bar selection
-          Obx(
-            () => IndexedStack(
-              index: controller.currentIndex.value,
+          // The body switches based on Nav Bar selection (Lazy mounted)
+          Obx(() {
+            final currentIndex = controller.currentIndex.value;
+            final loaded = controller.loadedIndices;
+
+            return IndexedStack(
+              index: currentIndex,
               children: [
-                const ZoneMapScreen(), // The Map Content
-                const SummaryScreen(isReportMainScreen: true),
-                SafeArea(
-                  bottom: false,
-                  child: GroupMainScreen(),
-                ),
-                ProfileMainScreen(),
+                loaded.contains(0)
+                    ? const ZoneMapScreen()
+                    : const SizedBox.shrink(),
+                loaded.contains(1)
+                    ? const SummaryScreen(isReportMainScreen: true)
+                    : const SizedBox.shrink(),
+                loaded.contains(2)
+                    ? SafeArea(
+                        bottom: false,
+                        child: GroupMainScreen(),
+                      )
+                    : const SizedBox.shrink(),
+                loaded.contains(3)
+                    ? ProfileMainScreen()
+                    : const SizedBox.shrink(),
               ],
-            ),
-          ),
+            );
+          }),
 
           // Floating Offline Banner
           const Positioned(

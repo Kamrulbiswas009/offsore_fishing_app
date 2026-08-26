@@ -7,7 +7,6 @@ import 'package:paytonpieper/core/utils/constants/api_constants.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/features/report_main/report_catch2/controller/report_catch2_controller.dart';
 import 'package:paytonpieper/features/report_main/offline_report/screen/offline_report_screen.dart';
-import 'package:paytonpieper/features/success_submit_report/screen/succes_screen.dart';
 import 'package:paytonpieper/core/utils/logging/logger.dart';
 import 'package:paytonpieper/routes/app_routes.dart';
 import 'package:paytonpieper/features/report_main/summary/controller/summary_details_controller.dart';
@@ -96,8 +95,20 @@ class VisibilitySharingController extends GetxController {
       return;
     }
 
-    final syncService = Get.find<SyncService>();
     final report2Ctrl = Get.find<ReportCatch2Controller>();
+    final validationError = report2Ctrl.validateInputs();
+    if (validationError != null) {
+      Get.snackbar(
+        "Required Field Missing",
+        validationError,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFFDA605C),
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    final syncService = Get.find<SyncService>();
     final visibility = isPublicSelected.value ? "PUBLIC" : "PRIVATE";
     final groupId = selectedGroups.isNotEmpty
         ? selectedGroups.first.toString()

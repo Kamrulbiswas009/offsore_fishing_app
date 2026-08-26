@@ -56,7 +56,9 @@ class WeatherAlertService extends GetxService {
     // Run an immediate check, then schedule recurring polls.
     _runAllChecks();
     _pollTimer = Timer.periodic(_pollInterval, (_) => _runAllChecks());
-    AppLoggerHelper.info('[WeatherAlerts] Monitoring started (interval: $_pollInterval)');
+    AppLoggerHelper.info(
+      '[WeatherAlerts] Monitoring started (interval: $_pollInterval)',
+    );
   }
 
   /// Stop the background monitoring timer.
@@ -103,8 +105,7 @@ class WeatherAlertService extends GetxService {
   }
 
   /// Whether a zone is currently being watched.
-  bool isWatched(String zoneId) =>
-      watchedZones.any((z) => z.zoneId == zoneId);
+  bool isWatched(String zoneId) => watchedZones.any((z) => z.zoneId == zoneId);
 
   /// Returns the config for a zone, or null.
   WatchedZoneConfig? configFor(String zoneId) {
@@ -116,8 +117,7 @@ class WeatherAlertService extends GetxService {
   }
 
   /// Last alert snapshot for a zone (used by the UI to show "last alerted").
-  ZoneAlertSnapshot? lastSnapshotFor(String zoneId) =>
-      _alertCache[zoneId];
+  ZoneAlertSnapshot? lastSnapshotFor(String zoneId) => _alertCache[zoneId];
 
   // ────────────────────────────────────────────────────────────────────────────
   // Monitoring loop
@@ -160,7 +160,8 @@ class WeatherAlertService extends GetxService {
       // Evaluate weather conditions
       final isThunderstorm = precipitation >= 2.5 && windSpeedMph >= 25.0;
       final isRain = precipitation >= 0.5 && !isThunderstorm;
-      final isGoodSunny = cloudCover != null && cloudCover < 30.0 && precipitation < 0.1;
+      final isGoodSunny =
+          cloudCover != null && cloudCover < 30.0 && precipitation < 0.1;
 
       // Determine condition token
       String conditionSuffix = 'o'; // ordinary
@@ -181,8 +182,10 @@ class WeatherAlertService extends GetxService {
       final now = DateTime.now().toUtc();
 
       // Suppression: skip if hash unchanged OR cooldown not elapsed
-      final hashChanged = prevSnapshot == null || prevSnapshot.conditionHash != currentHash;
-      final cooldownPassed = prevSnapshot == null ||
+      final hashChanged =
+          prevSnapshot == null || prevSnapshot.conditionHash != currentHash;
+      final cooldownPassed =
+          prevSnapshot == null ||
           now.difference(prevSnapshot.lastAlertAt) >= _cooldownDuration;
 
       if (!hashChanged || !cooldownPassed) {
@@ -255,7 +258,10 @@ class WeatherAlertService extends GetxService {
         '[WeatherAlerts] Alert fired for ${zone.zoneName}: $conditionText',
       );
     } catch (e) {
-      AppLoggerHelper.error('[WeatherAlerts] checkZone error (${zone.zoneId})', e);
+      AppLoggerHelper.error(
+        '[WeatherAlerts] checkZone error (${zone.zoneId})',
+        e,
+      );
     }
   }
 
@@ -265,8 +271,7 @@ class WeatherAlertService extends GetxService {
 
   final Map<String, double> _lastKnownTempCache = {};
 
-  double _lastKnownTempF(String zoneId) =>
-      _lastKnownTempCache[zoneId] ?? 78.0;
+  double _lastKnownTempF(String zoneId) => _lastKnownTempCache[zoneId] ?? 78.0;
 
   void _dispatchAlert({
     required WatchedZoneConfig zone,
@@ -328,10 +333,7 @@ class WeatherAlertService extends GetxService {
           const SizedBox(height: 4),
           Text(
             '📅 $forecastWindow',
-            style: const TextStyle(
-              color: Color(0xFF8B95A5),
-              fontSize: 11,
-            ),
+            style: const TextStyle(color: Color(0xFF8B95A5), fontSize: 11),
           ),
           const SizedBox(height: 6),
           Row(
@@ -347,13 +349,13 @@ class WeatherAlertService extends GetxService {
                     count: 0,
                     level: ActivityLevel.medium,
                   );
-                  Get.toNamed(
-                    AppRoute.summaryScreen,
-                    arguments: liveZone,
-                  );
+                  Get.toNamed(AppRoute.summaryScreen, arguments: liveZone);
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF117A88),
                     borderRadius: BorderRadius.circular(8),
@@ -387,12 +389,16 @@ class WeatherAlertService extends GetxService {
   // Weather data fetching
   // ────────────────────────────────────────────────────────────────────────────
 
-  Future<Map<String, dynamic>?> _fetchCurrentWeather(double lat, double lng) async {
+  Future<Map<String, dynamic>?> _fetchCurrentWeather(
+    double lat,
+    double lng,
+  ) async {
     try {
       final network = NetworkCaller();
       final url =
           'https://api.stormglass.io/v2/weather/point?lat=$lat&lng=$lng&params=windSpeed,waveHeight,waterTemperature,cloudCover,precipitation';
-      final cacheKey = 'alert_weather_${lat.toStringAsFixed(3)}_${lng.toStringAsFixed(3)}';
+      final cacheKey =
+          'alert_weather_${lat.toStringAsFixed(3)}_${lng.toStringAsFixed(3)}';
 
       final response = await network.cachedGetRequest(
         url,

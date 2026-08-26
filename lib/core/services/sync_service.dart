@@ -113,7 +113,9 @@ class SyncService extends GetxService {
     _startPeriodicRetryTimer();
     
     if (isOnline.value) {
-      prefetchAppData();
+      Future.delayed(const Duration(seconds: 3), () {
+        prefetchAppData();
+      });
     }
   }
 
@@ -569,6 +571,7 @@ class SyncService extends GetxService {
         token: bearerToken,
         cacheKey: "auth_me",
       );
+      await Future.delayed(const Duration(milliseconds: 200));
 
       // 2. Group List
       await _networkCaller.cachedGetRequest(
@@ -576,6 +579,7 @@ class SyncService extends GetxService {
         token: bearerToken,
         cacheKey: "group_list",
       );
+      await Future.delayed(const Duration(milliseconds: 200));
 
       // 3. Region Reports
       await _networkCaller.cachedGetRequest(
@@ -583,6 +587,7 @@ class SyncService extends GetxService {
         token: bearerToken,
         cacheKey: "region_reports",
       );
+      await Future.delayed(const Duration(milliseconds: 200));
 
       // 4. Region Summary
       await _networkCaller.cachedGetRequest(
@@ -590,6 +595,7 @@ class SyncService extends GetxService {
         token: bearerToken,
         cacheKey: "zone_summary_region",
       );
+      await Future.delayed(const Duration(milliseconds: 200));
 
       // 5. Default Zone Map bounds (south: 28.0, north: 29.0, west: -90.0, east: -88.0)
       final defaultZonesUrl = ApiConstants.getZonesApi(
@@ -604,6 +610,7 @@ class SyncService extends GetxService {
         token: bearerToken,
         cacheKey: defaultZonesCacheKey,
       );
+      await Future.delayed(const Duration(milliseconds: 200));
 
       // 6. Default Weather (lat: 28.375, lng: -89.125)
       final defaultWeatherUrl = "https://api.stormglass.io/v2/weather/point?lat=28.375&lng=-89.125&params=windSpeed,windDirection,waveHeight,waterTemperature,airTemperature,cloudCover,swellDirection,swellPeriod";
