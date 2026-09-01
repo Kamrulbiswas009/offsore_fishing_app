@@ -112,10 +112,20 @@ class AppDeviceUtility {
   }
 
   static void launchUrl(String url) async {
-    if (await canLaunchUrlString(url)) {
-      await launchUrlString(url);
-    } else {
-      throw 'Could not launch $url';
+    try {
+      if (await canLaunchUrlString(url)) {
+        await launchUrlString(
+          url,
+          mode: LaunchMode.externalApplication,
+        );
+      } else {
+        await launchUrlString(
+          url,
+          mode: LaunchMode.externalApplication,
+        );
+      }
+    } catch (e) {
+      debugPrint('Could not launch $url: $e');
     }
   }
 }

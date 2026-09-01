@@ -15,7 +15,6 @@ import 'package:paytonpieper/core/utils/logging/logger.dart';
 import 'package:paytonpieper/features/payment_service/model/payment_plan_model.dart';
 import 'package:paytonpieper/features/profile_and_setting/controller/profile_main_screen_controller.dart';
 
-
 class PaymentServiceController extends GetxController {
   final NetworkCaller _networkCaller = NetworkCaller();
   final RxList<PaymentPlanModel> paymentPlans = <PaymentPlanModel>[].obs;
@@ -212,6 +211,258 @@ class PaymentServiceController extends GetxController {
     );
   }
 
+  Future<void> cancelSubscription() async {
+    await EasyLoading.show(status: 'Canceling subscription...');
+    try {
+      final response = await _networkCaller.postRequest(
+        ApiConstants.cancelPaymentSubscriptionApi,
+        body: {},
+        token: _bearerToken,
+      );
+
+      await EasyLoading.dismiss();
+
+      if (!response.isSuccess) {
+        AppLoggerHelper.error(
+          'Cancel subscription failed: ${response.errorMessage}',
+        );
+        CommonMessage.showMessage(
+          title: 'Subscription',
+          message: response.errorMessage,
+        );
+        return;
+      }
+
+      final responseBody = response.responseData;
+      final mainMessage = responseBody is Map
+          ? responseBody['message'] as String?
+          : null;
+      final data = responseBody is Map ? responseBody['data'] : null;
+      final dataMessage = data is Map ? data['message'] as String? : null;
+
+      if (mainMessage != null && mainMessage.isNotEmpty) {
+        await EasyLoading.showSuccess(mainMessage);
+        await Future.delayed(const Duration(seconds: 2));
+      }
+
+      if (dataMessage != null && dataMessage.isNotEmpty) {
+        await EasyLoading.showInfo(dataMessage);
+        await Future.delayed(const Duration(seconds: 2));
+      }
+
+      final profileController = Get.find<ProfileMainScreenController>();
+      await profileController.getAuthMe();
+    } catch (error) {
+      await EasyLoading.dismiss();
+      AppLoggerHelper.error('Cancel subscription error', error);
+      CommonMessage.showMessage(
+        title: 'Error',
+        message: 'Could not cancel subscription. Please try again.',
+      );
+    }
+  }
+
+  Future<void> reactivateSubscription() async {
+    await EasyLoading.show(status: 'Reactivating subscription...');
+    try {
+      final response = await _networkCaller.postRequest(
+        ApiConstants.reActivePaymentSubscriptionApi,
+        body: {},
+        token: _bearerToken,
+      );
+
+      await EasyLoading.dismiss();
+
+      if (!response.isSuccess) {
+        AppLoggerHelper.error(
+          'Reactivate subscription failed: ${response.errorMessage}',
+        );
+        CommonMessage.showMessage(
+          title: 'Subscription',
+          message: response.errorMessage,
+        );
+        return;
+      }
+
+      final responseBody = response.responseData;
+      final mainMessage = responseBody is Map
+          ? responseBody['message'] as String?
+          : null;
+      final data = responseBody is Map ? responseBody['data'] : null;
+      final dataMessage = data is Map ? data['message'] as String? : null;
+
+      if (mainMessage != null && mainMessage.isNotEmpty) {
+        await EasyLoading.showSuccess(mainMessage);
+        await Future.delayed(const Duration(seconds: 2));
+      }
+
+      if (dataMessage != null && dataMessage.isNotEmpty) {
+        await EasyLoading.showInfo(dataMessage);
+        await Future.delayed(const Duration(seconds: 2));
+      }
+
+      final profileController = Get.find<ProfileMainScreenController>();
+      await profileController.getAuthMe();
+    } catch (error) {
+      await EasyLoading.dismiss();
+      AppLoggerHelper.error('Reactivate subscription error', error);
+      CommonMessage.showMessage(
+        title: 'Error',
+        message: 'Could not reactivate subscription. Please try again.',
+      );
+    }
+  }
+
+  void showCancelSubscriptionDialog() {
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.symmetric(horizontal: 20.w),
+        child: Container(
+          padding: EdgeInsets.all(20.r),
+          decoration: BoxDecoration(
+            color: AppColors.containerBackgroundColor,
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(
+              color: AppColors.grey3A4B62Color.withValues(alpha: 0.7),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Cancel Subscription',
+                style: getTextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.whiteColor,
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Text(
+                'Are you sure you want to cancel your Pro subscription?',
+                textAlign: TextAlign.center,
+                style: getTextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.greyC8D0DBColor,
+                ),
+              ),
+              SizedBox(height: 20.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: CustomButton(
+                      ontap: Get.back,
+                      title: 'No, Keep It',
+                      fontSize: 14,
+                      lineHeight: 12,
+                      bgColor: AppColors.grey3A4B62Color,
+                      borderRadius: 12.r,
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: CustomButton(
+                      ontap: () {
+                        Get.back();
+                        cancelSubscription();
+                      },
+                      title: 'Yes, Cancel',
+                      fontSize: 14,
+                      lineHeight: 12,
+                      bgColor: const Color(0xFFFB2C36),
+                      borderRadius: 12.r,
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.7),
+    );
+  }
+
+  void showReactivateSubscriptionDialog() {
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.symmetric(horizontal: 20.w),
+        child: Container(
+          padding: EdgeInsets.all(20.r),
+          decoration: BoxDecoration(
+            color: AppColors.containerBackgroundColor,
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(
+              color: AppColors.grey3A4B62Color.withValues(alpha: 0.7),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Reactivate Subscription',
+                style: getTextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.whiteColor,
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Text(
+                'Do you want to renew your Pro subscription?',
+                textAlign: TextAlign.center,
+                style: getTextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.greyC8D0DBColor,
+                ),
+              ),
+              SizedBox(height: 20.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: CustomButton(
+                      ontap: Get.back,
+                      title: 'Cancel',
+                      fontSize: 14,
+                      lineHeight: 12,
+                      bgColor: AppColors.grey3A4B62Color,
+                      borderRadius: 12.r,
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: CustomButton(
+                      ontap: () {
+                        Get.back();
+                        reactivateSubscription();
+                      },
+                      title: 'Yes, Renew',
+                      fontSize: 14,
+                      lineHeight: 12,
+                      bgColor: AppColors.orangeColor,
+                      borderRadius: 12.r,
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.7),
+    );
+  }
+
   String? get _bearerToken {
     final accessToken = StorageService.token;
     return accessToken == null || accessToken.isEmpty
@@ -238,12 +489,21 @@ class PaymentServiceController extends GetxController {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Choose Pro Plan',
+                'Choose Pro Plan ',
                 style: getTextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
                   color: AppColors.whiteColor,
                   lineHeight: 14,
+                ),
+              ),
+              Text(
+                'Auto-Renewable, But you can cancel at any time',
+                style: getTextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.whiteColor,
+                  lineHeight: 10,
                 ),
               ),
               SizedBox(height: 14.h),

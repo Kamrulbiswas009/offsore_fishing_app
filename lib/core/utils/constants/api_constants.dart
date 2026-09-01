@@ -3,8 +3,9 @@ class ApiConstants {
   // "https://coefficiently-vermiform-tatiana.ngrok-free.dev/api/v1";
   // static const String baseUrl = "http://172.252.13.68:8000/api/v1";
   static const String baseUrl = "https://onthebitefishing.com/api/v1";
-  
-  static const String stormGlassApiKey = "cb2f317e-409f-11f1-beac-0242ac120004-cb2f31e2-409f-11f1-beac-0242ac120004";
+
+  static const String stormGlassApiKey =
+      "cb2f317e-409f-11f1-beac-0242ac120004-cb2f31e2-409f-11f1-beac-0242ac120004";
   static String get socketBaseUrl =>
       baseUrl.replaceFirst(RegExp(r'/api/v\d+/?$'), '');
 
@@ -64,11 +65,12 @@ class ApiConstants {
 
   //Reports Flow ->
   static const String submitReportApi = "$baseUrl/reports";
-  static String getSingleReportDetailsApi(String reportId) => "$baseUrl/reports/$reportId";
+  static String getSingleReportDetailsApi(String reportId) =>
+      "$baseUrl/reports/$reportId";
   static const String getRegionReportsApi =
       "$baseUrl/zones/reports?regionCode=GOM&scope=region";
   static const String getZoneSummaryApi = "$baseUrl/zones/summary";
-  
+
   static String getFilteredZoneSummaryApi({
     String? zoneId,
     String? zoneIds,
@@ -97,21 +99,21 @@ class ApiConstants {
       if (depthMaxFt != null) 'depthMaxFt': depthMaxFt.toString(),
       if (fishingMethod != null && fishingMethod.isNotEmpty)
         'fishingMethod': fishingMethod,
-      if (visibility != null && visibility.isNotEmpty)
-        'visibility': visibility,
-      if (timeRange != null && timeRange.isNotEmpty)
-        'timeRange': timeRange,
+      if (visibility != null && visibility.isNotEmpty) 'visibility': visibility,
+      if (timeRange != null && timeRange.isNotEmpty) 'timeRange': timeRange,
       'page': page.toString(),
       'limit': limit.toString(),
     };
 
-    return Uri.parse(getZoneSummaryApi)
-        .replace(queryParameters: queryParameters)
-        .toString();
+    return Uri.parse(
+      getZoneSummaryApi,
+    ).replace(queryParameters: queryParameters).toString();
   }
-  
- static String confirmReportApi(String reportId) => "$baseUrl/reports/$reportId/confirm";
-  static String rejectReportApi(String reportId) => "$baseUrl/reports/$reportId/reject";
+
+  static String confirmReportApi(String reportId) =>
+      "$baseUrl/reports/$reportId/confirm";
+  static String rejectReportApi(String reportId) =>
+      "$baseUrl/reports/$reportId/reject";
   static String getZonesApi({
     required double south,
     required double north,
@@ -134,15 +136,13 @@ class ApiConstants {
       if (depthMaxFt != null) 'depthMaxFt': depthMaxFt.toString(),
       if (fishingMethod != null && fishingMethod.isNotEmpty)
         'fishingMethod': fishingMethod,
-      if (visibility != null && visibility.isNotEmpty)
-        'visibility': visibility,
-      if (timeRange != null && timeRange.isNotEmpty)
-        'timeRange': timeRange,
+      if (visibility != null && visibility.isNotEmpty) 'visibility': visibility,
+      if (timeRange != null && timeRange.isNotEmpty) 'timeRange': timeRange,
     };
 
-    return Uri.parse("$baseUrl/zones")
-        .replace(queryParameters: queryParameters)
-        .toString();
+    return Uri.parse(
+      "$baseUrl/zones",
+    ).replace(queryParameters: queryParameters).toString();
   }
 
   static String getFilteredRegionReportsApi({
@@ -164,20 +164,23 @@ class ApiConstants {
         'fishingMethod': fishingMethod,
       if (depthMinFt != null) 'depthMinFt': depthMinFt.toString(),
       if (depthMaxFt != null) 'depthMaxFt': depthMaxFt.toString(),
-      if (visibility != null && visibility.isNotEmpty)
-        'visibility': visibility,
+      if (visibility != null && visibility.isNotEmpty) 'visibility': visibility,
     };
 
-    return Uri.parse("$baseUrl/zones/reports")
-        .replace(queryParameters: queryParameters)
-        .toString();
+    return Uri.parse(
+      "$baseUrl/zones/reports",
+    ).replace(queryParameters: queryParameters).toString();
   }
-//}
-
+  //}
 
   //payment flow-
   static String getPaymentPlanApi = "$baseUrl/subscriptions/plans";
-  static const String createPaymentIntentPlanApi = "$baseUrl/subscriptions/intent";
+  static const String createPaymentIntentPlanApi =
+      "$baseUrl/subscriptions/intent";
+  static const String cancelPaymentSubscriptionApi =
+      "$baseUrl/subscriptions/cancel";
+  static const String reActivePaymentSubscriptionApi =
+      "$baseUrl/subscriptions/reactivate";
 
   //report-get-for-group
   static String getReportForGroupApi({
@@ -207,7 +210,6 @@ class ApiConstants {
     ).replace(queryParameters: queryParameters).toString();
   }
 
-
   //profile stat card -->
   static const String featchProfileStatApi = "$baseUrl/user/stats";
   static const String deleteAccountApi = "$baseUrl/user/delete";
@@ -216,9 +218,12 @@ class ApiConstants {
   static String watchZoneApi(String zoneId) => "$baseUrl/zones/$zoneId/watch";
   static const String watchedZonesListApi = "$baseUrl/zones/watched";
   static const String fcmTokenApi = "$baseUrl/users/me/fcm-token";
-  
+
   // Notification Settings -->
-  static const String notificationSettingsApi = "$baseUrl/notification-settings";
-  static const String generalNotificationSettingsApi = "$baseUrl/notification-settings/general";
-  static const String preferenceNotificationSettingsApi = "$baseUrl/notification-settings/preferences";
+  static const String notificationSettingsApi =
+      "$baseUrl/notification-settings";
+  static const String generalNotificationSettingsApi =
+      "$baseUrl/notification-settings/general";
+  static const String preferenceNotificationSettingsApi =
+      "$baseUrl/notification-settings/preferences";
 }

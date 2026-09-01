@@ -41,6 +41,10 @@ class ProfileMainScreenController extends GetxController {
   bool get isPremiumAccount =>
       authMe.value?.subscription?.plan == "PRO" &&
       authMe.value?.subscription?.status == "ACTIVE";
+  bool get cancelAtPeriodEnd =>
+      authMe.value?.subscription?.cancelAtPeriodEnd ?? false;
+  DateTime? get currentPeriodEnd =>
+      authMe.value?.subscription?.currentPeriodEnd;
 
   @override
   void onInit() {

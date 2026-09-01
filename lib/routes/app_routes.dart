@@ -33,6 +33,8 @@ import 'package:paytonpieper/features/report_main/offline_report/screen/offline_
 import 'package:paytonpieper/features/success_submit_report/screen/succes_screen.dart';
 import 'package:paytonpieper/features/weather_alerts/screen/watched_zones_screen.dart';
 
+import 'package:paytonpieper/features/profile_and_setting/presentation/screen/help_and_support_screen.dart';
+
 class AppRoute {
   static String splashScreen1 = "/splashScreen1";
   static String onboardingScreen1 = "/onboardingScreen1";
@@ -62,6 +64,7 @@ class AppRoute {
   static String verifyEmailOtpScreen = "/VerifyEmailOtpScreen";
   // Feature 3: Saved Zone Weather Alerts
   static String watchedZonesScreen = "/watchedZonesScreen";
+  static String helpAndSupportScreen = "/helpAndSupportScreen";
 
   static String getSplashScreen1() => splashScreen1;
   static String getOnboardingScreen1() => onboardingScreen1;
@@ -91,6 +94,7 @@ class AppRoute {
   static String getVerifyEmailOtpScreen()=> verifyEmailOtpScreen;
   // Feature 3
   static String getWatchedZonesScreen() => watchedZonesScreen;
+  static String getHelpAndSupportScreen() => helpAndSupportScreen;
 
   static List<GetPage> routes = [
     GetPage(name: splashScreen1, page: () => SplashScreen1()),
@@ -222,6 +226,12 @@ class AppRoute {
     GetPage(
       name: watchedZonesScreen,
       page: () => const WatchedZonesScreen(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 300),
+    ),
+    GetPage(
+      name: helpAndSupportScreen,
+      page: () => const HelpAndSupportScreen(),
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 300),
     ),
