@@ -11,6 +11,7 @@ import 'package:paytonpieper/core/services/storage_service.dart';
 import 'package:paytonpieper/core/utils/constants/api_constants.dart';
 import 'package:paytonpieper/core/utils/constants/colors.dart';
 import 'package:paytonpieper/core/utils/logging/logger.dart';
+import 'package:paytonpieper/core/utils/device/device_utility.dart';
 import 'package:paytonpieper/routes/app_routes.dart';
 
 class SettingsScreenController extends GetxController {
@@ -33,7 +34,7 @@ class SettingsScreenController extends GetxController {
       const <SettingsAboutItemModel>[
         SettingsAboutItemModel(title: 'Version', trailingText: '1.0.0'),
         SettingsAboutItemModel(title: 'Privacy Policy'),
-        SettingsAboutItemModel(title: 'Terms of Service'),
+        SettingsAboutItemModel(title: 'Terms of Use'),
         SettingsAboutItemModel(title: 'Help & Support'),
       ];
 
@@ -60,10 +61,12 @@ class SettingsScreenController extends GetxController {
         final data = response.responseData['data'];
         if (data != null) {
           final userSettings = data['userSettings'] ?? data;
-          isNotificationsEnabled.value = userSettings['enableNotification'] ?? false;
+          isNotificationsEnabled.value =
+              userSettings['enableNotification'] ?? false;
           isGroupActivityEnabled.value = userSettings['groupActivity'] ?? false;
           isHotZoneAlertsEnabled.value = userSettings['hotZoneAlert'] ?? false;
-          isOfflineModeEnabled.value = userSettings['enableOfflineMap'] ?? false;
+          isOfflineModeEnabled.value =
+              userSettings['enableOfflineMap'] ?? false;
         }
       }
     } catch (e) {
@@ -81,10 +84,10 @@ class SettingsScreenController extends GetxController {
       final token = StorageService.token;
       if (token == null || token.isEmpty) return;
       final body = <String, dynamic>{
-        if (enableNotification != null) 'enableNotification': enableNotification,
-        if (groupActivity != null) 'groupActivity': groupActivity,
-        if (hotZoneAlert != null) 'hotZoneAlert': hotZoneAlert,
-        if (enableOfflineMap != null) 'enableOfflineMap': enableOfflineMap,
+        'enableNotification': ?enableNotification,
+        'groupActivity': ?groupActivity,
+        'hotZoneAlert': ?hotZoneAlert,
+        'enableOfflineMap': ?enableOfflineMap,
       };
       final response = await _networkCaller.patchRequest(
         ApiConstants.generalNotificationSettingsApi,
@@ -132,7 +135,10 @@ class SettingsScreenController extends GetxController {
         final body = response.responseData;
         final data = body['data'];
         if (data is List) {
-          final groupIntelPref = data.firstWhere((p) => p['type'] == 'GROUP_INTEL', orElse: () => null);
+          final groupIntelPref = data.firstWhere(
+            (p) => p['type'] == 'GROUP_INTEL',
+            orElse: () => null,
+          );
           if (groupIntelPref != null) {
             _updateQuietHoursUI(groupIntelPref);
           }
@@ -151,7 +157,8 @@ class SettingsScreenController extends GetxController {
     final start = pref['quietStart'];
     final end = pref['quietEnd'];
     if (start != null && end != null) {
-      quietHoursStatus.value = 'Daily ${convertUtcToLocalTime(start.toString())} - ${convertUtcToLocalTime(end.toString())}';
+      quietHoursStatus.value =
+          'Daily ${convertUtcToLocalTime(start.toString())} - ${convertUtcToLocalTime(end.toString())}';
     } else if (pref['quietEnd'] != null) {
       final endUtc = DateTime.tryParse(pref['quietEnd'].toString());
       if (endUtc != null) {
@@ -172,7 +179,13 @@ class SettingsScreenController extends GetxController {
     try {
       final parts = hhmm.split(':');
       final now = DateTime.now();
-      final localTime = DateTime(now.year, now.month, now.day, int.parse(parts[0]), int.parse(parts[1]));
+      final localTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        int.parse(parts[0]),
+        int.parse(parts[1]),
+      );
       final utcTime = localTime.toUtc();
       return DateFormat('HH:mm').format(utcTime);
     } catch (_) {
@@ -184,7 +197,13 @@ class SettingsScreenController extends GetxController {
     try {
       final parts = hhmm.split(':');
       final now = DateTime.now().toUtc();
-      final utcTime = DateTime.utc(now.year, now.month, now.day, int.parse(parts[0]), int.parse(parts[1]));
+      final utcTime = DateTime.utc(
+        now.year,
+        now.month,
+        now.day,
+        int.parse(parts[0]),
+        int.parse(parts[1]),
+      );
       final localTime = utcTime.toLocal();
       return DateFormat('h:mm a').format(localTime);
     } catch (_) {
@@ -201,9 +220,7 @@ class SettingsScreenController extends GetxController {
     final token = StorageService.token;
     if (token == null || token.isEmpty) return;
 
-    final body = <String, dynamic>{
-      'type': 'GROUP_INTEL',
-    };
+    final body = <String, dynamic>{'type': 'GROUP_INTEL'};
     if (clear) {
       body['clearQuietHours'] = true;
     } else if (durationHours != null) {
@@ -228,7 +245,11 @@ class SettingsScreenController extends GetxController {
           _updateQuietHoursUI(data);
         }
       } else {
-        EasyLoading.showError(response.errorMessage.isNotEmpty ? response.errorMessage : 'Failed to update quiet hours');
+        EasyLoading.showError(
+          response.errorMessage.isNotEmpty
+              ? response.errorMessage
+              : 'Failed to update quiet hours',
+        );
       }
     } catch (e) {
       AppLoggerHelper.error('Exception setting quiet hours', e);
@@ -246,7 +267,19 @@ class SettingsScreenController extends GetxController {
     MapboxOfflineService.to.clearOfflineMap();
   }
 
-  void handleAboutItemTap(SettingsAboutItemModel item) {}
+  void handleAboutItemTap(SettingsAboutItemModel item) {
+    if (item.title == 'Privacy Policy') {
+      AppDeviceUtility.launchUrl(
+        'https://docs.google.com/presentation/d/1yxnsA-50zWnUfibbG7Rc7ajzKwknOnR5k58aybXy6OE/edit?usp=sharing',
+      );
+    } else if (item.title == 'Terms of Use') {
+      AppDeviceUtility.launchUrl(
+        'https://docs.google.com/presentation/d/1OilGUp8DNx2qGDA4FtKlDhhSOvPf8qlwbHTFS5iUsKs/edit?usp=sharing',
+      );
+    } else if (item.title == 'Help & Support') {
+      Get.toNamed(AppRoute.helpAndSupportScreen);
+    }
+  }
 
   Future<void> confirmAndDeleteAccount() async {
     final shouldDelete = await Get.dialog<bool>(

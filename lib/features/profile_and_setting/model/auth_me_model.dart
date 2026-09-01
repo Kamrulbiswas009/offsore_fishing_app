@@ -64,7 +64,30 @@ class AuthMeModel {
   }
 
   static DateTime? _parseDate(dynamic value) {
-    return value is String ? DateTime.tryParse(value) : null;
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    if (value is int) {
+      return value > 10000000000
+          ? DateTime.fromMillisecondsSinceEpoch(value)
+          : DateTime.fromMillisecondsSinceEpoch(value * 1000);
+    }
+    if (value is num) {
+      final intVal = value.toInt();
+      return intVal > 10000000000
+          ? DateTime.fromMillisecondsSinceEpoch(intVal)
+          : DateTime.fromMillisecondsSinceEpoch(intVal * 1000);
+    }
+    if (value is String) {
+      final parsed = DateTime.tryParse(value);
+      if (parsed != null) return parsed;
+      final asInt = int.tryParse(value);
+      if (asInt != null) {
+        return asInt > 10000000000
+            ? DateTime.fromMillisecondsSinceEpoch(asInt)
+            : DateTime.fromMillisecondsSinceEpoch(asInt * 1000);
+      }
+    }
+    return null;
   }
 
   Map<String, dynamic> toJson() => {
@@ -137,6 +160,8 @@ class UserSubscriptionModel {
   final String plan;
   final String status;
   final bool cancelAtPeriodEnd;
+  final bool isPro;
+  final DateTime? currentPeriodEnd;
 
   const UserSubscriptionModel({
     required this.id,
@@ -147,6 +172,8 @@ class UserSubscriptionModel {
     required this.plan,
     required this.status,
     required this.cancelAtPeriodEnd,
+    required this.isPro,
+    required this.currentPeriodEnd,
   });
 
   factory UserSubscriptionModel.fromJson(Map<String, dynamic> json) {
@@ -158,7 +185,13 @@ class UserSubscriptionModel {
       stripePriceId: json['stripePriceId'] as String? ?? '',
       plan: json['plan'] as String? ?? '',
       status: json['status'] as String? ?? '',
-      cancelAtPeriodEnd: json['cancelAtPeriodEnd'] as bool? ?? false,
+      cancelAtPeriodEnd: json['cancelAtPeriodEnd'] as bool? ??
+          json['cancel_at_period_end'] as bool? ??
+          false,
+      isPro: json['isPro'] as bool? ?? json['is_pro'] as bool? ?? false,
+      currentPeriodEnd: AuthMeModel._parseDate(
+        json['currentPeriodEnd'] ?? json['current_period_end'],
+      ),
     );
   }
 
@@ -171,5 +204,7 @@ class UserSubscriptionModel {
         'plan': plan,
         'status': status,
         'cancelAtPeriodEnd': cancelAtPeriodEnd,
+        'isPro': isPro,
+        'currentPeriodEnd': currentPeriodEnd?.toIso8601String(),
       };
 }

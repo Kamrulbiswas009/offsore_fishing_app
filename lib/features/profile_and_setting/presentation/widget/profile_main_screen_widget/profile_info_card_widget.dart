@@ -13,6 +13,8 @@ class ProfileInfoCardWidget extends StatelessWidget {
   final String imagePath;
   final VoidCallback onEditTap;
   final bool isPremiumAccount;
+  final bool? cancelAtPeriodEnd;
+  final DateTime? currentPeriodEnd;
 
   const ProfileInfoCardWidget({
     super.key,
@@ -21,6 +23,8 @@ class ProfileInfoCardWidget extends StatelessWidget {
     required this.imagePath,
     required this.onEditTap,
     required this.isPremiumAccount,
+    this.cancelAtPeriodEnd,
+    this.currentPeriodEnd,
   });
 
   @override
@@ -34,6 +38,7 @@ class ProfileInfoCardWidget extends StatelessWidget {
         border: Border.all(color: Color(0xFF117E97)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: 56.r,
@@ -53,14 +58,11 @@ class ProfileInfoCardWidget extends StatelessWidget {
                           const Icon(Icons.person, color: AppColors.whiteColor),
                     )
                   : (File(imagePath).existsSync()
-                      ? Image.file(
-                          File(imagePath),
-                          fit: BoxFit.cover,
-                        )
-                      : Image.asset(
-                          ImagePath.profileDefaultImage,
-                          fit: BoxFit.cover,
-                        )),
+                        ? Image.file(File(imagePath), fit: BoxFit.cover)
+                        : Image.asset(
+                            ImagePath.profileDefaultImage,
+                            fit: BoxFit.cover,
+                          )),
             ),
           ),
           SizedBox(width: 14.w),
@@ -119,28 +121,62 @@ class ProfileInfoCardWidget extends StatelessWidget {
                     ),
                   ],
                 ),
-                SizedBox(height: 6.h,),
-                RichText(text: TextSpan(children: [
-                  TextSpan(
-                    text: "Subscription: ",
-                    style: getTextStyle(
-                      fontSize: 12,
-                      lineHeight: 9,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.grey8B95A5Color,
-                    )
+                SizedBox(height: 6.h),
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: "Subscription: ",
+                        style: getTextStyle(
+                          fontSize: 12,
+                          lineHeight: 9,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.grey8B95A5Color,
+                        ),
+                      ),
+                      TextSpan(
+                        text: isPremiumAccount ? "Pro" : "free",
+                        style: getTextStyle(
+                          fontSize: 12,
+                          lineHeight: 9,
+                          fontWeight: FontWeight.w500,
+                          //if free then show  AppColors.grey8B95A5Color if pro then green
+                          color: isPremiumAccount
+                              ? AppColors.green10B981Color
+                              : AppColors.grey8B95A5Color,
+                        ),
+                      ),
+                    ],
                   ),
-                  TextSpan(
-                    text: isPremiumAccount? "Pro": "free",
-                    style: getTextStyle(
-                      fontSize: 12,
-                      lineHeight: 9,
-                      fontWeight: FontWeight.w500,
-                      //if free then show  AppColors.grey8B95A5Color if pro then green
-                      color:isPremiumAccount?AppColors.green10B981Color: AppColors.grey8B95A5Color,
-                    )
-                  )
-                ]))
+                ),
+                if (cancelAtPeriodEnd == true && currentPeriodEnd != null) ...[
+                  SizedBox(height: 4.h),
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: "Subscription close on: ",
+                          style: getTextStyle(
+                            fontSize: 12,
+                            lineHeight: 9,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.grey8B95A5Color,
+                          ),
+                        ),
+                        TextSpan(
+                          text:
+                              "${currentPeriodEnd!.year}-${currentPeriodEnd!.month.toString().padLeft(2, '0')}-${currentPeriodEnd!.day.toString().padLeft(2, '0')}",
+                          style: getTextStyle(
+                            fontSize: 12,
+                            lineHeight: 9,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.orangeFF6B35Color,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

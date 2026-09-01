@@ -271,34 +271,37 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
                     Divider(color: const Color(0xFF055467), height: 26.h),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        'Quiet Hours',
-                        style: getTextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.whiteColor,
-                          lineHeight: 12,
+                    Material(
+                      color: Colors.transparent,
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          'Quiet Hours',
+                          style: getTextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.whiteColor,
+                            lineHeight: 12,
+                          ),
                         ),
-                      ),
-                      subtitle: Text(
-                        'Mute Group Intel alerts temporarily or daily',
-                        style: getTextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
+                        subtitle: Text(
+                          'Mute Group Intel alerts temporarily or daily',
+                          style: getTextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.grey8B95A5Color,
+                            lineHeight: 10,
+                          ),
+                        ),
+                        trailing: Icon(
+                          Icons.chevron_right_rounded,
                           color: AppColors.grey8B95A5Color,
-                          lineHeight: 10,
+                          size: 22.r,
                         ),
+                        onTap: profileMainScreenController.isPremiumAccount
+                            ? () => _showQuietHoursBottomSheet(context)
+                            : () => EasyLoading.showInfo("Upgrade pro plan to active"),
                       ),
-                      trailing: Icon(
-                        Icons.chevron_right_rounded,
-                        color: AppColors.grey8B95A5Color,
-                        size: 22.r,
-                      ),
-                      onTap: profileMainScreenController.isPremiumAccount
-                          ? () => _showQuietHoursBottomSheet(context)
-                          : () => EasyLoading.showInfo("Upgrade pro plan to active"),
                     ),
                   ],
                 ),
