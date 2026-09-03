@@ -396,7 +396,7 @@ class WeatherAlertService extends GetxService {
     try {
       final network = NetworkCaller();
       final url =
-          'https://api.stormglass.io/v2/weather/point?lat=$lat&lng=$lng&params=windSpeed,waveHeight,waterTemperature,cloudCover,precipitation';
+          'https://api.stormglass.io/v2/weather/point?lat=$lat&lng=$lng&params=windSpeed,waveHeight,waterTemperature,cloudCover,precipitation&source=sg';
       final cacheKey =
           'alert_weather_${lat.toStringAsFixed(3)}_${lng.toStringAsFixed(3)}';
 
@@ -444,6 +444,8 @@ class WeatherAlertService extends GetxService {
     if (field == null) return null;
     if (field is num) return field.toDouble();
     if (field is Map) {
+      final sg = field['sg'];
+      if (sg is num) return sg.toDouble();
       for (final val in field.values) {
         if (val is num) return val.toDouble();
       }

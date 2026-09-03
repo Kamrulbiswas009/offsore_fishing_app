@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:paytonpieper/features/report_main/summary/controller/summary_details_controller.dart';
 import 'package:paytonpieper/features/profile_and_setting/controller/profile_main_screen_controller.dart';
 import 'package:paytonpieper/core/services/offline_cache_service.dart';
@@ -37,6 +38,13 @@ class FakeProfileMainScreenController extends GetxController implements ProfileM
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+String _localNoonIso(DateTime day) {
+  final noon = DateTime(day.year, day.month, day.day, 12);
+  return noon.toUtc().toIso8601String();
+}
+
+String _dayLabel(DateTime day) => DateFormat('EEE d').format(day);
+
 void main() {
   late SummaryController controller;
   late FakeProfileMainScreenController mockProfileCtrl;
@@ -54,73 +62,105 @@ void main() {
   });
 
   group('Weather Timezone and Subscription Limit Tests', () {
-    test('Date parsing constructs strict UTC DateTime independent of device timezone', () {
-      // Mock forecast data with hourly entries
+    test('Date parsing converts API timestamps to local calendar days', () {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final d1 = today.add(const Duration(days: 1));
+      final d2 = today.add(const Duration(days: 2));
+
       final hours = [
-        {'time': '2026-07-24T12:00:00+00:00'},
-        {'time': '2026-07-25T00:00:00Z'},
-        {'time': '2026-07-26T06:00:00-05:00'},
+        {'time': _localNoonIso(today)},
+        {'time': _localNoonIso(d1)},
+        {'time': _localNoonIso(d2)},
       ];
 
       controller.weatherData.value = {'hours': hours};
-      
-      // Accessing internal parsing logic through getSelectedDayNowEntry or _populateDaysList
-      // Check that the dates are correctly identified
-      mockProfileCtrl.premiumValue = true; // Premium user -> show all
-      controller.populateDaysList(hours); // This will trigger _populateDaysList
-      
-      // Let's verify the populated days list
-      // 2026-07-24 (Today)
-      // 2026-07-25 (Sat 25)
-      // 2026-07-26 (Sun 26)
+      mockProfileCtrl.premiumValue = true;
+      controller.populateDaysList(hours);
+
       expect(controller.days.length, 3);
       expect(controller.days[0], 'Today');
-      expect(controller.days[1], 'Sat 25');
-      expect(controller.days[2], 'Sun 26');
+      expect(controller.days[1], _dayLabel(d1));
+      expect(controller.days[2], _dayLabel(d2));
     });
 
     test('Free Users: Limit weather forecast to maximum 3 days (Today + 2 days)', () {
-      final hours = [
-        {'time': '2026-07-24T12:00:00Z'},
-        {'time': '2026-07-25T12:00:00Z'},
-        {'time': '2026-07-26T12:00:00Z'},
-        {'time': '2026-07-27T12:00:00Z'},
-        {'time': '2026-07-28T12:00:00Z'},
-      ];
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final hours = List.generate(5, (i) {
+        return {'time': _localNoonIso(today.add(Duration(days: i)))};
+      });
 
       controller.weatherData.value = {'hours': hours};
-      mockProfileCtrl.premiumValue = false; // Free user
-      
+      mockProfileCtrl.premiumValue = false;
+
       controller.populateDaysList(hours);
-      
-      // Today + 2 days = 3 days maximum
+
       expect(controller.days.length, 3);
       expect(controller.days[0], 'Today');
-      expect(controller.days[1], 'Sat 25');
-      expect(controller.days[2], 'Sun 26');
+      expect(controller.days[1], _dayLabel(today.add(const Duration(days: 1))));
+      expect(controller.days[2], _dayLabel(today.add(const Duration(days: 2))));
     });
 
     test('Premium Users: Show all forecast dates available from API', () {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final hours = List.generate(5, (i) {
+        return {'time': _localNoonIso(today.add(Duration(days: i)))};
+      });
+
+      controller.weatherData.value = {'hours': hours};
+      mockProfileCtrl.premiumValue = true;
+
+      controller.populateDaysList(hours);
+
+      expect(controller.days.length, 5);
+      expect(controller.days[0], 'Today');
+      expect(controller.days[1], _dayLabel(today.add(const Duration(days: 1))));
+      expect(controller.days[2], _dayLabel(today.add(const Duration(days: 2))));
+      expect(controller.days[3], _dayLabel(today.add(const Duration(days: 3))));
+      expect(controller.days[4], _dayLabel(today.add(const Duration(days: 4))));
+    });
+
+    test('Yesterday is never shown as a forecast day chip', () {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final yesterday = today.subtract(const Duration(days: 1));
+      final tomorrow = today.add(const Duration(days: 1));
+
+      // UTC midnight of "today" is still yesterday evening in US timezones.
+      final utcMidnightToday =
+          DateTime.utc(today.year, today.month, today.day).toIso8601String();
+
       final hours = [
-        {'time': '2026-07-24T12:00:00Z'},
-        {'time': '2026-07-25T12:00:00Z'},
-        {'time': '2026-07-26T12:00:00Z'},
-        {'time': '2026-07-27T12:00:00Z'},
-        {'time': '2026-07-28T12:00:00Z'},
+        {'time': _localNoonIso(yesterday)},
+        {'time': utcMidnightToday},
+        {'time': _localNoonIso(today)},
+        {'time': _localNoonIso(tomorrow)},
       ];
 
       controller.weatherData.value = {'hours': hours};
-      mockProfileCtrl.premiumValue = true; // Premium user
-      
+      mockProfileCtrl.premiumValue = true;
       controller.populateDaysList(hours);
-      
-      // All 5 days should be shown
-      expect(controller.days.length, 5);
-      expect(controller.days[0], 'Today');
-      expect(controller.days[1], 'Sat 25');
-      expect(controller.days[2], 'Sun 26');
-      expect(controller.days[3], 'Mon 27');
-      expect(controller.days[4], 'Tue 28');
+
+      expect(controller.days.first, 'Today');
+      expect(controller.days, isNot(contains(_dayLabel(yesterday))));
+      expect(controller.days, contains(_dayLabel(tomorrow)));
+    });
+
+    test('extractSgValue prefers StormGlass sg over NOAA/ECMWF/DWD', () {
+      expect(
+        controller.extractSgValue({
+          'ecmwf': 28.05,
+          'noaa': 23.29,
+          'dwd': 24.1,
+          'sg': 27.5,
+        }),
+        27.5,
+      );
+      expect(controller.extractSgValue({'noaa': 10.0}), 10.0);
+      expect(controller.extractSgValue(12.3), 12.3);
+      expect(controller.extractSgValue(null), isNull);
     });
   });
 }

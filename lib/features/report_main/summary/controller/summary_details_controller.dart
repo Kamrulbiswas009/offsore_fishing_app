@@ -976,7 +976,7 @@ class SummaryController extends GetxController {
     try {
       final network = NetworkCaller();
       final url =
-          "https://api.stormglass.io/v2/weather/point?lat=$lat&lng=$lng&params=windSpeed,windDirection,waveHeight,waterTemperature,airTemperature,cloudCover,swellDirection,swellPeriod";
+          "https://api.stormglass.io/v2/weather/point?lat=$lat&lng=$lng&params=windSpeed,windDirection,waveHeight,waterTemperature,airTemperature,cloudCover,swellDirection,swellPeriod&source=sg";
 
       final ttl = customTtl ?? (isCurrentZoneOffline ? 52560000 : 1440);
 
@@ -1021,23 +1021,23 @@ class SummaryController extends GetxController {
       return;
     }
 
-    final nowLocal = DateTime.now();
-    final todayStr =
-        "${nowLocal.year}-${nowLocal.month.toString().padLeft(2, '0')}-${nowLocal.day.toString().padLeft(2, '0')}";
+    final today = _localCalendarDate(DateTime.now());
 
     for (var item in hours) {
       final timeStr = item['time'] as String?;
       if (timeStr == null) continue;
       try {
         final dt = _parseDateTimeLocal(timeStr);
+        final dateOnly = _localCalendarDate(dt);
+        // StormGlass hours are UTC; early UTC hours fall on the previous
+        // local calendar day in US timezones. Never surface yesterday.
+        if (!dateOnly.isAfter(today)) continue;
         final dateStr =
-            "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}";
-        if (dateStr == todayStr) continue;
+            "${dateOnly.year}-${dateOnly.month.toString().padLeft(2, '0')}-${dateOnly.day.toString().padLeft(2, '0')}";
         if (uniqueDates.contains(dateStr)) continue;
 
         uniqueDates.add(dateStr);
-        final label = DateFormat('EEE d').format(dt);
-        computed.add(label);
+        computed.add(DateFormat('EEE d').format(dt));
       } catch (_) {}
     }
 
@@ -1055,28 +1055,8 @@ class SummaryController extends GetxController {
     if (hours == null || hours.isEmpty) return null;
 
     final nowLocal = DateTime.now();
-    DateTime targetDate = nowLocal;
-    if (dayLabel != "Today") {
-      for (var item in hours) {
-        final timeStr = item['time'] as String?;
-        if (timeStr == null) continue;
-        try {
-          final dt = _parseDateTimeLocal(timeStr);
-          final label = DateFormat('EEE d').format(dt);
-          if (label == dayLabel) {
-            targetDate = dt;
-            break;
-          }
-        } catch (_) {}
-      }
-    } else {
-      final firstTimeStr = hours.first['time'] as String?;
-      if (firstTimeStr != null) {
-        try {
-          targetDate = _parseDateTimeLocal(firstTimeStr);
-        } catch (_) {}
-      }
-    }
+    final targetDate = _targetDateForDayLabel(dayLabel, hours, nowLocal);
+    if (targetDate == null) return null;
 
     final targetHour = nowLocal.hour;
     Map<String, dynamic>? bestMatch;
@@ -1087,6 +1067,7 @@ class SummaryController extends GetxController {
       if (timeStr == null) continue;
       try {
         final dt = _parseDateTimeLocal(timeStr);
+        if (!_isSameLocalDay(dt, targetDate)) continue;
         final targetDt = DateTime(
           targetDate.year,
           targetDate.month,
@@ -1219,11 +1200,16 @@ class SummaryController extends GetxController {
     return "${val.toStringAsFixed(0)} seconds";
   }
 
+  /// Reads a StormGlass parameter. Prefers the blended `sg` source
+  /// (StormGlass interpolation of NOAA / ECMWF / DWD), then falls back
+  /// to the first numeric model value if `sg` is missing.
   double? extractSgValue(dynamic field) {
     if (field == null) return null;
     if (field is num) return field.toDouble();
     if (field is Map) {
-      for (var val in field.values) {
+      final sg = field['sg'];
+      if (sg is num) return sg.toDouble();
+      for (final val in field.values) {
         if (val is num) return val.toDouble();
       }
     }
@@ -1235,28 +1221,8 @@ class SummaryController extends GetxController {
     if (hours == null || hours.isEmpty) return null;
 
     final nowLocal = DateTime.now();
-    DateTime targetDate = nowLocal;
-    if (dayLabel != "Today") {
-      for (var item in hours) {
-        final timeStr = item['time'] as String?;
-        if (timeStr == null) continue;
-        try {
-          final dt = _parseDateTimeLocal(timeStr);
-          final label = DateFormat('EEE d').format(dt);
-          if (label == dayLabel) {
-            targetDate = dt;
-            break;
-          }
-        } catch (_) {}
-      }
-    } else {
-      final firstTimeStr = hours.first['time'] as String?;
-      if (firstTimeStr != null) {
-        try {
-          targetDate = _parseDateTimeLocal(firstTimeStr);
-        } catch (_) {}
-      }
-    }
+    final targetDate = _targetDateForDayLabel(dayLabel, hours, nowLocal);
+    if (targetDate == null) return null;
 
     int targetHour = 9;
     if (period == "Afternoon") targetHour = 15;
@@ -1270,6 +1236,7 @@ class SummaryController extends GetxController {
       if (timeStr == null) continue;
       try {
         final dt = _parseDateTimeLocal(timeStr);
+        if (!_isSameLocalDay(dt, targetDate)) continue;
         final targetDt = DateTime(
           targetDate.year,
           targetDate.month,
@@ -1375,31 +1342,39 @@ class SummaryController extends GetxController {
 
   DateTime _parseDateTimeLocal(String timeStr) {
     try {
-      final parts = timeStr.split('T');
-      final dateParts = parts[0].split('-');
-      final year = int.parse(dateParts[0]);
-      final month = int.parse(dateParts[1]);
-      final day = int.parse(dateParts[2]);
-
-      int hour = 0;
-      int minute = 0;
-      int second = 0;
-
-      if (parts.length > 1) {
-        final timeClean = parts[1].replaceAll('Z', '');
-        final timePartsOnly = timeClean.split(RegExp(r'[+\-]'));
-        final timeParts = timePartsOnly[0].split(':');
-        if (timeParts.length >= 1) hour = int.parse(timeParts[0]);
-        if (timeParts.length >= 2) minute = int.parse(timeParts[1]);
-        if (timeParts.length >= 3) {
-          final secPart = timeParts[2].split('.')[0];
-          second = int.parse(secPart);
-        }
-      }
-      return DateTime.utc(year, month, day, hour, minute, second).toLocal();
-    } catch (_) {
       return DateTime.parse(timeStr).toLocal();
+    } catch (_) {
+      return DateTime.now();
     }
+  }
+
+  DateTime _localCalendarDate(DateTime dt) =>
+      DateTime(dt.year, dt.month, dt.day);
+
+  bool _isSameLocalDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  /// Resolves the local calendar date for a day chip. "Today" is always
+  /// the device's current date — never the first hour in the API payload,
+  /// which can be yesterday after UTC→local conversion.
+  DateTime? _targetDateForDayLabel(
+    String dayLabel,
+    List hours,
+    DateTime nowLocal,
+  ) {
+    if (dayLabel == "Today") return nowLocal;
+
+    final today = _localCalendarDate(nowLocal);
+    for (final item in hours) {
+      final timeStr = item['time'] as String?;
+      if (timeStr == null) continue;
+      try {
+        final dt = _parseDateTimeLocal(timeStr);
+        if (_localCalendarDate(dt).isBefore(today)) continue;
+        if (DateFormat('EEE d').format(dt) == dayLabel) return dt;
+      } catch (_) {}
+    }
+    return null;
   }
 
   bool get _isPremium {

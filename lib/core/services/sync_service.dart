@@ -613,7 +613,7 @@ class SyncService extends GetxService {
       await Future.delayed(const Duration(milliseconds: 200));
 
       // 6. Default Weather (lat: 28.375, lng: -89.125)
-      final defaultWeatherUrl = "https://api.stormglass.io/v2/weather/point?lat=28.375&lng=-89.125&params=windSpeed,windDirection,waveHeight,waterTemperature,airTemperature,cloudCover,swellDirection,swellPeriod";
+      final defaultWeatherUrl = "https://api.stormglass.io/v2/weather/point?lat=28.375&lng=-89.125&params=windSpeed,windDirection,waveHeight,waterTemperature,airTemperature,cloudCover,swellDirection,swellPeriod&source=sg";
       await _networkCaller.cachedGetRequest(
         defaultWeatherUrl,
         token: ApiConstants.stormGlassApiKey,
