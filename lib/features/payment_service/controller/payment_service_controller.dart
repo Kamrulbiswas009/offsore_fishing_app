@@ -1,8 +1,13 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:get/get.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:paytonpieper/core/common/styles/global_text_style.dart';
 import 'package:paytonpieper/core/common/widgets/common_message.dart';
 import 'package:paytonpieper/core/common/widgets/custom_button.dart';
@@ -17,10 +22,96 @@ import 'package:paytonpieper/features/profile_and_setting/controller/profile_mai
 
 class PaymentServiceController extends GetxController {
   final NetworkCaller _networkCaller = NetworkCaller();
+
+  // --- Android / Stripe Payment State ---
   final RxList<PaymentPlanModel> paymentPlans = <PaymentPlanModel>[].obs;
   final Rxn<PaymentPlanModel> selectedPlan = Rxn<PaymentPlanModel>();
 
+  // --- iOS In-App Purchase (IAP) Configuration & State ---
+  static const Set<String> _iosProductIds = {
+    'com.onthebite.app.premium.monthly',
+  };
+
+  final InAppPurchase _iap = InAppPurchase.instance;
+  StreamSubscription<List<PurchaseDetails>>? _iapSubscription;
+  final RxList<ProductDetails> iosProducts = <ProductDetails>[].obs;
+  final Rxn<ProductDetails> selectedIosProduct = Rxn<ProductDetails>();
+
+  @override
+  void onInit() {
+    super.onInit();
+    if (Platform.isIOS) {
+      _initIapStream();
+    }
+  }
+
+  void _initIapStream() {
+    final Stream<List<PurchaseDetails>> purchaseUpdated = _iap.purchaseStream;
+    _iapSubscription = purchaseUpdated.listen(
+      _onPurchaseUpdated,
+      onDone: () => _iapSubscription?.cancel(),
+      onError: (error) {
+        AppLoggerHelper.error('IAP purchase stream error', error);
+      },
+    );
+  }
+
+  @override
+  void onClose() {
+    _iapSubscription?.cancel();
+    super.onClose();
+  }
+
+  Future<void> _onPurchaseUpdated(
+    List<PurchaseDetails> purchaseDetailsList,
+  ) async {
+    for (final purchaseDetails in purchaseDetailsList) {
+      if (purchaseDetails.status == PurchaseStatus.pending) {
+        await EasyLoading.show(status: 'Processing purchase...');
+      } else {
+        if (purchaseDetails.status == PurchaseStatus.error) {
+          await EasyLoading.dismiss();
+          AppLoggerHelper.error(
+            'IAP purchase failed: ${purchaseDetails.error?.message}',
+            purchaseDetails.error,
+          );
+          CommonMessage.showMessage(
+            title: 'Purchase Error',
+            message:
+                purchaseDetails.error?.message ?? 'Payment was not completed.',
+          );
+        } else if (purchaseDetails.status == PurchaseStatus.purchased ||
+            purchaseDetails.status == PurchaseStatus.restored) {
+          await EasyLoading.dismiss();
+          AppLoggerHelper.info(
+            'IAP purchase successful/restored: ${purchaseDetails.productID}',
+          );
+          await _handleIosPurchaseSuccess(purchaseDetails);
+        }
+
+        if (purchaseDetails.pendingCompletePurchase) {
+          await _iap.completePurchase(purchaseDetails);
+        }
+      }
+    }
+  }
+
+  Future<void> _handleIosPurchaseSuccess(
+    PurchaseDetails purchaseDetails,
+  ) async {
+    // When backend receipt verification endpoint is integrated, pass receipt token here.
+    await _refetchProfileAfterPayment();
+  }
+
+  // --- Flow Entry Point ---
+
   Future<void> openUnlockProFlow() async {
+    if (Platform.isIOS) {
+      await _openIosUnlockProFlow();
+      return;
+    }
+
+    // Android / Default Stripe Flow
     await fetchPaymentPlans(showLoading: true);
     if (paymentPlans.isEmpty) return;
 
@@ -29,6 +120,101 @@ class PaymentServiceController extends GetxController {
         paymentPlans.first;
     _showPaymentPlanDialog();
   }
+
+  // --- iOS IAP Methods ---
+
+  Future<void> _openIosUnlockProFlow() async {
+    await EasyLoading.show(status: 'Loading plans...');
+    try {
+      final isAvailable = await _iap.isAvailable();
+      if (!isAvailable) {
+        await EasyLoading.dismiss();
+        CommonMessage.showMessage(
+          title: 'In-App Purchase',
+          message: 'Store is not available on this device.',
+        );
+        return;
+      }
+
+      final ProductDetailsResponse response =
+          await _iap.queryProductDetails(_iosProductIds);
+      await EasyLoading.dismiss();
+
+      if (response.notFoundIDs.isNotEmpty) {
+        AppLoggerHelper.warning(
+          'IAP Product IDs not found: ${response.notFoundIDs}',
+        );
+      }
+
+      if (response.error != null) {
+        AppLoggerHelper.error(
+          'IAP Product query error: ${response.error?.message}',
+        );
+        CommonMessage.showMessage(
+          title: 'In-App Purchase',
+          message: 'Could not load subscription products.',
+        );
+        return;
+      }
+
+      if (response.productDetails.isEmpty) {
+        CommonMessage.showMessage(
+          title: 'In-App Purchase',
+          message: 'No subscription plan is available right now.',
+        );
+        return;
+      }
+
+      iosProducts.assignAll(response.productDetails);
+      selectedIosProduct.value = iosProducts.first;
+
+      _showIosPaymentPlanDialog();
+    } catch (error) {
+      await EasyLoading.dismiss();
+      AppLoggerHelper.error('IAP flow threw an error.', error);
+      CommonMessage.showMessage(
+        title: 'In-App Purchase',
+        message: 'Could not initialize subscription flow.',
+      );
+    }
+  }
+
+  Future<void> buyIosProduct(ProductDetails product) async {
+    final purchaseParam = PurchaseParam(productDetails: product);
+    try {
+      await _iap.buyNonConsumable(purchaseParam: purchaseParam);
+    } catch (error) {
+      AppLoggerHelper.error(
+        'Failed to initiate purchase for product: ${product.id}',
+        error,
+      );
+      CommonMessage.showMessage(
+        title: 'Purchase Error',
+        message: 'Could not start App Store checkout.',
+      );
+    }
+  }
+
+  Future<void> restoreIosPurchases() async {
+    await EasyLoading.show(status: 'Restoring purchases...');
+    try {
+      await _iap.restorePurchases();
+      await EasyLoading.dismiss();
+      CommonMessage.showMessage(
+        title: 'Restore Purchases',
+        message: 'Restore request sent to App Store.',
+      );
+    } catch (error) {
+      await EasyLoading.dismiss();
+      AppLoggerHelper.error('Restore purchases error', error);
+      CommonMessage.showMessage(
+        title: 'Restore Error',
+        message: 'Could not restore purchases from App Store.',
+      );
+    }
+  }
+
+  // --- Android / Stripe Methods ---
 
   Future<void> fetchPaymentPlans({bool showLoading = false}) async {
     if (showLoading) {
@@ -211,7 +397,14 @@ class PaymentServiceController extends GetxController {
     );
   }
 
+  // --- Cancel & Reactivate Actions (Platform Aware) ---
+
   Future<void> cancelSubscription() async {
+    if (Platform.isIOS) {
+      await _openAppleSubscriptionManagement();
+      return;
+    }
+
     await EasyLoading.show(status: 'Canceling subscription...');
     try {
       final response = await _networkCaller.postRequest(
@@ -263,6 +456,11 @@ class PaymentServiceController extends GetxController {
   }
 
   Future<void> reactivateSubscription() async {
+    if (Platform.isIOS) {
+      await restoreIosPurchases();
+      return;
+    }
+
     await EasyLoading.show(status: 'Reactivating subscription...');
     try {
       final response = await _networkCaller.postRequest(
@@ -314,6 +512,11 @@ class PaymentServiceController extends GetxController {
   }
 
   void showCancelSubscriptionDialog() {
+    if (Platform.isIOS) {
+      _showIosCancelSubscriptionDialog();
+      return;
+    }
+
     Get.dialog(
       Dialog(
         backgroundColor: Colors.transparent,
@@ -389,6 +592,11 @@ class PaymentServiceController extends GetxController {
   }
 
   void showReactivateSubscriptionDialog() {
+    if (Platform.isIOS) {
+      _showIosReactivateSubscriptionDialog();
+      return;
+    }
+
     Get.dialog(
       Dialog(
         backgroundColor: Colors.transparent,
@@ -463,12 +671,190 @@ class PaymentServiceController extends GetxController {
     );
   }
 
+  void _showIosCancelSubscriptionDialog() {
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.symmetric(horizontal: 20.w),
+        child: Container(
+          padding: EdgeInsets.all(20.r),
+          decoration: BoxDecoration(
+            color: AppColors.containerBackgroundColor,
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(
+              color: AppColors.grey3A4B62Color.withValues(alpha: 0.7),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Manage Subscription',
+                style: getTextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.whiteColor,
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Text(
+                'On iOS, subscriptions are managed directly through your Apple ID settings. Would you like to open Apple Subscription Management?',
+                textAlign: TextAlign.center,
+                style: getTextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.greyC8D0DBColor,
+                ),
+              ),
+              SizedBox(height: 20.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: CustomButton(
+                      ontap: Get.back,
+                      title: 'Cancel',
+                      fontSize: 14,
+                      lineHeight: 12,
+                      bgColor: AppColors.grey3A4B62Color,
+                      borderRadius: 12.r,
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: CustomButton(
+                      ontap: () {
+                        Get.back();
+                        _openAppleSubscriptionManagement();
+                      },
+                      title: 'Open Settings',
+                      fontSize: 14,
+                      lineHeight: 12,
+                      bgColor: const Color(0xFFFB2C36),
+                      borderRadius: 12.r,
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.7),
+    );
+  }
+
+  void _showIosReactivateSubscriptionDialog() {
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.symmetric(horizontal: 20.w),
+        child: Container(
+          padding: EdgeInsets.all(20.r),
+          decoration: BoxDecoration(
+            color: AppColors.containerBackgroundColor,
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(
+              color: AppColors.grey3A4B62Color.withValues(alpha: 0.7),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Reactivate / Restore',
+                style: getTextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.whiteColor,
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Text(
+                'You can restore your previous Apple In-App Purchases or manage your subscription status in Apple ID settings.',
+                textAlign: TextAlign.center,
+                style: getTextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.greyC8D0DBColor,
+                ),
+              ),
+              SizedBox(height: 20.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: CustomButton(
+                      ontap: () {
+                        Get.back();
+                        restoreIosPurchases();
+                      },
+                      title: 'Restore',
+                      fontSize: 14,
+                      lineHeight: 12,
+                      bgColor: AppColors.grey3A4B62Color,
+                      borderRadius: 12.r,
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: CustomButton(
+                      ontap: () {
+                        Get.back();
+                        _openAppleSubscriptionManagement();
+                      },
+                      title: 'Manage In Store',
+                      fontSize: 14,
+                      lineHeight: 12,
+                      bgColor: AppColors.orangeColor,
+                      borderRadius: 12.r,
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.7),
+    );
+  }
+
+  Future<void> _openAppleSubscriptionManagement() async {
+    const urlString = 'https://apps.apple.com/account/subscriptions';
+    final uri = Uri.parse(urlString);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        CommonMessage.showMessage(
+          title: 'Manage Subscription',
+          message:
+              'Please open iOS Settings > Apple ID > Subscriptions to manage your subscription.',
+        );
+      }
+    } catch (error) {
+      AppLoggerHelper.error('Error opening subscription settings', error);
+      CommonMessage.showMessage(
+        title: 'Manage Subscription',
+        message:
+            'Please open iOS Settings > Apple ID > Subscriptions to manage your subscription.',
+      );
+    }
+  }
+
   String? get _bearerToken {
     final accessToken = StorageService.token;
     return accessToken == null || accessToken.isEmpty
         ? null
         : 'Bearer $accessToken';
   }
+
+  // --- Dialogs ---
 
   void _showPaymentPlanDialog() {
     Get.dialog(
@@ -563,6 +949,112 @@ class PaymentServiceController extends GetxController {
       barrierColor: Colors.black.withValues(alpha: 0.7),
     );
   }
+
+  void _showIosPaymentPlanDialog() {
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 24.h),
+        child: Container(
+          padding: EdgeInsets.all(18.r),
+          decoration: BoxDecoration(
+            color: AppColors.containerBackgroundColor,
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(
+              color: AppColors.grey3A4B62Color.withValues(alpha: 0.7),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Choose Pro Plan',
+                style: getTextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.whiteColor,
+                  lineHeight: 14,
+                ),
+              ),
+              Text(
+                'Auto-Renewable, cancel anytime in Apple ID Settings',
+                style: getTextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.whiteColor,
+                  lineHeight: 10,
+                ),
+              ),
+              SizedBox(height: 14.h),
+              ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: 420.h),
+                child: Obx(
+                  () => ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: iosProducts.length,
+                    separatorBuilder: (context, index) =>
+                        SizedBox(height: 10.h),
+                    itemBuilder: (context, index) {
+                      final product = iosProducts[index];
+                      return Obx(
+                        () => _IosPaymentPlanTile(
+                          product: product,
+                          isSelected:
+                              selectedIosProduct.value?.id == product.id,
+                          onTap: () => selectedIosProduct.value = product,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              SizedBox(height: 18.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: CustomButton(
+                      ontap: Get.back,
+                      title: 'Cancel',
+                      fontSize: 15,
+                      lineHeight: 12,
+                      bgColor: AppColors.grey3A4B62Color,
+                      borderRadius: 12.r,
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: CustomButton(
+                      ontap: () {
+                        final product = selectedIosProduct.value;
+                        if (product == null) {
+                          CommonMessage.showMessage(
+                            title: 'Payment plan',
+                            message: 'Please select a plan first.',
+                          );
+                          return;
+                        }
+                        Get.back();
+                        buyIosProduct(product);
+                      },
+                      title: 'Confirm',
+                      fontSize: 15,
+                      lineHeight: 12,
+                      borderRadius: 12.r,
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.7),
+    );
+  }
 }
 
 class _PaymentPlanTile extends StatelessWidget {
@@ -639,6 +1131,94 @@ class _PaymentPlanTile extends StatelessWidget {
                       lineHeight: 9,
                     ),
                   ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _IosPaymentPlanTile extends StatelessWidget {
+  final ProductDetails product;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _IosPaymentPlanTile({
+    required this.product,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: EdgeInsets.all(14.r),
+        decoration: BoxDecoration(
+          color: AppColors.black0F1E33Color,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.orangeColor
+                : AppColors.grey3A4B62Color,
+            width: isSelected ? 1.6 : 1,
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              isSelected
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_unchecked,
+              color: isSelected
+                  ? AppColors.orangeColor
+                  : AppColors.greyC8D0DBColor,
+              size: 22.r,
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.title.isNotEmpty
+                        ? product.title
+                        : 'Pro Plan (Monthly)',
+                    style: getTextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.whiteColor,
+                      lineHeight: 12,
+                    ),
+                  ),
+                  SizedBox(height: 6.h),
+                  Text(
+                    product.price,
+                    style: getTextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.blue00D4FFColor,
+                      lineHeight: 10,
+                    ),
+                  ),
+                  if (product.description.isNotEmpty) ...[
+                    SizedBox(height: 8.h),
+                    Text(
+                      product.description,
+                      style: getTextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.greyC8D0DBColor,
+                        lineHeight: 9,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
