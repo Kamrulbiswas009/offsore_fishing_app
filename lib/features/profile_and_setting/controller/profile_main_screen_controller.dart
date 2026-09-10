@@ -96,10 +96,16 @@ class ProfileMainScreenController extends GetxController {
     }
   }
 
-  Future<void> _loadProfileScreenData() async {
-    await getAuthMe();
+  Future<void> fetchFreshProfileData({bool showLoader = false}) async {
+    _loadCachedProfile();
+    _loadCachedStats();
+    await getAuthMe(showLoader: showLoader);
     if (_isEndingExpiredSession) return;
     await featchProfileState();
+  }
+
+  Future<void> _loadProfileScreenData() async {
+    await fetchFreshProfileData(showLoader: authMe.value == null);
   }
 
   @override
@@ -108,8 +114,10 @@ class ProfileMainScreenController extends GetxController {
     super.onClose();
   }
 
-  Future<void> getAuthMe() async {
-    await EasyLoading.show(status: 'Loading profile...');
+  Future<void> getAuthMe({bool showLoader = true}) async {
+    if (showLoader) {
+      await EasyLoading.show(status: 'Loading profile...');
+    }
     AppLoggerHelper.info('Fetching user profile.');
 
     try {
@@ -171,7 +179,9 @@ class ProfileMainScreenController extends GetxController {
     } catch (error) {
       AppLoggerHelper.error('Profile fetch failed unexpectedly.', error);
     } finally {
-      await EasyLoading.dismiss();
+      if (showLoader) {
+        await EasyLoading.dismiss();
+      }
     }
   }
 

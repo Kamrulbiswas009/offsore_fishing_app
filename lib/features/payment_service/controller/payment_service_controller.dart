@@ -129,7 +129,11 @@ class PaymentServiceController extends GetxController {
         token: _bearerToken,
       );
 
-      if (!response.isSuccess) {
+      final isAlreadyActive = response.statusCode == 409 ||
+          response.errorMessage.contains('already have an active Pro subscription') ||
+          response.errorMessage.contains('409');
+
+      if (!response.isSuccess && !isAlreadyActive) {
         AppLoggerHelper.error(
           'IAP verification API failed: ${response.errorMessage}',
         );
@@ -140,9 +144,16 @@ class PaymentServiceController extends GetxController {
         return;
       }
 
-      AppLoggerHelper.info(
-        'IAP verification API successful, refreshing profile data.',
-      );
+      if (isAlreadyActive) {
+        AppLoggerHelper.info(
+          'IAP subscription already active on server (409). Completing transaction and refreshing profile.',
+        );
+      } else {
+        AppLoggerHelper.info(
+          'IAP verification API successful, refreshing profile data.',
+        );
+      }
+
       await _refetchProfileAfterPayment();
     } catch (error) {
       AppLoggerHelper.error('IAP verification error', error);

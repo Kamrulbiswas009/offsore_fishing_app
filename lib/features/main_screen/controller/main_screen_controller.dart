@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:paytonpieper/features/profile_and_setting/controller/profile_main_screen_controller.dart';
 
 class MainScreenController extends GetxController {
   // Observable index for navigation
@@ -16,5 +17,8 @@ class MainScreenController extends GetxController {
   void changeIndex(int index) {
     currentIndex.value = index;
     loadedIndices.add(index);
+    if (index == 3 && Get.isRegistered<ProfileMainScreenController>()) {
+      Get.find<ProfileMainScreenController>().fetchFreshProfileData(showLoader: false);
+    }
   }
 }
