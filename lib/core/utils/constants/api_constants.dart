@@ -182,6 +182,9 @@ class ApiConstants {
   static const String reActivePaymentSubscriptionApi =
       "$baseUrl/subscriptions/reactivate";
 
+  static const String inAppSubscriptionSuccessApi =
+      "$baseUrl/subscriptions/verify-ios";
+
   //report-get-for-group
   static String getReportForGroupApi({
     required String groupId,
