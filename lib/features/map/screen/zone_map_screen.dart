@@ -109,7 +109,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
         }
       } else {
         if (_panelAnim.status != AnimationStatus.reverse &&
-          _panelAnim.status != AnimationStatus.dismissed) {
+            _panelAnim.status != AnimationStatus.dismissed) {
           _panelAnim.reverse();
         }
       }
@@ -118,7 +118,9 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
     WidgetsBinding.instance.addObserver(this);
 
     if (Get.isRegistered<MainScreenController>()) {
-      _tabIndexWorker = ever(Get.find<MainScreenController>().currentIndex, (_) {
+      _tabIndexWorker = ever(Get.find<MainScreenController>().currentIndex, (
+        _,
+      ) {
         _updateLocationTracking();
       });
     }
@@ -138,7 +140,8 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _updateLocationTracking();
-    } else if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
       _stopLocationStream();
     }
   }
@@ -149,14 +152,17 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
       accuracy: LocationAccuracy.high,
       distanceFilter: 10,
     );
-    _positionStream = Geolocator.getPositionStream(locationSettings: locationSettings).listen(
-      (Position position) {
-        debugPrint('[ZoneMapScreen] Location stream update: ${position.latitude}, ${position.longitude}');
-      },
-      onError: (e) {
-        debugPrint('[ZoneMapScreen] Location stream error: $e');
-      },
-    );
+    _positionStream =
+        Geolocator.getPositionStream(locationSettings: locationSettings).listen(
+          (Position position) {
+            debugPrint(
+              '[ZoneMapScreen] Location stream update: ${position.latitude}, ${position.longitude}',
+            );
+          },
+          onError: (e) {
+            debugPrint('[ZoneMapScreen] Location stream error: $e');
+          },
+        );
   }
 
   void _stopLocationStream() {
@@ -168,17 +174,21 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
     try {
       final permissionService = Get.find<LocationPermissionService>();
       final isGranted = await permissionService.isLocationPermissionGranted();
-      
+
       bool isMapTabActive = true;
       if (Get.isRegistered<MainScreenController>()) {
         final mainController = Get.find<MainScreenController>();
         isMapTabActive = mainController.currentIndex.value == 0;
       }
-      
-      final isAppForeground = WidgetsBinding.instance.lifecycleState == null ||
+
+      final isAppForeground =
+          WidgetsBinding.instance.lifecycleState == null ||
           WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
 
-      if (isGranted && isMapTabActive && isAppForeground && _mapboxMap != null) {
+      if (isGranted &&
+          isMapTabActive &&
+          isAppForeground &&
+          _mapboxMap != null) {
         _startLocationStream();
         await controller.toggleMockUserLocation(_mapboxMap!, false);
         await _mapboxMap!.location.updateSettings(
@@ -192,9 +202,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
         _stopLocationStream();
         if (_mapboxMap != null) {
           await _mapboxMap!.location.updateSettings(
-            mapbox.LocationComponentSettings(
-              enabled: false,
-            ),
+            mapbox.LocationComponentSettings(enabled: false),
           );
           await controller.toggleMockUserLocation(_mapboxMap!, true);
         }
@@ -208,12 +216,14 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
 
   Future<void> _onMapCreated(mapbox.MapboxMap map) async {
     _mapboxMap = map;
-    
+
     // Check if offline to log mapbox offline loading
     try {
       final syncService = Get.find<SyncService>();
       if (!syncService.isOnline.value) {
-        debugPrint('[ZoneMapScreen] Offline detected. Mapbox will serve cached offline TileRegion and StylePack.');
+        debugPrint(
+          '[ZoneMapScreen] Offline detected. Mapbox will serve cached offline TileRegion and StylePack.',
+        );
       }
     } catch (_) {}
 
@@ -240,7 +250,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
     try {
       final permissionService = Get.find<LocationPermissionService>();
       final isGranted = await permissionService.isLocationPermissionGranted();
-      
+
       await _updateLocationTracking();
 
       if (isGranted && _mapboxMap != null) {
@@ -290,7 +300,6 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
     // Populate grid for the initial camera position
     await _updateGridForViewport();
   }
-
 
   /// Requests permission then flies camera to the device position.
   Future<void> _goToMyLocation() async {
@@ -376,10 +385,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
         await map.easeTo(
           mapbox.CameraOptions(
             center: mapbox.Point(
-              coordinates: mapbox.Position(
-                pos.longitude,
-                pos.latitude,
-              ),
+              coordinates: mapbox.Position(pos.longitude, pos.latitude),
             ),
             zoom: 10.0,
           ),
@@ -416,8 +422,6 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
       if (mounted) setState(() => _isLocating = false);
     }
   }
-
-
 
   // ── Camera change → grid refresh ────────────────────────────────────────
 
@@ -798,7 +802,10 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppColors.blue134D67Color.withValues(alpha: 0.9),
-              border: Border.all(color: AppColors.blue00F0FFColor, width: 1.5.w),
+              border: Border.all(
+                color: AppColors.blue00F0FFColor,
+                width: 1.5.w,
+              ),
               boxShadow: [
                 BoxShadow(
                   color: AppColors.blue00F0FFColor.withValues(alpha: 0.25),
@@ -809,8 +816,8 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
             ),
             child: Center(
               child: Image.asset(
-                IconPath.filterIcon, 
-                height: 24.r, 
+                IconPath.filterIcon,
+                height: 24.r,
                 width: 24.r,
                 color: AppColors.blue00F0FFColor,
               ),
@@ -826,16 +833,13 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
                   shape: BoxShape.circle,
                   color: Color(0xFFFF5252), // vibrant red badge
                 ),
-                constraints: BoxConstraints(
-                  minWidth: 18.r,
-                  minHeight: 18.r,
-                ),
+                constraints: BoxConstraints(minWidth: 18.r, minHeight: 18.r),
                 child: Center(
                   child: Text(
                     '$count',
                     style: TextStyle(
-                      fontSize: 10.sp, 
-                      color: Colors.white, 
+                      fontSize: 10.sp,
+                      color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -884,13 +888,16 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppColors.blue0D2B43Color.withValues(alpha: 0.8),
-              border: Border.all(color: AppColors.blue00F0FFColor, width: 1.5.w),
+              border: Border.all(
+                color: AppColors.blue00F0FFColor,
+                width: 1.5.w,
+              ),
               boxShadow: [
                 BoxShadow(
                   color: AppColors.blue00F0FFColor.withValues(alpha: 0.2),
                   blurRadius: 8,
-                )
-              ]
+                ),
+              ],
             ),
             child: Center(
               child: Transform.rotate(
@@ -910,7 +917,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
               fontWeight: FontWeight.bold,
               color: AppColors.blue00F0FFColor,
             ),
-          )
+          ),
         ],
       ),
     );
@@ -922,9 +929,8 @@ class CompassNeedlePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..style = PaintingStyle.fill;
-    
+    final paint = Paint()..style = PaintingStyle.fill;
+
     final path = ui.Path();
     // Draw top half (orange)
     paint.color = const Color(0xFFFF8C42);
@@ -978,14 +984,14 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
   void initState() {
     super.initState();
     // Seed with whatever the controller already knows from the /zones call
-    _reportCount     = widget.zone.reports;
-    _activityScore   = widget.zone.activityScore;
-    _trend           = widget.zone.trend;
-    _topSpecies      = widget.zone.topSpecies;
-    _avgDepth        = widget.zone.avgDepth;
-    _lastUpdated     = widget.zone.lastUpdated;
-    _dominantMethod  = '—';
-    _peakWindow      = '—';
+    _reportCount = widget.zone.reports;
+    _activityScore = widget.zone.activityScore;
+    _trend = widget.zone.trend;
+    _topSpecies = widget.zone.topSpecies;
+    _avgDepth = widget.zone.avgDepth;
+    _lastUpdated = widget.zone.lastUpdated;
+    _dominantMethod = '—';
+    _peakWindow = '—';
 
     _fetchLiveData();
   }
@@ -995,15 +1001,15 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
     super.didUpdateWidget(old);
     if (old.zone.id != widget.zone.id) {
       setState(() {
-        _loading        = true;
-        _reportCount    = widget.zone.reports;
-        _activityScore  = widget.zone.activityScore;
-        _trend          = widget.zone.trend;
-        _topSpecies     = widget.zone.topSpecies;
-        _avgDepth       = widget.zone.avgDepth;
-        _lastUpdated    = widget.zone.lastUpdated;
+        _loading = true;
+        _reportCount = widget.zone.reports;
+        _activityScore = widget.zone.activityScore;
+        _trend = widget.zone.trend;
+        _topSpecies = widget.zone.topSpecies;
+        _avgDepth = widget.zone.avgDepth;
+        _lastUpdated = widget.zone.lastUpdated;
         _dominantMethod = '—';
-        _peakWindow     = '—';
+        _peakWindow = '—';
       });
       _fetchLiveData();
     }
@@ -1014,11 +1020,14 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
     if (!mounted) return;
     if (data != null) {
       setState(() {
-        _activityScore  = data['activityScore']  as double;
-        _trend          = data['trend']           as TrendDirection;
-        
+        _activityScore = data['activityScore'] as double;
+        _trend = data['trend'] as TrendDirection;
+
         final newTopSpecies = data['topSpecies'] as String;
-        _topSpecies = (newTopSpecies == 'None' || newTopSpecies.isEmpty || newTopSpecies == 'Unknown')
+        _topSpecies =
+            (newTopSpecies == 'None' ||
+                newTopSpecies.isEmpty ||
+                newTopSpecies == 'Unknown')
             ? widget.zone.topSpecies
             : newTopSpecies;
 
@@ -1027,10 +1036,10 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
             ? widget.zone.avgDepth
             : newAvgDepth;
 
-        _dominantMethod = data['dominantMethod']  as String;
-        _peakWindow     = data['peakWindow']      as String;
-        _reportCount    = data['reportCount']     as int;
-        _lastUpdated    = data['lastUpdated']     as String;
+        _dominantMethod = data['dominantMethod'] as String;
+        _peakWindow = data['peakWindow'] as String;
+        _reportCount = data['reportCount'] as int;
+        _lastUpdated = data['lastUpdated'] as String;
       });
     }
     if (mounted) setState(() => _loading = false);
@@ -1134,11 +1143,7 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                     shape: BoxShape.circle,
                     color: Color(0xFF1F242E),
                   ),
-                  child: const Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 16,
-                  ),
+                  child: const Icon(Icons.close, color: Colors.white, size: 16),
                 ),
               ),
             ],
@@ -1185,9 +1190,14 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                           final progress = _activityScore.clamp(0.0, 1.0);
                           final trackHeight = 8.h;
                           final thumbSize = 16.w;
-                          final leftOffset = (constraints.maxWidth * progress) - (thumbSize / 2);
-                          final clampedOffset = leftOffset.clamp(0.0, constraints.maxWidth - thumbSize);
-                          
+                          final leftOffset =
+                              (constraints.maxWidth * progress) -
+                              (thumbSize / 2);
+                          final clampedOffset = leftOffset.clamp(
+                            0.0,
+                            constraints.maxWidth - thumbSize,
+                          );
+
                           return Stack(
                             alignment: Alignment.centerLeft,
                             clipBehavior: Clip.none,
@@ -1198,7 +1208,9 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                                 width: double.infinity,
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF151922),
-                                  borderRadius: BorderRadius.circular(trackHeight / 2),
+                                  borderRadius: BorderRadius.circular(
+                                    trackHeight / 2,
+                                  ),
                                 ),
                               ),
                               // Progress track
@@ -1208,7 +1220,9 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                                   height: trackHeight,
                                   decoration: BoxDecoration(
                                     color: const Color(0xFF00B4D8),
-                                    borderRadius: BorderRadius.circular(trackHeight / 2),
+                                    borderRadius: BorderRadius.circular(
+                                      trackHeight / 2,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -1223,7 +1237,9 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                                     shape: BoxShape.circle,
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFFFF6D00).withValues(alpha: 0.6),
+                                        color: const Color(
+                                          0xFFFF6D00,
+                                        ).withValues(alpha: 0.6),
                                         blurRadius: 10,
                                         spreadRadius: 4,
                                       ),
@@ -1247,7 +1263,11 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                 child: _metricCard(
                   label: 'Top Species',
                   value: _topSpecies,
-                  loading: _loading && (_topSpecies == 'None' || _topSpecies.isEmpty || _topSpecies == 'Unknown'),
+                  loading:
+                      _loading &&
+                      (_topSpecies == 'None' ||
+                          _topSpecies.isEmpty ||
+                          _topSpecies == 'Unknown'),
                 ),
               ),
               SizedBox(width: 8.w),
@@ -1278,8 +1298,6 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
         ],
       ),
     );
-    
-    
   }
 
   /// Dual-button CTA: Watch Zone bell + View Full Details.
@@ -1298,7 +1316,8 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
 
     return Obx(() {
       final isWatched = alertCtrl!.isWatched(widget.zone.name);
-      final alertsOn = alertCtrl.configFor(widget.zone.name)?.alertsEnabled ?? false;
+      final alertsOn =
+          alertCtrl.configFor(widget.zone.name)?.alertsEnabled ?? false;
 
       BiteWatchController? biteCtrl;
       try {
@@ -1311,7 +1330,8 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
       } catch (_) {}
 
       final isPro = profileCtrl?.isPremiumAccount ?? false;
-      final isBiteWatched = biteCtrl != null && biteCtrl.isWatched(widget.zone.name);
+      final isBiteWatched =
+          biteCtrl != null && biteCtrl.isWatched(widget.zone.name);
       final biteConfig = biteCtrl?.getWatchFor(widget.zone.name);
       final biteAlertsOn = biteConfig?.watchBiteActivity ?? false;
 
@@ -1322,10 +1342,7 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
             onTap: () {
               if (isWatched) {
                 // Toggle alerts enabled/disabled
-                alertCtrl!.toggleAlerts(
-                  widget.zone.name,
-                  enabled: !alertsOn,
-                );
+                alertCtrl!.toggleAlerts(widget.zone.name, enabled: !alertsOn);
                 final msg = alertsOn
                     ? 'Alerts paused for ${widget.zone.name}'
                     : 'Alerts re-enabled for ${widget.zone.name}';
@@ -1364,10 +1381,7 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                           AppColors.tealColor117A88.withOpacity(0.22),
                           const Color(0xFF0D1B2A),
                         ]
-                      : [
-                          const Color(0xFF1F242E),
-                          const Color(0xFF1F242E),
-                        ],
+                      : [const Color(0xFF1F242E), const Color(0xFF1F242E)],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
@@ -1401,14 +1415,14 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                       child: Icon(
                         isWatched
                             ? (alertsOn
-                                ? Icons.notifications_active_rounded
-                                : Icons.notifications_paused_rounded)
+                                  ? Icons.notifications_active_rounded
+                                  : Icons.notifications_paused_rounded)
                             : Icons.notifications_none_rounded,
                         size: 18.sp,
                         color: isWatched
                             ? (alertsOn
-                                ? AppColors.teal0C98AFColor
-                                : Colors.orange)
+                                  ? AppColors.teal0C98AFColor
+                                  : Colors.orange)
                             : const Color(0xFF8A94A6),
                       ),
                     ),
@@ -1422,8 +1436,8 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                         Text(
                           isWatched
                               ? (alertsOn
-                                  ? 'Weather Alerts Active'
-                                  : 'Alerts Paused')
+                                    ? 'Weather Alerts Active'
+                                    : 'Alerts Paused')
                               : 'Watch This Zone (Weather)',
                           style: getTextStyle(
                             fontSize: 13,
@@ -1436,8 +1450,8 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                         Text(
                           isWatched
                               ? (alertsOn
-                                  ? 'Tap to pause  •  Hold to edit'
-                                  : 'Tap to re-enable  •  Hold to edit')
+                                    ? 'Tap to pause  •  Hold to edit'
+                                    : 'Tap to re-enable  •  Hold to edit')
                               : 'Get notified on wave / wind changes',
                           style: getTextStyle(
                             fontSize: 11,
@@ -1452,7 +1466,9 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                   if (isWatched)
                     Container(
                       padding: EdgeInsets.symmetric(
-                          horizontal: 8.w, vertical: 4.h),
+                        horizontal: 8.w,
+                        vertical: 4.h,
+                      ),
                       decoration: BoxDecoration(
                         color: alertsOn
                             ? AppColors.tealColor117A88.withOpacity(0.18)
@@ -1497,7 +1513,7 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                 return;
               }
               if (biteCtrl == null) return;
-              
+
               if (isBiteWatched) {
                 biteCtrl.updateWatchSettings(
                   widget.zone.name,
@@ -1531,10 +1547,7 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                           const Color(0xFFFF6D00).withOpacity(0.18),
                           const Color(0xFF0D1B2A),
                         ]
-                      : [
-                          const Color(0xFF1F242E),
-                          const Color(0xFF1F242E),
-                        ],
+                      : [const Color(0xFF1F242E), const Color(0xFF1F242E)],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
@@ -1561,18 +1574,18 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                       !isPro
                           ? Icons.lock_outline_rounded
                           : isBiteWatched
-                              ? (biteAlertsOn
-                                  ? Icons.notifications_active_rounded
-                                  : Icons.notifications_paused_rounded)
-                              : Icons.notifications_none_rounded,
+                          ? (biteAlertsOn
+                                ? Icons.notifications_active_rounded
+                                : Icons.notifications_paused_rounded)
+                          : Icons.notifications_none_rounded,
                       size: 18.sp,
                       color: !isPro
                           ? Colors.amber
                           : isBiteWatched
-                              ? (biteAlertsOn
-                                  ? const Color(0xFFFF6D00)
-                                  : Colors.orange)
-                              : const Color(0xFF8A94A6),
+                          ? (biteAlertsOn
+                                ? const Color(0xFFFF6D00)
+                                : Colors.orange)
+                          : const Color(0xFF8A94A6),
                     ),
                   ),
                   SizedBox(width: 12.w),
@@ -1584,10 +1597,10 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                           !isPro
                               ? 'Watch Bite Activity (PRO)'
                               : isBiteWatched
-                                  ? (biteAlertsOn
-                                      ? 'Bite Alerts Active'
-                                      : 'Bite Alerts Paused')
-                                  : 'Watch Bite Activity',
+                              ? (biteAlertsOn
+                                    ? 'Bite Alerts Active'
+                                    : 'Bite Alerts Paused')
+                              : 'Watch Bite Activity',
                           style: getTextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
@@ -1600,8 +1613,8 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                           !isPro
                               ? 'Unlock to receive activity spike alerts'
                               : isBiteWatched
-                                  ? 'Notify: ≥${biteConfig?.biteThreshold ?? 3} reports / ${biteConfig?.biteThresholdDays ?? 7}d'
-                                  : 'Get notified when recent reports spike',
+                              ? 'Notify: ≥${biteConfig?.biteThreshold ?? 3} reports / ${biteConfig?.biteThresholdDays ?? 7}d'
+                              : 'Get notified when recent reports spike',
                           style: getTextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w400,
@@ -1614,7 +1627,9 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
                   if (isBiteWatched && isPro)
                     Container(
                       padding: EdgeInsets.symmetric(
-                          horizontal: 8.w, vertical: 4.h),
+                        horizontal: 8.w,
+                        vertical: 4.h,
+                      ),
                       decoration: BoxDecoration(
                         color: biteAlertsOn
                             ? const Color(0xFFFF6D00).withOpacity(0.15)
@@ -1678,8 +1693,8 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
             level: _activityScore >= 0.7
                 ? ActivityLevel.high
                 : _activityScore >= 0.4
-                    ? ActivityLevel.medium
-                    : ActivityLevel.low,
+                ? ActivityLevel.medium
+                : ActivityLevel.low,
             reports: _reportCount,
             lastUpdated: _lastUpdated,
             activityScore: _activityScore,
@@ -1707,7 +1722,6 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
       ),
     );
   }
-
 
   /// Animated shimmer placeholder for loading state
   Widget _shimmerBox(double width, double height) =>
@@ -1740,40 +1754,40 @@ class _ZoneDetailPanelState extends State<_ZoneDetailPanel> {
           loading
               ? _shimmerBox(50.w, 16.h)
               : isTrend
-                  ? Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (trendIcon != null)
-                          Icon(
-                            trendIcon,
-                            color: trendColor ?? Colors.white,
-                            size: 16.sp,
-                          ),
-                        if (trendIcon != null) SizedBox(width: 4.w),
-                        Flexible(
-                          child: Text(
-                            value.isEmpty ? '—' : value,
-                            style: getTextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: trendColor ?? Colors.white,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    )
-                  : Text(
-                      value.isEmpty ? '—' : value,
-                      style: getTextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (trendIcon != null)
+                      Icon(
+                        trendIcon,
+                        color: trendColor ?? Colors.white,
+                        size: 16.sp,
                       ),
-                      textAlign: TextAlign.center,
-                      overflow: TextOverflow.ellipsis,
+                    if (trendIcon != null) SizedBox(width: 4.w),
+                    Flexible(
+                      child: Text(
+                        value.isEmpty ? '—' : value,
+                        style: getTextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: trendColor ?? Colors.white,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
+                  ],
+                )
+              : Text(
+                  value.isEmpty ? '—' : value,
+                  style: getTextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                ),
         ],
       ),
     );
@@ -1805,9 +1819,10 @@ class _ShimmerBoxState extends State<_ShimmerBox>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     )..repeat();
-    _anim = Tween<double>(begin: -1.5, end: 2.0).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+    _anim = Tween<double>(
+      begin: -1.5,
+      end: 2.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
