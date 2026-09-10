@@ -75,11 +75,14 @@ class PaymentServiceController extends GetxController {
             'IAP purchase failed: ${purchaseDetails.error?.message}',
             purchaseDetails.error,
           );
-          CommonMessage.showMessage(
-            title: 'Purchase Error',
-            message:
-                purchaseDetails.error?.message ?? 'Payment was not completed.',
-          );
+          if (purchaseDetails.error?.code != 'storekit_canceled' &&
+              purchaseDetails.error?.code != 'canceled') {
+            CommonMessage.showMessage(
+              title: 'Purchase Error',
+              message:
+                  purchaseDetails.error?.message ?? 'Payment was not completed.',
+            );
+          }
         } else if (purchaseDetails.status == PurchaseStatus.purchased ||
             purchaseDetails.status == PurchaseStatus.restored) {
           await EasyLoading.dismiss();
@@ -87,10 +90,17 @@ class PaymentServiceController extends GetxController {
             'IAP purchase successful/restored: ${purchaseDetails.productID}',
           );
           await _handleIosPurchaseSuccess(purchaseDetails);
+        } else if (purchaseDetails.status == PurchaseStatus.canceled) {
+          await EasyLoading.dismiss();
+          AppLoggerHelper.info('IAP purchase canceled.');
         }
 
         if (purchaseDetails.pendingCompletePurchase) {
-          await _iap.completePurchase(purchaseDetails);
+          try {
+            await _iap.completePurchase(purchaseDetails);
+          } catch (error) {
+            AppLoggerHelper.error('Error completing purchase', error);
+          }
         }
       }
     }
@@ -99,8 +109,50 @@ class PaymentServiceController extends GetxController {
   Future<void> _handleIosPurchaseSuccess(
     PurchaseDetails purchaseDetails,
   ) async {
-    // When backend receipt verification endpoint is integrated, pass receipt token here.
-    await _refetchProfileAfterPayment();
+    await EasyLoading.show(status: 'Verifying subscription...');
+    try {
+      final receipt = purchaseDetails.verificationData.serverVerificationData.isNotEmpty
+          ? purchaseDetails.verificationData.serverVerificationData
+          : purchaseDetails.verificationData.localVerificationData;
+
+      final body = {
+        "productId": purchaseDetails.productID,
+        "transactionId": purchaseDetails.purchaseID ?? '',
+        "receiptData": receipt,
+      };
+
+      AppLoggerHelper.info('IAP verification request body: $body');
+
+      final response = await _networkCaller.postRequest(
+        ApiConstants.inAppSubscriptionSuccessApi,
+        body: body,
+        token: _bearerToken,
+      );
+
+      if (!response.isSuccess) {
+        AppLoggerHelper.error(
+          'IAP verification API failed: ${response.errorMessage}',
+        );
+        CommonMessage.showMessage(
+          title: 'Subscription Verification Failed',
+          message: response.errorMessage,
+        );
+        return;
+      }
+
+      AppLoggerHelper.info(
+        'IAP verification API successful, refreshing profile data.',
+      );
+      await _refetchProfileAfterPayment();
+    } catch (error) {
+      AppLoggerHelper.error('IAP verification error', error);
+      CommonMessage.showMessage(
+        title: 'Subscription Error',
+        message: 'Could not verify purchase with server.',
+      );
+    } finally {
+      await EasyLoading.dismiss();
+    }
   }
 
   // --- Flow Entry Point ---
@@ -188,10 +240,20 @@ class PaymentServiceController extends GetxController {
         'Failed to initiate purchase for product: ${product.id}',
         error,
       );
-      CommonMessage.showMessage(
-        title: 'Purchase Error',
-        message: 'Could not start App Store checkout.',
-      );
+      final errorMsg = error.toString();
+      if (errorMsg.contains('storekit_duplicate_product_object') ||
+          errorMsg.contains('pending transaction')) {
+        CommonMessage.showMessage(
+          title: 'Pending Transaction',
+          message:
+              'A transaction for this subscription is already pending in the App Store. Please wait a moment for it to process or tap Restore Purchases.',
+        );
+      } else {
+        CommonMessage.showMessage(
+          title: 'Purchase Error',
+          message: 'Could not start App Store checkout.',
+        );
+      }
     }
   }
 
