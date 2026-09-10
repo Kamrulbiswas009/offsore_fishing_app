@@ -412,13 +412,17 @@ class _ApiMemberCard extends GetView<GroupDetailsScreenController> {
                 children: [
                   Row(
                     children: [
-                      Text(
-                        member.user.name,
-                        style: getTextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.whiteColor,
-                          lineHeight: 12,
+                      Flexible(
+                        child: Text(
+                          member.user.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: getTextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.whiteColor,
+                            lineHeight: 12,
+                          ),
                         ),
                       ),
                       if (isOwner) ...[

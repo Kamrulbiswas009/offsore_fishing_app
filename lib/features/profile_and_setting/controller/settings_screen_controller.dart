@@ -270,11 +270,13 @@ class SettingsScreenController extends GetxController {
   void handleAboutItemTap(SettingsAboutItemModel item) {
     if (item.title == 'Privacy Policy') {
       AppDeviceUtility.launchUrl(
-        'https://docs.google.com/presentation/d/1yxnsA-50zWnUfibbG7Rc7ajzKwknOnR5k58aybXy6OE/edit?usp=sharing',
+        "https://sites.google.com/onthebitefishing.com/privacy-policy/home",
+        //'https://docs.google.com/presentation/d/1yxnsA-50zWnUfibbG7Rc7ajzKwknOnR5k58aybXy6OE/edit?usp=sharing',
       );
     } else if (item.title == 'Terms of Use') {
       AppDeviceUtility.launchUrl(
-        'https://docs.google.com/presentation/d/1OilGUp8DNx2qGDA4FtKlDhhSOvPf8qlwbHTFS5iUsKs/edit?usp=sharing',
+        "https://sites.google.com/onthebitefishing.com/terms-of-use?usp=sharing",
+        //'https://docs.google.com/presentation/d/1OilGUp8DNx2qGDA4FtKlDhhSOvPf8qlwbHTFS5iUsKs/edit?usp=sharing',
       );
     } else if (item.title == 'Help & Support') {
       Get.toNamed(AppRoute.helpAndSupportScreen);

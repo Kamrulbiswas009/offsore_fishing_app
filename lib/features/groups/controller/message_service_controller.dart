@@ -31,6 +31,7 @@ class MessageServiceController extends GetxController {
   String? _activeGroupId;
   String? _nextCursor;
   bool _isLoadingMore = false;
+  bool _isAutoScrolling = false;
   Timer? _typingStopTimer;
   bool _hasSentTypingStart = false;
 
@@ -45,6 +46,7 @@ class MessageServiceController extends GetxController {
     if (groupId == null || groupId.isEmpty) return;
     if (_activeGroupId == groupId && _socket != null) {
       if (_socket!.connected) markGroupAsRead(groupId);
+      scrollToBottom();
       return;
     }
 
@@ -142,7 +144,11 @@ class MessageServiceController extends GetxController {
             hasMoreMessages.value = data['hasMore'] is bool
                 ? data['hasMore'] == true
                 : rawMessages.length >= _pageSize;
+            final bool isInitialLoad = messages.isEmpty;
             _prependMessages(loadedMessages);
+            if (isInitialLoad) {
+              scrollToBottom();
+            }
           } else {
             AppLoggerHelper.error(
               '[MessageService] getMessages failed: $ackData',
@@ -214,7 +220,7 @@ class MessageServiceController extends GetxController {
                 selectedReply,
               );
               _upsertMessage(sentMessage);
-              _scrollToBottom();
+              scrollToBottom();
             }
           } else {
             CommonMessage.showMessage(
@@ -363,7 +369,7 @@ class MessageServiceController extends GetxController {
         final message = _withReplyFallback(_messageFromJson(_asMap(data)));
         if (message.groupId != _activeGroupId) return;
         _upsertMessage(message);
-        _scrollToBottom();
+        scrollToBottom();
       } catch (error) {
         AppLoggerHelper.error('[MessageService] newMessage exception', error);
       }
@@ -453,7 +459,7 @@ class MessageServiceController extends GetxController {
   }
 
   void _handleScroll() {
-    if (!scrollController.hasClients) return;
+    if (_isAutoScrolling || !scrollController.hasClients) return;
     if (scrollController.position.pixels <= 120) {
       loadOlderMessages();
     }
@@ -632,14 +638,45 @@ class MessageServiceController extends GetxController {
     return null;
   }
 
-  void _scrollToBottom() {
-    Future.delayed(const Duration(milliseconds: 80), () {
-      if (!scrollController.hasClients) return;
+  void scrollToBottom({bool immediate = false}) {
+    _isAutoScrolling = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _performScrollToBottom(immediate: immediate, attempts: 0);
+    });
+  }
+
+  void _performScrollToBottom({bool immediate = false, int attempts = 0}) {
+    if (!scrollController.hasClients) {
+      _isAutoScrolling = false;
+      return;
+    }
+
+    final maxScroll = scrollController.position.maxScrollExtent;
+
+    if (immediate) {
+      scrollController.jumpTo(maxScroll);
+    } else {
       scrollController.animateTo(
-        scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 220),
+        maxScroll,
+        duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
       );
+    }
+
+    Future.delayed(Duration(milliseconds: immediate ? 80 : 230), () {
+      if (!scrollController.hasClients) {
+        _isAutoScrolling = false;
+        return;
+      }
+
+      final currentMax = scrollController.position.maxScrollExtent;
+      final currentPixels = scrollController.position.pixels;
+
+      if ((currentMax - currentPixels).abs() > 5 && attempts < 3) {
+        _performScrollToBottom(immediate: true, attempts: attempts + 1);
+      } else {
+        _isAutoScrolling = false;
+      }
     });
   }
 

@@ -13,6 +13,10 @@ class GroupDetailsChatTab extends GetView<MessageServiceController> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.scrollToBottom();
+    });
+
     return Column(
       children: [
         Expanded(
