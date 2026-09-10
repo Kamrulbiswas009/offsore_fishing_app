@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
@@ -361,7 +362,13 @@ class PaymentServiceController extends GetxController {
       return;
     }
 
+    // Dismiss focus to prevent Flutter input manager from trapping the IME connection
+    FocusManager.instance.primaryFocus?.unfocus();
+
     Get.back();
+    // Allow GetX dialog animation to complete cleanly before displaying loading overlay
+    await Future.delayed(const Duration(milliseconds: 200));
+
     await EasyLoading.show(status: 'Creating payment...');
 
     try {
@@ -378,15 +385,19 @@ class PaymentServiceController extends GetxController {
       }
 
       final intentData = _intentData(intentResponse);
-      final clientSecret = intentData['clientSecret'];
-      final publishableKey = intentData['publishableKey'];
+      final clientSecret = (intentData['clientSecret'] as String?)?.trim();
+      final publishableKey = (intentData['publishableKey'] as String?)?.trim();
+      final customerId = (intentData['customerId'] as String?)?.trim();
+      final ephemeralKey = (intentData['ephemeralKey'] as String?)?.trim() ??
+          (intentData['customerEphemeralKeySecret'] as String?)?.trim();
+
       AppLoggerHelper.info(
         'Payment intent created: ${intentData['paymentIntentId'] ?? 'unknown'}',
       );
 
-      if (clientSecret is! String ||
+      if (clientSecret == null ||
           clientSecret.isEmpty ||
-          publishableKey is! String ||
+          publishableKey == null ||
           publishableKey.isEmpty) {
         AppLoggerHelper.error(
           'Payment intent response is missing Stripe data.',
@@ -400,15 +411,40 @@ class PaymentServiceController extends GetxController {
 
       Stripe.publishableKey = publishableKey;
       await Stripe.instance.applySettings();
+
+      final isSetupIntent = clientSecret.startsWith('seti_');
+
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
           merchantDisplayName: 'On The Bite',
-          paymentIntentClientSecret: clientSecret,
+          paymentIntentClientSecret: isSetupIntent ? null : clientSecret,
+          setupIntentClientSecret: isSetupIntent ? clientSecret : null,
+          customerId: customerId,
+          customerEphemeralKeySecret: ephemeralKey,
+          allowsDelayedPaymentMethods: true,
           style: ThemeMode.dark,
+          appearance: const PaymentSheetAppearance(
+            colors: PaymentSheetAppearanceColors(
+              background: Color(0xFF132337),
+              primary: Color(0xFFFF6600),
+              componentBackground: Color(0xFF1E324A),
+              componentText: Colors.white,
+              primaryText: Colors.white,
+              secondaryText: Color(0xFF8FA3BF),
+              placeholderText: Color(0xFF637381),
+            ),
+          ),
         ),
       );
 
+      // Dismiss loading overlay and allow animation to finish so the native activity/sheet can attach cleanly
       await EasyLoading.dismiss();
+      await Future.delayed(const Duration(milliseconds: 250));
+
+      // Temporarily switch system UI mode to edgeToEdge so Android WindowManager
+      // does not suppress the Soft Keyboard (IME) when tapping card input fields in the native sheet
+      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
       await Stripe.instance.presentPaymentSheet();
 
       await _refetchProfileAfterPayment();
@@ -426,6 +462,8 @@ class PaymentServiceController extends GetxController {
       );
     } finally {
       await EasyLoading.dismiss();
+      // Restore the app's immersive mode
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     }
   }
 
