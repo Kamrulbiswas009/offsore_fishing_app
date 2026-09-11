@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
@@ -16,11 +16,11 @@ import 'package:paytonpieper/features/main_screen/controller/filter_controller.d
 import 'package:paytonpieper/core/utils/helpers/app_helper.dart';
 
 // ── Source / Layer IDs ────────────────────────────────────────────────────
-const kGridCellSourceId  = 'zone-grid-cell-source';   // polygons (fill + line)
-const kGridLabelSourceId = 'zone-grid-label-source';  // points (symbols)
+const kGridCellSourceId = 'zone-grid-cell-source'; // polygons (fill + line)
+const kGridLabelSourceId = 'zone-grid-label-source'; // points (symbols)
 
-const kGridFillLayerId  = 'zone-grid-fill-layer';
-const kGridLineLayerId  = 'zone-grid-line-layer';
+const kGridFillLayerId = 'zone-grid-fill-layer';
+const kGridLineLayerId = 'zone-grid-line-layer';
 const kGridLabelLayerId = 'zone-grid-label-layer';
 
 class MapScreenController extends GetxController {
@@ -45,7 +45,7 @@ class MapScreenController extends GetxController {
   final Map<String, Map<String, dynamic>> activityMap = {};
 
   // ── Reactive state ────────────────────────────────────────────────────
-  var activeZones  = <MapZoneModel>[].obs;
+  var activeZones = <MapZoneModel>[].obs;
   var selectedZone = Rxn<MapZoneModel>();
   var selectedCellId = RxnString();
 
@@ -69,35 +69,23 @@ class MapScreenController extends GetxController {
     super.onInit();
     loadMockData();
 
+    _debounceWorker = debounce(_cameraBounds, (Map<String, dynamic>? bounds) {
+      if (bounds != null) {
+        fetchZones(
+          south: bounds['south'],
+          north: bounds['north'],
+          west: bounds['west'],
+          east: bounds['east'],
+          map: bounds['map'],
+        );
+      }
+    }, time: const Duration(milliseconds: 1500));
 
-    _debounceWorker = debounce(
-      _cameraBounds,
-      (Map<String, dynamic>? bounds) {
-        if (bounds != null) {
-          fetchZones(
-            south: bounds['south'],
-            north: bounds['north'],
-            west: bounds['west'],
-            east: bounds['east'],
-            map: bounds['map'],
-          );
-        }
-      },
-      time: const Duration(milliseconds: 1500), 
-    );
-
-    fetchZones(
-      south: 24.0,
-      north: 31.0,
-      west: -98.0,
-      east: -81.0,
-    );
-
+    fetchZones(south: 24.0, north: 31.0, west: -98.0, east: -81.0);
   }
 
   @override
   void onClose() {
-
     _debounceWorker?.dispose();
     super.onClose();
   }
@@ -114,10 +102,13 @@ class MapScreenController extends GetxController {
     await map.scaleBar.updateSettings(mapbox.ScaleBarSettings(enabled: false));
 
     // Empty sources – populated on first camera-change update
-    final emptyCollection = jsonEncode({'type': 'FeatureCollection', 'features': <dynamic>[]});
+    final emptyCollection = jsonEncode({
+      'type': 'FeatureCollection',
+      'features': <dynamic>[],
+    });
 
     await map.style.addSource(
-      mapbox.GeoJsonSource(id: kGridCellSourceId,  data: emptyCollection),
+      mapbox.GeoJsonSource(id: kGridCellSourceId, data: emptyCollection),
     );
     await map.style.addSource(
       mapbox.GeoJsonSource(id: kGridLabelSourceId, data: emptyCollection),
@@ -126,15 +117,15 @@ class MapScreenController extends GetxController {
     // FillLayer – data-driven colour per activityLevel
     await map.style.addLayer(
       mapbox.FillLayer(
-        id:       kGridFillLayerId,
+        id: kGridFillLayerId,
         sourceId: kGridCellSourceId,
         fillColorExpression: [
           'match',
           ['get', 'activityLevel'],
-          'high',   'rgba(226, 83, 1, 0.75)',
+          'high', 'rgba(226, 83, 1, 0.75)',
           'medium', 'rgba(12, 152, 175, 0.50)',
-          'low',    'rgba(28, 44, 58, 0.50)',
-          'rgba(0, 0, 0, 0)',         // empty → transparent
+          'low', 'rgba(28, 44, 58, 0.50)',
+          'rgba(0, 0, 0, 0)', // empty → transparent
         ],
         fillOpacity: 1.0,
         fillOutlineColor: 0x00000000, // outline via LineLayer
@@ -144,10 +135,11 @@ class MapScreenController extends GetxController {
     // LineLayer – draws the cyan grid partition lines
     await map.style.addLayer(
       mapbox.LineLayer(
-        id:          kGridLineLayerId,
-        sourceId:    kGridCellSourceId,
-        lineColor:   0x33153A56,   // Extremely subtle dark blue/cyan matching mockup
-        lineWidth:   0.8,
+        id: kGridLineLayerId,
+        sourceId: kGridCellSourceId,
+        lineColor:
+            0x33153A56, // Extremely subtle dark blue/cyan matching mockup
+        lineWidth: 0.8,
         lineOpacity: 1.0,
       ),
     );
@@ -155,22 +147,25 @@ class MapScreenController extends GetxController {
     // Highlighted borders for active cells
     await map.style.addLayer(
       mapbox.LineLayer(
-        id:          'active-grid-line-layer',
-        sourceId:    kGridCellSourceId,
+        id: 'active-grid-line-layer',
+        sourceId: kGridCellSourceId,
         lineColorExpression: [
           'match',
           ['get', 'activityLevel'],
-          'high',   'rgba(255, 140, 66, 0.95)', // Glowing orange border
+          'high', 'rgba(255, 140, 66, 0.95)', // Glowing orange border
           'medium', 'rgba(0, 240, 255, 0.85)', // Cyan border
-          'low',    'rgba(81, 97, 115, 0.60)', // Grey border
-          'rgba(0, 0, 0, 0)',                  // Transparent for empty
+          'low', 'rgba(81, 97, 115, 0.60)', // Grey border
+          'rgba(0, 0, 0, 0)', // Transparent for empty
         ],
         lineWidthExpression: [
           'match',
           ['get', 'activityLevel'],
-          'high',   2.2,
-          'medium', 1.5,
-          'low',    1.0,
+          'high',
+          2.2,
+          'medium',
+          1.5,
+          'low',
+          1.0,
           0.0,
         ],
         lineOpacity: 1.0,
@@ -180,23 +175,25 @@ class MapScreenController extends GetxController {
     // SymbolLayer – white count labels centred in active cells
     await map.style.addLayer(
       mapbox.SymbolLayer(
-        id:                 kGridLabelLayerId,
-        sourceId:           kGridLabelSourceId,
+        id: kGridLabelLayerId,
+        sourceId: kGridLabelSourceId,
         textFieldExpression: ['get', 'label'],
-        textSize:            20.0,
+        textSize: 20.0,
         textColorExpression: [
           'match',
           ['get', 'activityLevel'],
-          'high',   '#FFFFFF', // White text for High Activity
-          'medium', '#FF8C42', // Orange text for Medium Activity (like 1, 7, 3, 6)
-          'low',    '#C8D0DB', // Light grey text for Low
+          'high', '#FFFFFF', // White text for High Activity
+          'medium',
+          '#FF8C42', // Orange text for Medium Activity (like 1, 7, 3, 6)
+          'low', '#C8D0DB', // Light grey text for Low
           '#FFFFFF',
         ],
-        textHaloColor:       0xFF0A1628, // Deep navy halo matching the background theme
-        textHaloWidth:       2.0,
-        textFont:            ['DIN Pro Bold', 'Arial Unicode MS Bold'],
-        textAllowOverlap:    true,
-        iconAllowOverlap:    true,
+        textHaloColor:
+            0xFF0A1628, // Deep navy halo matching the background theme
+        textHaloWidth: 2.0,
+        textFont: ['DIN Pro Bold', 'Arial Unicode MS Bold'],
+        textAllowOverlap: true,
+        iconAllowOverlap: true,
       ),
     );
 
@@ -212,10 +209,10 @@ class MapScreenController extends GetxController {
               'properties': <String, dynamic>{},
               'geometry': {
                 'type': 'Point',
-                'coordinates': [-88.5, 28.5]
-              }
-            }
-          ]
+                'coordinates': [-88.5, 28.5],
+              },
+            },
+          ],
         }),
       ),
     );
@@ -249,7 +246,9 @@ class MapScreenController extends GetxController {
   /// When [show] is false, clears features from the source to hide the marker.
   Future<void> toggleMockUserLocation(mapbox.MapboxMap map, bool show) async {
     try {
-      final source = await map.style.getSource('mock-user-location-source') as mapbox.GeoJsonSource?;
+      final source =
+          await map.style.getSource('mock-user-location-source')
+              as mapbox.GeoJsonSource?;
       if (source != null) {
         final data = show
             ? jsonEncode({
@@ -260,14 +259,14 @@ class MapScreenController extends GetxController {
                     'properties': <String, dynamic>{},
                     'geometry': {
                       'type': 'Point',
-                      'coordinates': [mapCenter.longitude, mapCenter.latitude]
-                    }
-                  }
-                ]
+                      'coordinates': [mapCenter.longitude, mapCenter.latitude],
+                    },
+                  },
+                ],
               })
             : jsonEncode({
                 'type': 'FeatureCollection',
-                'features': <dynamic>[]
+                'features': <dynamic>[],
               });
         await source.updateGeoJSON(data);
       }
@@ -315,104 +314,35 @@ class MapScreenController extends GetxController {
     LatLng ne,
   ) async {
     try {
-      final localZones = ZoneCalculator.zonesInBounds(
-        south: sw.latitude,
-        north: ne.latitude,
-        west: sw.longitude,
-        east: ne.longitude,
-      );
-
-      final zoneIds = localZones.map((z) => z.zoneId).toList();
-      final activeMap = {for (var z in activeZones) z.id: z};
-      
-      // Calculate a signature representing active state within visible cells
-      final activeStateSignature = localZones.map((z) {
-        final az = activeMap[z.zoneId];
-        return '${z.zoneId}_${az?.level.name ?? 'empty'}_${az?.count ?? 0}';
-      }).join('|');
-
-      bool isIdentical = zoneIds.length == _lastRenderedZoneIds.length;
-      if (isIdentical) {
-        for (int i = 0; i < zoneIds.length; i++) {
-          if (zoneIds[i] != _lastRenderedZoneIds[i]) {
-            isIdentical = false;
-            break;
-          }
-        }
+      final activeZonesData = <String, Map<String, dynamic>>{};
+      for (final z in activeZones) {
+        activeZonesData[z.id] = {'level': z.level.name, 'count': z.count};
       }
 
-      // Viewport grid lines and active colors match cache; skip Mapbox refresh
-      if (isIdentical && _lastActiveStateSignature == activeStateSignature) {
-        return;
-      }
+      // Offload grid calculation, feature creation, and JSON serialization to background isolate
+      final result = await compute(_buildGridGeoJsonTask, {
+        'south': sw.latitude,
+        'north': ne.latitude,
+        'west': sw.longitude,
+        'east': ne.longitude,
+        'activeZones': activeZonesData,
+        'lastZoneIds': _lastRenderedZoneIds,
+        'lastSignature': _lastActiveStateSignature,
+      });
 
-      _lastRenderedZoneIds = zoneIds;
-      _lastActiveStateSignature = activeStateSignature;
+      if (result == null) return; // Viewport/active signature unchanged
 
-      final features = localZones.map((zone) {
-        final activeZone = activeMap[zone.zoneId];
-        final level = activeZone?.level.name ?? 'empty';
-        final count = activeZone?.count ?? 0;
-
-        return {
-          'type': 'Feature',
-          'id': zone.zoneId,
-          'geometry': {
-            'type': 'Polygon',
-            'coordinates': [
-              [
-                [zone.boundWest, zone.boundSouth],
-                [zone.boundEast, zone.boundSouth],
-                [zone.boundEast, zone.boundNorth],
-                [zone.boundWest, zone.boundNorth],
-                [zone.boundWest, zone.boundSouth],
-              ]
-            ],
-          },
-          'properties': {
-            'id': zone.zoneId,
-            'activityLevel': level,
-            'reportCount': count,
-            'label': count > 0 ? count.toString() : '',
-          },
-        };
-      }).toList();
-
-      final cellJson = {
-        'type': 'FeatureCollection',
-        'features': features,
-      };
-
-      final labelFeatures = <Map<String, dynamic>>[];
-      for (final zone in localZones) {
-        final activeZone = activeMap[zone.zoneId];
-        final count = activeZone?.count ?? 0;
-        if (count == 0) continue;
-        labelFeatures.add({
-          'type': 'Feature',
-          'geometry': {
-            'type': 'Point',
-            'coordinates': [zone.centerLng, zone.centerLat],
-          },
-          'properties': {
-            'label': count.toString(),
-            'activityLevel': activeZone?.level.name ?? 'empty',
-          },
-        });
-      }
-
-      final labelJson = {
-        'type': 'FeatureCollection',
-        'features': labelFeatures,
-      };
+      _lastRenderedZoneIds = (result['zoneIds'] as List).cast<String>();
+      _lastActiveStateSignature = result['activeSignature'] as String;
 
       final cellSrc =
           await map.style.getSource(kGridCellSourceId) as mapbox.GeoJsonSource?;
-      cellSrc?.updateGeoJSON(jsonEncode(cellJson));
+      await cellSrc?.updateGeoJSON(result['cellJson'] as String);
 
       final labelSrc =
-          await map.style.getSource(kGridLabelSourceId) as mapbox.GeoJsonSource?;
-      labelSrc?.updateGeoJSON(jsonEncode(labelJson));
+          await map.style.getSource(kGridLabelSourceId)
+              as mapbox.GeoJsonSource?;
+      await labelSrc?.updateGeoJSON(result['labelJson'] as String);
     } catch (_) {
       // Ignore style transition errors
     }
@@ -498,7 +428,7 @@ class MapScreenController extends GetxController {
         break;
       }
     }
-    
+
     // 2. If not found in activeZones, calculate coordinates and build a default one
     if (found == null) {
       final zoneInfo = ZoneCalculator.fromZoneId(zoneId);
@@ -522,7 +452,7 @@ class MapScreenController extends GetxController {
         );
       }
     }
-    
+
     if (found != null) {
       selectedCellId.value = found.id;
       selectZone(found);
@@ -542,69 +472,111 @@ class MapScreenController extends GetxController {
     activeZones.assignAll([
       if (zone1 != null)
         MapZoneModel(
-          id: zone1.zoneId, name: zone1.zoneId,
+          id: zone1.zoneId,
+          name: zone1.zoneId,
           location: LatLng(zone1.centerLat, zone1.centerLng),
-          count: 12, level: ActivityLevel.high,
-          reports: 24, lastUpdated: '6 hours ago',
-          activityScore: 0.92, topSpecies: 'Tuna', avgDepth: '120 ft',
+          count: 12,
+          level: ActivityLevel.high,
+          reports: 24,
+          lastUpdated: '6 hours ago',
+          activityScore: 0.92,
+          topSpecies: 'Tuna',
+          avgDepth: '120 ft',
           trend: TrendDirection.rising,
-          north: zone1.boundNorth, south: zone1.boundSouth,
-          east: zone1.boundEast, west: zone1.boundWest,
+          north: zone1.boundNorth,
+          south: zone1.boundSouth,
+          east: zone1.boundEast,
+          west: zone1.boundWest,
         ),
       if (zone2 != null)
         MapZoneModel(
-          id: zone2.zoneId, name: zone2.zoneId,
+          id: zone2.zoneId,
+          name: zone2.zoneId,
           location: LatLng(zone2.centerLat, zone2.centerLng),
-          count: 8, level: ActivityLevel.high,
-          reports: 17, lastUpdated: '2 hours ago',
-          activityScore: 0.78, topSpecies: 'Marlin', avgDepth: '95 ft',
+          count: 8,
+          level: ActivityLevel.high,
+          reports: 17,
+          lastUpdated: '2 hours ago',
+          activityScore: 0.78,
+          topSpecies: 'Marlin',
+          avgDepth: '95 ft',
           trend: TrendDirection.stable,
-          north: zone2.boundNorth, south: zone2.boundSouth,
-          east: zone2.boundEast, west: zone2.boundWest,
+          north: zone2.boundNorth,
+          south: zone2.boundSouth,
+          east: zone2.boundEast,
+          west: zone2.boundWest,
         ),
       if (zone3 != null)
         MapZoneModel(
-          id: zone3.zoneId, name: zone3.zoneId,
+          id: zone3.zoneId,
+          name: zone3.zoneId,
           location: LatLng(zone3.centerLat, zone3.centerLng),
-          count: 3, level: ActivityLevel.medium,
-          reports: 6, lastUpdated: '1 day ago',
-          activityScore: 0.35, topSpecies: 'Snapper', avgDepth: '60 ft',
+          count: 3,
+          level: ActivityLevel.medium,
+          reports: 6,
+          lastUpdated: '1 day ago',
+          activityScore: 0.35,
+          topSpecies: 'Snapper',
+          avgDepth: '60 ft',
           trend: TrendDirection.falling,
-          north: zone3.boundNorth, south: zone3.boundSouth,
-          east: zone3.boundEast, west: zone3.boundWest,
+          north: zone3.boundNorth,
+          south: zone3.boundSouth,
+          east: zone3.boundEast,
+          west: zone3.boundWest,
         ),
       if (zone4 != null)
         MapZoneModel(
-          id: zone4.zoneId, name: zone4.zoneId,
+          id: zone4.zoneId,
+          name: zone4.zoneId,
           location: LatLng(zone4.centerLat, zone4.centerLng),
-          count: 1, level: ActivityLevel.low,
-          reports: 3, lastUpdated: '5 hours ago',
-          activityScore: 0.15, topSpecies: 'Wahoo', avgDepth: '140 ft',
+          count: 1,
+          level: ActivityLevel.low,
+          reports: 3,
+          lastUpdated: '5 hours ago',
+          activityScore: 0.15,
+          topSpecies: 'Wahoo',
+          avgDepth: '140 ft',
           trend: TrendDirection.stable,
-          north: zone4.boundNorth, south: zone4.boundSouth,
-          east: zone4.boundEast, west: zone4.boundWest,
+          north: zone4.boundNorth,
+          south: zone4.boundSouth,
+          east: zone4.boundEast,
+          west: zone4.boundWest,
         ),
       if (zone5 != null)
         MapZoneModel(
-          id: zone5.zoneId, name: zone5.zoneId,
+          id: zone5.zoneId,
+          name: zone5.zoneId,
           location: LatLng(zone5.centerLat, zone5.centerLng),
-          count: 7, level: ActivityLevel.medium,
-          reports: 14, lastUpdated: '30 min ago',
-          activityScore: 0.68, topSpecies: 'Mahi', avgDepth: '110 ft',
+          count: 7,
+          level: ActivityLevel.medium,
+          reports: 14,
+          lastUpdated: '30 min ago',
+          activityScore: 0.68,
+          topSpecies: 'Mahi',
+          avgDepth: '110 ft',
           trend: TrendDirection.rising,
-          north: zone5.boundNorth, south: zone5.boundSouth,
-          east: zone5.boundEast, west: zone5.boundWest,
+          north: zone5.boundNorth,
+          south: zone5.boundSouth,
+          east: zone5.boundEast,
+          west: zone5.boundWest,
         ),
       if (zone6 != null)
         MapZoneModel(
-          id: zone6.zoneId, name: zone6.zoneId,
+          id: zone6.zoneId,
+          name: zone6.zoneId,
           location: LatLng(zone6.centerLat, zone6.centerLng),
-          count: 4, level: ActivityLevel.medium,
-          reports: 9, lastUpdated: '4 hours ago',
-          activityScore: 0.44, topSpecies: 'Sailfish', avgDepth: '200 ft',
+          count: 4,
+          level: ActivityLevel.medium,
+          reports: 9,
+          lastUpdated: '4 hours ago',
+          activityScore: 0.44,
+          topSpecies: 'Sailfish',
+          avgDepth: '200 ft',
           trend: TrendDirection.falling,
-          north: zone6.boundNorth, south: zone6.boundSouth,
-          east: zone6.boundEast, west: zone6.boundWest,
+          north: zone6.boundNorth,
+          south: zone6.boundSouth,
+          east: zone6.boundEast,
+          west: zone6.boundWest,
         ),
     ]);
 
@@ -657,12 +629,16 @@ class MapScreenController extends GetxController {
         final filterController = Get.find<FilterController>();
         final allSpeciesSelected = filterController.isAllSpeciesSelected;
         final allMethodsSelected = filterController.isAllMethodsSelected;
-        isFiltering = (filterController.selectedSpecies.isNotEmpty && !allSpeciesSelected) ||
-            (filterController.selectedMethods.isNotEmpty && !allMethodsSelected) ||
+        isFiltering =
+            (filterController.selectedSpecies.isNotEmpty &&
+                !allSpeciesSelected) ||
+            (filterController.selectedMethods.isNotEmpty &&
+                !allMethodsSelected) ||
             filterController.selectedTime.value.isNotEmpty ||
             filterController.depthValue.value != 625.0 ||
             !filterController.isAllVisibilitiesSelected;
-        speciesParam = (filterController.selectedSpecies.isEmpty || allSpeciesSelected)
+        speciesParam =
+            (filterController.selectedSpecies.isEmpty || allSpeciesSelected)
             ? null
             : filterController.selectedSpecies.join(',');
         depthMin = 0;
@@ -679,7 +655,9 @@ class MapScreenController extends GetxController {
             return "ANCHOR_SPOT_FISHING";
           return "CASTING";
         }).toList();
-        methodParam = (mappedMethods.isEmpty || allMethodsSelected) ? null : mappedMethods.join(',');
+        methodParam = (mappedMethods.isEmpty || allMethodsSelected)
+            ? null
+            : mappedMethods.join(',');
 
         // When both Public and Group are selected (default), send null so backend returns all data
         final upperVis = filterController.selectedVisibilities
@@ -713,14 +691,15 @@ class MapScreenController extends GetxController {
           : "none";
 
       // Check if we can skip this request because it's identical to the last successful fetch
-      final isIdenticalCall = !forceRefresh &&
+      final isIdenticalCall =
+          !forceRefresh &&
           _lastIsFiltering == isFiltering &&
           (isFiltering
               ? _lastFilterSignature == filterSignature
               : (_lastSouth == southParam &&
-                  _lastNorth == northParam &&
-                  _lastWest == westParam &&
-                  _lastEast == eastParam));
+                    _lastNorth == northParam &&
+                    _lastWest == westParam &&
+                    _lastEast == eastParam));
 
       if (isIdenticalCall) {
         // If we skipped the fetch, we still want to make sure the grid is drawn/refreshed on the map
@@ -760,9 +739,18 @@ class MapScreenController extends GetxController {
       // 1. Load from cache instantly if available
       try {
         final cacheService = Get.find<OfflineCacheService>();
-        final cachedData = await cacheService.getCache(cacheKey, ignoreExpiry: true);
-        if (cachedData != null && cachedData is Map && cachedData['data'] is List) {
-          await _parseAndApplyZonesList(cachedData['data'] as List, isFiltering, map);
+        final cachedData = await cacheService.getCache(
+          cacheKey,
+          ignoreExpiry: true,
+        );
+        if (cachedData != null &&
+            cachedData is Map &&
+            cachedData['data'] is List) {
+          await _parseAndApplyZonesList(
+            cachedData['data'] as List,
+            isFiltering,
+            map,
+          );
           _lastSouth = southParam;
           _lastNorth = northParam;
           _lastWest = westParam;
@@ -862,7 +850,7 @@ class MapScreenController extends GetxController {
     mapbox.MapboxMap? map,
   ) async {
     final List<MapZoneModel> zonesList = [];
-    
+
     if (isFiltering) {
       final Map<String, int> zoneCounts = {};
       final Map<String, List<String>> zoneSpecies = {};
@@ -936,20 +924,22 @@ class MapScreenController extends GetxController {
             }
           });
 
-          zonesList.add(MapZoneModel(
-            id: zoneId,
-            name: zoneId,
-            location: LatLng(zoneInfo.centerLat, zoneInfo.centerLng),
-            count: count,
-            level: level,
-            reports: count,
-            avgDepth: avgDepth,
-            topSpecies: topSpecies,
-            north: zoneInfo.boundNorth,
-            south: zoneInfo.boundSouth,
-            east: zoneInfo.boundEast,
-            west: zoneInfo.boundWest,
-          ));
+          zonesList.add(
+            MapZoneModel(
+              id: zoneId,
+              name: zoneId,
+              location: LatLng(zoneInfo.centerLat, zoneInfo.centerLng),
+              count: count,
+              level: level,
+              reports: count,
+              avgDepth: avgDepth,
+              topSpecies: topSpecies,
+              north: zoneInfo.boundNorth,
+              south: zoneInfo.boundSouth,
+              east: zoneInfo.boundEast,
+              west: zoneInfo.boundWest,
+            ),
+          );
         }
       });
     } else {
@@ -959,15 +949,17 @@ class MapScreenController extends GetxController {
           final displayName = item['displayName'] ?? zoneId;
           final centerLat = (item['centerLat'] as num?)?.toDouble() ?? 0.0;
           final centerLng = (item['centerLng'] as num?)?.toDouble() ?? 0.0;
-          
+
           final boundsMap = item['bounds'] as Map<String, dynamic>?;
           final zNorth = (boundsMap?['north'] as num?)?.toDouble();
           final zSouth = (boundsMap?['south'] as num?)?.toDouble();
           final zEast = (boundsMap?['east'] as num?)?.toDouble();
           final zWest = (boundsMap?['west'] as num?)?.toDouble();
 
-          final activityScore = (item['activityScore'] as num?)?.toDouble() ?? 0.0;
-          final trendDirectionStr = item['trendDirection'] as String? ?? 'STABLE';
+          final activityScore =
+              (item['activityScore'] as num?)?.toDouble() ?? 0.0;
+          final trendDirectionStr =
+              item['trendDirection'] as String? ?? 'STABLE';
           final reportCount = (item['reportCount'] as num?)?.toInt() ?? 0;
 
           // Map trend direction
@@ -993,22 +985,26 @@ class MapScreenController extends GetxController {
             avgDepth = '${rawAvgDepth.round()} ft';
           }
 
-          zonesList.add(MapZoneModel(
-            id: zoneId,
-            name: displayName,
-            location: LatLng(centerLat, centerLng),
-            count: reportCount,
-            level: level,
-            reports: reportCount,
-            activityScore: activityScore > 1.0 ? activityScore / 100.0 : activityScore,
-            trend: trend,
-            topSpecies: topSpecies,
-            avgDepth: avgDepth,
-            north: zNorth,
-            south: zSouth,
-            east: zEast,
-            west: zWest,
-          ));
+          zonesList.add(
+            MapZoneModel(
+              id: zoneId,
+              name: displayName,
+              location: LatLng(centerLat, centerLng),
+              count: reportCount,
+              level: level,
+              reports: reportCount,
+              activityScore: activityScore > 1.0
+                  ? activityScore / 100.0
+                  : activityScore,
+              trend: trend,
+              topSpecies: topSpecies,
+              avgDepth: avgDepth,
+              north: zNorth,
+              south: zSouth,
+              east: zEast,
+              west: zWest,
+            ),
+          );
         }
       }
     }
@@ -1055,7 +1051,8 @@ class MapScreenController extends GetxController {
 
         // Parse singleZoneDetails
         final zoneDetails = data['singleZoneDetails'] as Map<String, dynamic>?;
-        final rawScore = (zoneDetails?['activityScore'] as num?)?.toDouble() ?? 0.0;
+        final rawScore =
+            (zoneDetails?['activityScore'] as num?)?.toDouble() ?? 0.0;
         final activityScore = rawScore > 1.0 ? rawScore / 100.0 : rawScore;
         final trendStr = zoneDetails?['trendDirection'] as String? ?? 'STABLE';
 
@@ -1102,8 +1099,12 @@ class MapScreenController extends GetxController {
         // Parse activityTiming for peakWindow
         final timing = data['activityTiming'] as Map<String, dynamic>?;
         final rawHistogram = timing?['hourlyHistogram'] as List?;
-        final localHistogram = AppHelperFunctions.shiftHistogramToLocal(rawHistogram);
-        final peakWindow = AppHelperFunctions.calculateLocalPeakWindowFromLocal(localHistogram);
+        final localHistogram = AppHelperFunctions.shiftHistogramToLocal(
+          rawHistogram,
+        );
+        final peakWindow = AppHelperFunctions.calculateLocalPeakWindowFromLocal(
+          localHistogram,
+        );
 
         return {
           'topSpecies': topSpecies,
@@ -1124,14 +1125,22 @@ class MapScreenController extends GetxController {
 
   String _formatMethod(String raw) {
     switch (raw.toUpperCase()) {
-      case 'TROLLING': return 'Trolling';
-      case 'JIGGING': return 'Jigging';
-      case 'CASTING': return 'Casting';
-      case 'ANCHOR_SPOT_FISHING': return 'Anchor/Spot';
-      case 'FLY_FISHING': return 'Fly Fishing';
-      case 'DRIFTING': return 'Drifting';
-      case 'BOTTOM_FISHING': return 'Bottom Fishing';
-      default: return raw.isNotEmpty ? raw : '—';
+      case 'TROLLING':
+        return 'Trolling';
+      case 'JIGGING':
+        return 'Jigging';
+      case 'CASTING':
+        return 'Casting';
+      case 'ANCHOR_SPOT_FISHING':
+        return 'Anchor/Spot';
+      case 'FLY_FISHING':
+        return 'Fly Fishing';
+      case 'DRIFTING':
+        return 'Drifting';
+      case 'BOTTOM_FISHING':
+        return 'Bottom Fishing';
+      default:
+        return raw.isNotEmpty ? raw : '—';
     }
   }
 
@@ -1152,12 +1161,107 @@ class MapScreenController extends GetxController {
         map: bounds['map'],
       );
     } else {
-      await fetchZones(
-        south: 28.0,
-        north: 29.0,
-        west: -90.0,
-        east: -88.0,
-      );
+      await fetchZones(south: 28.0, north: 29.0, west: -90.0, east: -88.0);
     }
   }
+}
+
+/// Top-level function executed in a background isolate via [compute]
+/// to generate GeoJSON strings without blocking the main UI thread.
+Map<String, dynamic>? _buildGridGeoJsonTask(Map<String, dynamic> params) {
+  final south = params['south'] as double;
+  final north = params['north'] as double;
+  final west = params['west'] as double;
+  final east = params['east'] as double;
+  final activeMap = params['activeZones'] as Map<String, dynamic>;
+  final lastZoneIds = (params['lastZoneIds'] as List?)?.cast<String>();
+  final lastSignature = params['lastSignature'] as String?;
+
+  final localZones = ZoneCalculator.zonesInBounds(
+    south: south,
+    north: north,
+    west: west,
+    east: east,
+  );
+
+  final zoneIds = localZones.map((z) => z.zoneId).toList();
+  final activeStateSignature = localZones
+      .map((z) {
+        final az = activeMap[z.zoneId] as Map<String, dynamic>?;
+        return '${z.zoneId}_${az?['level'] ?? 'empty'}_${az?['count'] ?? 0}';
+      })
+      .join('|');
+
+  if (lastZoneIds != null && lastSignature != null) {
+    bool isIdentical = zoneIds.length == lastZoneIds.length;
+    if (isIdentical) {
+      for (int i = 0; i < zoneIds.length; i++) {
+        if (zoneIds[i] != lastZoneIds[i]) {
+          isIdentical = false;
+          break;
+        }
+      }
+    }
+    if (isIdentical && lastSignature == activeStateSignature) {
+      return null; // Skip - no change needed
+    }
+  }
+
+  final features = localZones.map((zone) {
+    final activeZone = activeMap[zone.zoneId] as Map<String, dynamic>?;
+    final level = activeZone?['level'] as String? ?? 'empty';
+    final count = activeZone?['count'] as int? ?? 0;
+
+    return {
+      'type': 'Feature',
+      'id': zone.zoneId,
+      'geometry': {
+        'type': 'Polygon',
+        'coordinates': [
+          [
+            [zone.boundWest, zone.boundSouth],
+            [zone.boundEast, zone.boundSouth],
+            [zone.boundEast, zone.boundNorth],
+            [zone.boundWest, zone.boundNorth],
+            [zone.boundWest, zone.boundSouth],
+          ],
+        ],
+      },
+      'properties': {
+        'id': zone.zoneId,
+        'activityLevel': level,
+        'reportCount': count,
+        'label': count > 0 ? count.toString() : '',
+      },
+    };
+  }).toList();
+
+  final cellJson = {'type': 'FeatureCollection', 'features': features};
+
+  final labelFeatures = <Map<String, dynamic>>[];
+  for (final zone in localZones) {
+    final activeZone = activeMap[zone.zoneId] as Map<String, dynamic>?;
+    final count = activeZone?['count'] as int? ?? 0;
+    if (count == 0) continue;
+    labelFeatures.add({
+      'type': 'Feature',
+      'geometry': {
+        'type': 'Point',
+        'coordinates': [zone.centerLng, zone.centerLat],
+      },
+      'properties': {
+        'label': count.toString(),
+        'activityLevel': activeZone?['level'] as String? ?? 'empty',
+      },
+    });
+  }
+
+  final labelJson = {'type': 'FeatureCollection', 'features': labelFeatures};
+
+  return {
+    'zoneIds': zoneIds,
+    'activeSignature': activeStateSignature,
+    'cellJson': jsonEncode(cellJson),
+    'labelJson': jsonEncode(labelJson),
+  };
 }
