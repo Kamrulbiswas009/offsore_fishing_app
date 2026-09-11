@@ -53,7 +53,7 @@ class MainScreen extends StatelessWidget {
             right: 0,
             child: SafeArea(
               bottom: false,
-              child: OfflineBannerWidget(),
+              child: RepaintBoundary(child: OfflineBannerWidget()),
             ),
           ),
 
@@ -62,12 +62,14 @@ class MainScreen extends StatelessWidget {
             left: 0,
             right: 0,
             bottom: 0,
-            child: Obx(
-              () => CustomBottomNavBar(
-                currentIndex: controller.currentIndex.value,
-                onTap: (index) {
-                  controller.changeIndex(index);
-                },
+            child: RepaintBoundary(
+              child: Obx(
+                () => CustomBottomNavBar(
+                  currentIndex: controller.currentIndex.value,
+                  onTap: (index) {
+                    controller.changeIndex(index);
+                  },
+                ),
               ),
             ),
           ),

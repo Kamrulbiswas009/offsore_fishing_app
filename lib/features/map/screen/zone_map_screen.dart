@@ -60,7 +60,8 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
   bool _layersReady = false;
   bool _isLocating = false; // prevents double-tap on location button
   Timer? _gridDebounce;
-  double _bearing = 0.0;
+  final ValueNotifier<double> _bearingNotifier = ValueNotifier<double>(0.0);
+  DateTime _lastBearingCheck = DateTime.fromMillisecondsSinceEpoch(0);
 
   StreamSubscription<Position>? _positionStream;
   Worker? _tabIndexWorker;
@@ -132,6 +133,7 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
     _tabIndexWorker?.dispose();
     _stopLocationStream();
     _gridDebounce?.cancel();
+    _bearingNotifier.dispose();
     _panelAnim.dispose();
     super.dispose();
   }
@@ -425,23 +427,24 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
 
   // ── Camera change → grid refresh ────────────────────────────────────────
 
-  void _onCameraChange(mapbox.CameraChangedEventData _) async {
+  void _onCameraChange(mapbox.CameraChangedEventData _) {
     _gridDebounce?.cancel();
     _gridDebounce = Timer(
-      const Duration(milliseconds: 150),
+      const Duration(milliseconds: 300),
       _updateGridForViewport,
     );
 
-    final map = _mapboxMap;
-    if (map != null) {
-      try {
-        final cam = await map.getCameraState();
-        if (mounted && _bearing != cam.bearing) {
-          setState(() {
-            _bearing = cam.bearing;
-          });
-        }
-      } catch (_) {}
+    final now = DateTime.now();
+    if (now.difference(_lastBearingCheck).inMilliseconds > 100) {
+      _lastBearingCheck = now;
+      final map = _mapboxMap;
+      if (map != null) {
+        map.getCameraState().then((cam) {
+          if (mounted && (_bearingNotifier.value - cam.bearing).abs() > 0.5) {
+            _bearingNotifier.value = cam.bearing;
+          }
+        }).catchError((_) {});
+      }
     }
   }
 
@@ -876,7 +879,6 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
   }
 
   Widget _buildCompass() {
-    final angleRad = -_bearing * 3.141592653589793 / 180.0;
     return Positioned(
       top: 130.h,
       left: 20.w,
@@ -900,8 +902,15 @@ class _ZoneMapScreenState extends State<ZoneMapScreen>
               ],
             ),
             child: Center(
-              child: Transform.rotate(
-                angle: angleRad,
+              child: ValueListenableBuilder<double>(
+                valueListenable: _bearingNotifier,
+                builder: (context, bearing, child) {
+                  final angleRad = -bearing * 3.141592653589793 / 180.0;
+                  return Transform.rotate(
+                    angle: angleRad,
+                    child: child,
+                  );
+                },
                 child: CustomPaint(
                   size: Size(18.w, 24.h),
                   painter: const CompassNeedlePainter(),
