@@ -12,12 +12,18 @@ import '../widgets/report_tab_widget.dart';
 import '../widgets/summary_tab_widget.dart';
 import '../widgets/weather_tab_widget.dart';
 
-class SummaryScreen extends GetView<SummaryController> {
+class SummaryScreen extends StatelessWidget {
   final bool isReportMainScreen;
   const SummaryScreen({super.key, required this.isReportMainScreen});
 
+  SummaryController get controller => Get.isRegistered<SummaryController>()
+      ? Get.find<SummaryController>()
+      : Get.put(SummaryController());
+
   @override
   Widget build(BuildContext context) {
+    final controller = this.controller;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (isReportMainScreen) {
         controller.clearZoneAndFetch();
