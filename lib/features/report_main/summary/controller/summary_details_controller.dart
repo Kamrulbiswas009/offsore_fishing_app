@@ -18,9 +18,10 @@ import 'package:paytonpieper/features/profile_and_setting/controller/profile_mai
 
 class SummaryController extends GetxController {
   var selectedTab = "Summary".obs;
-  var selectedTimeRange = "Last 3 Days".obs;
+  var selectedTimeRange = "---".obs;
 
   final List<String> timeRangeOptions = [
+    "All",
     "Last 24 Hours",
     "Last 3 Days",
     "Last 7 Days",
@@ -30,21 +31,23 @@ class SummaryController extends GetxController {
   ];
 
   void changeTimeRange(String range) {
-    if (selectedTimeRange.value != range) {
-      selectedTimeRange.value = range;
+    final valueToSet = range == "All" ? "---" : range;
+    if (selectedTimeRange.value != valueToSet) {
+      selectedTimeRange.value = valueToSet;
       fetchSummary(forceRefresh: true);
     }
   }
 
-  String _mapTimeRangeToParam(String range) {
+  String? _mapTimeRangeToParam(String range) {
     final clean = range.trim().toLowerCase();
+    if (clean == "---" || clean.isEmpty || clean == "all") return null;
     if (clean == "last 24 hours" || clean == "24h") return "24h";
     if (clean == "last 3 days" || clean == "3d") return "3d";
     if (clean == "last 7 days" || clean == "7d") return "7d";
     if (clean == "last 30 days" || clean == "30d") return "30d";
     if (clean == "this month" || clean == "month") return "month";
     if (clean == "custom range" || clean == "custom") return "custom";
-    return "24h";
+    return null;
   }
 
   var selectedZone = Rxn<MapZoneModel>();
@@ -134,6 +137,8 @@ class SummaryController extends GetxController {
     }
   }
 
+  DateTime? _lastFetchTime;
+
   @override
   void onInit() {
     super.onInit();
@@ -141,6 +146,7 @@ class SummaryController extends GetxController {
     if (Get.arguments is MapZoneModel) {
       selectedZone.value = Get.arguments;
     }
+    _lastFetchTime = DateTime.now();
     fetchReports();
     fetchSummary();
     fetchWeather();
@@ -158,13 +164,24 @@ class SummaryController extends GetxController {
     } catch (_) {}
   }
 
-  void setZoneAndFetch(dynamic argument) {
+  void setZoneAndFetch(dynamic argument, {bool forceRefresh = false}) {
     if (argument is MapZoneModel) {
-      if (selectedZone.value?.id != argument.id) {
-        selectedZone.value = argument;
-        fetchReports();
-        fetchSummary();
-        fetchWeather();
+      final current = selectedZone.value;
+      final isDifferent = current == null ||
+          current.id != argument.id ||
+          current.name != argument.name;
+      selectedZone.value = argument;
+      selectedTimeRange.value = "---";
+
+      final now = DateTime.now();
+      final justFetched = _lastFetchTime != null &&
+          now.difference(_lastFetchTime!).inMilliseconds < 1000;
+
+      if (isDifferent || (!justFetched || forceRefresh)) {
+        _lastFetchTime = now;
+        fetchReports(forceRefresh: forceRefresh);
+        fetchSummary(forceRefresh: forceRefresh);
+        fetchWeather(forceRefresh: forceRefresh);
       }
     }
   }
@@ -172,6 +189,8 @@ class SummaryController extends GetxController {
   void clearZoneAndFetch() {
     if (selectedZone.value != null) {
       selectedZone.value = null;
+      selectedTimeRange.value = "---";
+      _lastFetchTime = DateTime.now();
       fetchReports();
       fetchSummary();
       fetchWeather();
@@ -276,11 +295,16 @@ class SummaryController extends GetxController {
   Future<void> fetchReports({int? customTtl, bool forceRefresh = false}) async {
     isLoading.value = true;
 
+    final zoneId = selectedZone.value?.name ?? selectedZone.value?.id;
+    final cacheKey = (zoneId != null && zoneId.isNotEmpty)
+        ? "zone_reports_$zoneId"
+        : "region_reports";
+
     // Load from cache instantly if available
     try {
       final cacheService = Get.find<OfflineCacheService>();
       final cachedData = await cacheService.getCache(
-        "region_reports",
+        cacheKey,
         ignoreExpiry: true,
       );
       if (cachedData != null &&
@@ -303,17 +327,25 @@ class SummaryController extends GetxController {
 
       final ttl = customTtl ?? (isCurrentZoneOffline ? 52560000 : 1440);
 
+      final String reportsUrl;
+      if (zoneId != null && zoneId.isNotEmpty) {
+        // Only call with specific zoneId (no regionCode, page, limit, timeRange, or scope)
+        reportsUrl = ApiConstants.getZoneReportsByZoneIdApi(zoneId);
+      } else {
+        reportsUrl = ApiConstants.getRegionReportsApi;
+      }
+
       final response = await network.cachedGetRequest(
-        ApiConstants.getRegionReportsApi,
+        reportsUrl,
         token: token,
-        cacheKey: "region_reports",
+        cacheKey: cacheKey,
         ttlMinutes: ttl,
         forceRefresh: forceRefresh,
       );
 
       if (response.isSuccess) {
         AppLoggerHelper.info(
-          "Successfully fetched region reports. API: ${ApiConstants.getRegionReportsApi}, Response: ${response.responseData}",
+          "Successfully fetched zone reports. API: $reportsUrl, Response: ${response.responseData}",
         );
         final data = response.responseData['data'] as List?;
         if (data != null) {
@@ -366,7 +398,7 @@ class SummaryController extends GetxController {
           }
         }
 
-        final zone = item['zoneId'] ?? item['zone']?['zoneId'] ?? 'Unknown';
+        final zone = item['zoneId'] ?? item['zone']?['zoneId'] ?? (selectedZone.value?.name ?? 'Unknown');
         final note = item['notes'];
         final confirms = item['biteConfirmations']?['confirmed'] ?? 0;
         final author = item['user']?['name'];
@@ -456,10 +488,12 @@ class SummaryController extends GetxController {
   }
 
   int get reportsLast24h {
-    final list = selectedZone.value != null
+    final zoneId = selectedZone.value?.name ?? selectedZone.value?.id;
+    final list = (zoneId != null && zoneId.isNotEmpty)
         ? reports.where(
             (r) =>
-                r.zone.toLowerCase() == selectedZone.value!.name.toLowerCase(),
+                r.zone.toLowerCase() == zoneId.toLowerCase() ||
+                r.zone.toLowerCase() == 'unknown',
           )
         : reports;
     int count = 0;
@@ -476,12 +510,13 @@ class SummaryController extends GetxController {
   }
 
   List<FishingReport> get filteredReports {
-    final zoneFiltered = selectedZone.value != null
+    final zoneId = selectedZone.value?.name ?? selectedZone.value?.id;
+    final zoneFiltered = (zoneId != null && zoneId.isNotEmpty)
         ? reports
               .where(
                 (r) =>
-                    r.zone.toLowerCase() ==
-                    selectedZone.value!.name.toLowerCase(),
+                    r.zone.toLowerCase() == zoneId.toLowerCase() ||
+                    r.zone.toLowerCase() == 'unknown',
               )
               .toList()
         : reports;
@@ -707,11 +742,16 @@ class SummaryController extends GetxController {
   Future<void> fetchSummary({int? customTtl, bool forceRefresh = false}) async {
     isSummaryLoading.value = true;
 
+    final zoneId = selectedZone.value?.name ?? selectedZone.value?.id;
     final timeRangeParam = _mapTimeRangeToParam(selectedTimeRange.value);
 
-    final cacheKey = selectedZone.value != null
-        ? "zone_summary_${selectedZone.value!.name}_$timeRangeParam"
-        : "zone_summary_region_$timeRangeParam";
+    final cacheKey = (zoneId != null && zoneId.isNotEmpty)
+        ? (timeRangeParam != null
+            ? "zone_summary_${zoneId}_$timeRangeParam"
+            : "zone_summary_$zoneId")
+        : (timeRangeParam != null
+            ? "zone_summary_region_$timeRangeParam"
+            : "zone_summary_region");
 
     // Load from cache instantly if available
     try {
@@ -739,12 +779,11 @@ class SummaryController extends GetxController {
       final token = 'Bearer $accessToken';
 
       final String url;
-      if (selectedZone.value != null) {
-        url = ApiConstants.getFilteredZoneSummaryApi(
-          zoneId: selectedZone.value!.name,
+      if (zoneId != null && zoneId.isNotEmpty) {
+        // When timeRangeParam is null, calls without timeRange. When selected, calls with timeRange.
+        url = ApiConstants.getZoneSummaryByZoneIdApi(
+          zoneId,
           timeRange: timeRangeParam,
-          page: 1,
-          limit: 20,
         );
       } else {
         url = ApiConstants.getFilteredZoneSummaryApi(
@@ -1331,7 +1370,11 @@ class SummaryController extends GetxController {
     final summaryKey = "zone_summary_${zone.name}";
     await cacheService.deleteCache(summaryKey);
 
-    // 2. weather_${lat.toStringAsFixed(3)}_${lng.toStringAsFixed(3)}
+    // 2. zone_reports_${zone.name}
+    final reportsKey = "zone_reports_${zone.name}";
+    await cacheService.deleteCache(reportsKey);
+
+    // 3. weather_${lat.toStringAsFixed(3)}_${lng.toStringAsFixed(3)}
     final weatherKey =
         "weather_${lat.toStringAsFixed(3)}_${lng.toStringAsFixed(3)}";
     await cacheService.deleteCache(weatherKey);

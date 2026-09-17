@@ -69,12 +69,22 @@ class ApiConstants {
       "$baseUrl/reports/$reportId";
   static const String getRegionReportsApi =
       "$baseUrl/zones/reports?regionCode=GOM&scope=region";
+  static const String getZoneReportsApi = "$baseUrl/zones/reports";
+  static String getZoneReportsByZoneIdApi(String zoneId) =>
+      "$baseUrl/zones/reports?zoneId=$zoneId";
+
   static const String getZoneSummaryApi = "$baseUrl/zones/summary";
+  static String getZoneSummaryByZoneIdApi(String zoneId, {String? timeRange}) {
+    if (timeRange != null && timeRange.isNotEmpty) {
+      return "$baseUrl/zones/summary?zoneId=$zoneId&timeRange=$timeRange";
+    }
+    return "$baseUrl/zones/summary?zoneId=$zoneId";
+  }
 
   static String getFilteredZoneSummaryApi({
     String? zoneId,
     String? zoneIds,
-    String regionCode = "GOM",
+    String? regionCode,
     double? lat,
     double? lng,
     String? scope,
@@ -84,11 +94,11 @@ class ApiConstants {
     String? fishingMethod,
     String? visibility,
     String? timeRange,
-    int page = 1,
-    int limit = 20,
+    int? page,
+    int? limit,
   }) {
     final queryParameters = <String, String>{
-      'regionCode': regionCode,
+      if (regionCode != null && regionCode.isNotEmpty) 'regionCode': regionCode,
       if (zoneId != null && zoneId.isNotEmpty) 'zoneId': zoneId,
       if (zoneIds != null && zoneIds.isNotEmpty) 'zoneIds': zoneIds,
       if (lat != null) 'lat': lat.toString(),
@@ -101,8 +111,8 @@ class ApiConstants {
         'fishingMethod': fishingMethod,
       if (visibility != null && visibility.isNotEmpty) 'visibility': visibility,
       if (timeRange != null && timeRange.isNotEmpty) 'timeRange': timeRange,
-      'page': page.toString(),
-      'limit': limit.toString(),
+      if (page != null) 'page': page.toString(),
+      if (limit != null) 'limit': limit.toString(),
     };
 
     return Uri.parse(

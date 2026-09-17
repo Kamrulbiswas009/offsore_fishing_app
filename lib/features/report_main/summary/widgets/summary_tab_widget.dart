@@ -11,8 +11,11 @@ import '../controller/summary_details_controller.dart';
 
 class SummaryTabWidget extends StatelessWidget {
   final bool isReportMainScreen;
-  final SummaryController controller = Get.put(SummaryController());
-  SummaryTabWidget({super.key, required this.isReportMainScreen});
+  const SummaryTabWidget({super.key, required this.isReportMainScreen});
+
+  SummaryController get controller => Get.isRegistered<SummaryController>()
+      ? Get.find<SummaryController>()
+      : Get.put(SummaryController());
 
   @override
   Widget build(BuildContext context) {
@@ -243,7 +246,8 @@ class SummaryTabWidget extends StatelessWidget {
                 value: option,
                 child: Obx(() {
                   final isSelected =
-                      controller.selectedTimeRange.value == option;
+                      controller.selectedTimeRange.value == option ||
+                      (option == "All" && controller.selectedTimeRange.value == "---");
                   return Text(
                     option,
                     style: getTextStyle(
@@ -317,6 +321,9 @@ class SummaryTabWidget extends StatelessWidget {
   String _getTimeRangeTitle(String range) {
     final clean = range.trim();
     final lower = clean.toLowerCase();
+    if (lower == "---" || lower.isEmpty || lower == "all") {
+      return "---";
+    }
     if (lower == "last 24 hours" || lower == "24h") {
       return "LAST 24H";
     }
@@ -1181,13 +1188,15 @@ class SummaryTabWidget extends StatelessWidget {
         children: [
           Image.asset(icon, height: 20.h, width: 20.w, color: iconColor),
           SizedBox(width: 10.w),
-          Text(
-            title,
-            style: getTextStyle(
-              fontSize: 18,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-              lineHeight: 12,
+          Expanded(
+            child: Text(
+              title,
+              style: getTextStyle(
+                fontSize: 18,
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+                lineHeight: 12,
+              ),
             ),
           ),
         ],
