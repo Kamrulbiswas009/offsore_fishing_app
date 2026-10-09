@@ -1,7 +1,0 @@
-# Appfile for Fastlane iOS Deployment
-
-app_identifier("com.onthebite.app.ios") # App Bundle Identifier
-apple_id(ENV["APPLE_ID"] || "")         # Apple ID Email (Optional when using App Store Connect API Key)
-team_id(ENV["APPLE_TEAM_ID"] || "")     # Developer Portal Team ID
-
-# Fastlane will authenticate using App Store Connect API Key configured in Fastfile
