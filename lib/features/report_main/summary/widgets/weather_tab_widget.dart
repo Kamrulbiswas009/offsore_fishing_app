@@ -54,8 +54,8 @@ class WeatherTabWidget extends GetView<SummaryController> {
           }
           return const SizedBox.shrink();
         }),
-        _buildFishingConditionsCard(),
-        SizedBox(height: 16.h),
+       // _buildFishingConditionsCard(),
+        //SizedBox(height: 16.h),
         _buildSelectDay(),
         SizedBox(height: 16.h),
         _buildNowForecastToggle(),
@@ -317,78 +317,78 @@ class WeatherTabWidget extends GetView<SummaryController> {
   }
 
   // ── Fishing Conditions ──────────────────────────────────────────────────────
-  Widget _buildFishingConditionsCard() {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: AppColors.blue0D2B43Color,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: AppColors.blue153A56Color.withValues(alpha: 0.5),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            right: 0,
-            top: 0,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-              decoration: BoxDecoration(
-                color: Color(0xFF00D4FF),
-                borderRadius: BorderRadius.circular(20.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.teal0C98AFColor.withValues(alpha: 0.25),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Text(
-                'Excellent',
-                style: getTextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Fishing Conditions',
-                style: getTextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                'Ideal conditions for offshore fishing with moderate seas and favorable winds',
-                style: getTextStyle(
-                  fontSize: 12,
-                  color: AppColors.grey8B95A5Color,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildFishingConditionsCard() {
+  //   return Container(
+  //     width: double.infinity,
+  //     padding: EdgeInsets.all(16.w),
+  //     decoration: BoxDecoration(
+  //       color: AppColors.blue0D2B43Color,
+  //       borderRadius: BorderRadius.circular(16.r),
+  //       border: Border.all(
+  //         color: AppColors.blue153A56Color.withValues(alpha: 0.5),
+  //       ),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: Colors.black.withValues(alpha: 0.08),
+  //           blurRadius: 16,
+  //           offset: const Offset(0, 6),
+  //         ),
+  //       ],
+  //     ),
+  //     child: Stack(
+  //       clipBehavior: Clip.none,
+  //       children: [
+  //         Positioned(
+  //           right: 0,
+  //           top: 0,
+  //           child: Container(
+  //             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+  //             decoration: BoxDecoration(
+  //               color: Color(0xFF00D4FF),
+  //               borderRadius: BorderRadius.circular(20.r),
+  //               boxShadow: [
+  //                 BoxShadow(
+  //                   color: AppColors.teal0C98AFColor.withValues(alpha: 0.25),
+  //                   blurRadius: 12,
+  //                   offset: const Offset(0, 4),
+  //                 ),
+  //               ],
+  //             ),
+  //             child: Text(
+  //               'Excellent',
+  //               style: getTextStyle(
+  //                 fontSize: 12,
+  //                 fontWeight: FontWeight.w500,
+  //                 color: Colors.black,
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //         Column(
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: [
+  //             Text(
+  //               'Fishing Conditions',
+  //               style: getTextStyle(
+  //                 fontSize: 15,
+  //                 fontWeight: FontWeight.bold,
+  //                 color: Colors.white,
+  //               ),
+  //             ),
+  //             SizedBox(height: 8.h),
+  //             Text(
+  //               'Ideal conditions for offshore fishing with moderate seas and favorable winds',
+  //               style: getTextStyle(
+  //                 fontSize: 12,
+  //                 color: AppColors.grey8B95A5Color,
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   // ── Now / Forecast toggle ───────────────────────────────────────────────────
   Widget _buildNowForecastToggle() {

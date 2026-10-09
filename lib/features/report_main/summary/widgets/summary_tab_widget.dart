@@ -450,8 +450,9 @@ class SummaryTabWidget extends StatelessWidget {
               ),
               SizedBox(height: 20.h),
               GestureDetector(
-                onTap: () =>
-                    Get.snackbar("Forecast", "Loading full marine forecast..."),
+                onTap: () {
+                  controller.selectedTab.value = "Weather";
+                },
                 child: Container(
                   height: 38.h,
                   width: double.infinity,
