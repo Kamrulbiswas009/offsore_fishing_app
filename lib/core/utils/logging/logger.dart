@@ -1,10 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 
 class AppLoggerHelper{
   AppLoggerHelper._();
   static final Logger _logger = Logger(
     printer: PrettyPrinter(), // Customize the log levels based on your needs
-    level: Level.debug, // Set the default log level
+    level: kDebugMode? Level.debug : Level.off, // Set the default log level
   );
 
   static void debug(String message) {

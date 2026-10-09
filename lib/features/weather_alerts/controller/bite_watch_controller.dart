@@ -16,6 +16,7 @@ class BiteWatchController extends GetxController {
   final RxBool isLoading = false.obs;
   
   // Local cache key for fallbacks in offline or dev testing
+  // ignore: unused_field
   static const String _localBiteWatchesKey = 'local_bite_watches_backup';
 
   String? get _token {
